@@ -1,4 +1,5 @@
 import { serve } from "@hono/node-server";
+import { ethers } from "ethers";
 import fs from "fs/promises";
 import { Hono } from "hono";
 import { Kysely, PostgresDialect, sql } from "kysely";
@@ -51,6 +52,26 @@ async function initializeDatabase() {
   try {
     console.log("Initializing database...");
 
+    // Create copy_trading table
+    await db.schema
+      .createTable("copy_trading")
+      .ifNotExists()
+      .addColumn("id", "serial", (col) => col.primaryKey())
+      .addColumn("copier_address", "varchar(42)", (col) => col.notNull())
+      .addColumn("trader_address", "varchar(42)", (col) => col.notNull())
+      .addColumn("signature", "text", (col) => col.notNull())
+      .addColumn("message", "text", (col) => col.notNull())
+      .addColumn("timestamp", "bigint", (col) => col.notNull())
+      .addColumn("is_active", "boolean", (col) => col.defaultTo(true))
+      .addColumn("created_at", "timestamp", (col) =>
+        col.defaultTo(sql`CURRENT_TIMESTAMP`).notNull()
+      )
+      .addColumn("updated_at", "timestamp", (col) =>
+        col.defaultTo(sql`CURRENT_TIMESTAMP`).notNull()
+      )
+      .execute();
+    console.log("Copy trading table created/verified");
+
     // Create users table with all User interface fields
     await db.schema
       .createTable("users")
@@ -102,7 +123,6 @@ async function initializeDatabase() {
         col.defaultTo(sql`CURRENT_TIMESTAMP`).notNull()
       )
       .execute();
-
     console.log("Trades table created/verified");
 
     // Create positions table (unchanged)
@@ -449,6 +469,192 @@ app.post("/api/wallet/disconnect", async (c) => {
 
   console.log(`Wallet disconnected: ${address}`);
   return c.json({ success: true, message: "Wallet disconnected" });
+});
+
+// Utility function to verify signature
+function verifySignature(
+  message: string,
+  signature: string,
+  expectedAddress: string
+): boolean {
+  try {
+    const recoveredAddress = ethers.verifyMessage(message, signature);
+    return recoveredAddress.toLowerCase() === expectedAddress.toLowerCase();
+  } catch (error) {
+    console.error("Error verifying signature:", error);
+    return false;
+  }
+}
+
+// API endpoint to start copy trading
+app.post("/api/copy-trading/start", async (c) => {
+  try {
+    const { traderAddress, copierAddress, message, signature, timestamp } =
+      await c.req.json();
+
+    // Validate required fields
+    if (
+      !traderAddress ||
+      !copierAddress ||
+      !message ||
+      !signature ||
+      !timestamp
+    ) {
+      return c.json({ error: "Missing required fields" }, 400);
+    }
+
+    // Verify the signature
+    if (!verifySignature(message, signature, copierAddress)) {
+      return c.json({ error: "Invalid signature" }, 401);
+    }
+
+    // Check timestamp (should be within last 5 minutes)
+    const now = Date.now();
+    if (Math.abs(now - timestamp) > 5 * 60 * 1000) {
+      return c.json({ error: "Request timestamp too old" }, 400);
+    }
+
+    // Verify the message contains the correct action and trader address
+    if (
+      !message.includes("START_COPY_TRADING") ||
+      !message.includes(traderAddress)
+    ) {
+      return c.json({ error: "Invalid message content" }, 400);
+    }
+
+    // Check if already copying this trader
+    const existingCopy = await db
+      .selectFrom("copy_trading")
+      .select(["id"])
+      .where("copier_address", "=", copierAddress)
+      .where("trader_address", "=", traderAddress)
+      .where("is_active", "=", true)
+      .executeTakeFirst();
+
+    if (existingCopy) {
+      return c.json({ error: "Already copying trades from this trader" }, 409);
+    }
+
+    // Create copy trading record
+    await db
+      .insertInto("copy_trading")
+      .values({
+        copier_address: copierAddress,
+        trader_address: traderAddress,
+        signature: signature,
+        message: message,
+        timestamp: timestamp,
+        is_active: true,
+      })
+      .execute();
+
+    console.log(
+      `Copy trading started: ${copierAddress} copying ${traderAddress}`
+    );
+    return c.json({
+      success: true,
+      message: "Copy trading started successfully",
+    });
+  } catch (error) {
+    console.error("Error starting copy trading:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
+// API endpoint to stop copy trading
+app.post("/api/copy-trading/stop", async (c) => {
+  try {
+    const { traderAddress, copierAddress, message, signature, timestamp } =
+      await c.req.json();
+
+    // Validate required fields
+    if (
+      !traderAddress ||
+      !copierAddress ||
+      !message ||
+      !signature ||
+      !timestamp
+    ) {
+      return c.json({ error: "Missing required fields" }, 400);
+    }
+
+    // Verify the signature
+    if (!verifySignature(message, signature, copierAddress)) {
+      return c.json({ error: "Invalid signature" }, 401);
+    }
+
+    // Check timestamp (should be within last 5 minutes)
+    const now = Date.now();
+    if (Math.abs(now - timestamp) > 5 * 60 * 1000) {
+      return c.json({ error: "Request timestamp too old" }, 400);
+    }
+
+    // Verify the message contains the correct action and trader address
+    if (
+      !message.includes("STOP_COPY_TRADING") ||
+      !message.includes(traderAddress)
+    ) {
+      return c.json({ error: "Invalid message content" }, 400);
+    }
+
+    // Find and deactivate copy trading record
+    const result = await db
+      .updateTable("copy_trading")
+      .set({
+        is_active: false,
+        updated_at: new Date().toISOString(),
+      })
+      .where("copier_address", "=", copierAddress)
+      .where("trader_address", "=", traderAddress)
+      .where("is_active", "=", true)
+      .execute();
+
+    if (result.length === 0) {
+      return c.json(
+        { error: "No active copy trading relationship found" },
+        404
+      );
+    }
+
+    console.log(
+      `Copy trading stopped: ${copierAddress} stopped copying ${traderAddress}`
+    );
+    return c.json({
+      success: true,
+      message: "Copy trading stopped successfully",
+    });
+  } catch (error) {
+    console.error("Error stopping copy trading:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
+// API endpoint to check copy trading status
+app.get("/api/copy-trading/status", async (c) => {
+  try {
+    const traderAddress = c.req.query("traderAddress");
+    const copierAddress = c.req.query("copierAddress");
+
+    if (!traderAddress || !copierAddress) {
+      return c.json({ error: "Missing required parameters" }, 400);
+    }
+
+    const copyRecord = await db
+      .selectFrom("copy_trading")
+      .select(["is_active", "created_at"])
+      .where("copier_address", "=", copierAddress as string)
+      .where("trader_address", "=", traderAddress as string)
+      .where("is_active", "=", true)
+      .executeTakeFirst();
+
+    return c.json({
+      isActive: !!copyRecord,
+      startedAt: copyRecord?.created_at || null,
+    });
+  } catch (error) {
+    console.error("Error checking copy trading status:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
 });
 
 app.get("/users/:address/positions", async (c) => {

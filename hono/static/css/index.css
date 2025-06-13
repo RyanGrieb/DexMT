@@ -59,6 +59,7 @@ md-card {
   justify-content: space-between;
   align-items: stretch;
   background-color: #3a3a3a;
+  border-radius: 12px;
 }
 
 .card-content {
@@ -131,7 +132,6 @@ md-chip {
 .user-list-header {
   background-color: #333333;
   border-bottom: 1px solid #404040;
-  border-radius: 12px 12px 0 0;
 }
 
 .header-cell {
@@ -304,6 +304,29 @@ md-chip {
   display: flex;
   align-items: center;
   gap: 16px;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.user-actions {
+  margin-left: auto;
+}
+
+.copy-trades-button {
+  --md-sys-color-primary: #4caf50;
+  --md-sys-color-on-primary: white;
+}
+
+.copy-trades-button:hover {
+  --md-sys-color-primary: #45a049;
+}
+
+.copy-trades-button.copying {
+  --md-sys-color-primary: #ff9800;
+}
+
+.copy-trades-button.active {
+  --md-sys-color-primary: #2196f3;
 }
 
 .user-avatar .trader-icon {
@@ -485,6 +508,29 @@ md-chip {
 
 .position-net-value.negative {
   color: #f44336;
+}
+
+.navigation {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.nav-button {
+  --md-sys-color-primary: #8ee0f3;
+  --md-sys-color-on-primary: #e0e0e0;
+  transition: all 0.2s ease;
+}
+
+.nav-button.active {
+  --md-sys-color-primary: #4f46e5;
+  --md-sys-color-on-primary: white;
+  --md-sys-color-surface: #4f46e5;
+  --md-sys-color-on-surface: white;
+}
+
+.nav-button:hover {
+  --md-sys-color-primary: #6b73ff;
 }
 
 /* Responsive design */

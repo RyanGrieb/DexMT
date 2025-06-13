@@ -10,6 +10,7 @@ export interface Database {
   users: UserTable;
   trades: TradeTable;
   positions: PositionTable;
+  copy_trading: CopyTradingTable;
 }
 
 // Users table interface
@@ -61,6 +62,19 @@ export interface PositionTable {
   updated_at: ColumnType<Date, string | undefined, string | undefined>;
 }
 
+// Copy Trading table interface
+export interface CopyTradingTable {
+  id: Generated<number>;
+  copier_address: string;
+  trader_address: string;
+  signature: string;
+  message: string;
+  timestamp: bigint;
+  is_active: boolean;
+  created_at: ColumnType<Date, string | undefined, never>;
+  updated_at: ColumnType<Date, string | undefined, string | undefined>;
+}
+
 // Type helpers for Users
 export type User = Selectable<UserTable>;
 export type NewUser = Insertable<UserTable>;
@@ -75,3 +89,8 @@ export type TradeUpdate = Updateable<TradeTable>;
 export type Position = Selectable<PositionTable>;
 export type NewPosition = Insertable<PositionTable>;
 export type PositionUpdate = Updateable<PositionTable>;
+
+// Type helpers for Copy Trading
+export type CopyTrading = Selectable<CopyTradingTable>;
+export type NewCopyTrading = Insertable<CopyTradingTable>;
+export type CopyTradingUpdate = Updateable<CopyTradingTable>;

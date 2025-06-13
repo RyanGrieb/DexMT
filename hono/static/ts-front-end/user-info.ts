@@ -1,7 +1,9 @@
-import { User } from "./users";
+import { provider } from "./metamask";
+import { User, updateUsersUI } from "./users";
 
 let currentUser: User | null = null;
 let currentPeriod: string = "today";
+let isCopyingTrades = false;
 
 export function showUserInfo(user: User): void {
   currentUser = user;
@@ -28,8 +30,47 @@ function initializeUserInfo(): void {
   const backButton = document.getElementById("backToUsers");
   if (backButton) {
     backButton.addEventListener("click", () => {
-      // Reload the main view
-      location.reload();
+      // Fetch and load the top traders HTML
+      fetch("/html/top-traders.html")
+        .then((response) => response.text())
+        .then((html) => {
+          const indexContent = document.querySelector(".index-content");
+          if (indexContent) {
+            indexContent.innerHTML = html;
+
+            // Re-populate the users list
+            updateUsersUI();
+
+            // Update navigation button states
+            const topTradersBtn = document.getElementById("topTradersBtn");
+            const myCopiesBtn = document.getElementById("myCopiesBtn");
+            if (topTradersBtn) topTradersBtn.classList.add("active");
+            if (myCopiesBtn) myCopiesBtn.classList.remove("active");
+          }
+        })
+        .catch((error) => {
+          console.error("Error loading top traders HTML:", error);
+        });
+    });
+  }
+
+  // Copy trades button
+  const copyTradesButton = document.getElementById("copyTradesButton");
+  if (copyTradesButton) {
+    copyTradesButton.addEventListener("click", async () => {
+      // Ensure the wallet is connected
+      if (!provider?.isConnected()) {
+        alert("Wallet not connected. Please connect your wallet first.");
+        return;
+      }
+
+      if (!currentUser) {
+        alert("No user selected.");
+        return;
+      }
+
+      // Toggle copy trading
+      await toggleCopyTrades();
     });
   }
 
@@ -49,6 +90,203 @@ function initializeUserInfo(): void {
       }
     });
   });
+}
+
+async function toggleCopyTrades(): Promise<void> {
+  if (!provider || !currentUser) return;
+
+  const copyTradesButton = document.getElementById("copyTradesButton");
+  if (!copyTradesButton) return;
+
+  try {
+    // Disable button during operation
+    copyTradesButton.setAttribute("disabled", "true");
+    copyTradesButton.textContent = "Processing...";
+
+    if (isCopyingTrades) {
+      // Stop copying trades
+      await stopCopyingTrades();
+    } else {
+      // Start copying trades
+      await startCopyingTrades();
+    }
+  } catch (error) {
+    console.error("Error toggling copy trades:", error);
+    alert("Failed to toggle copy trading. Please try again.");
+  } finally {
+    // Re-enable button
+    copyTradesButton.removeAttribute("disabled");
+  }
+}
+
+async function startCopyingTrades(): Promise<void> {
+  if (!provider || !currentUser) return;
+
+  try {
+    // Create a message to sign
+    const timestamp = Date.now();
+    const message = `DEXMT Copy Trading Authorization
+Trader: ${currentUser.address}
+Timestamp: ${timestamp}
+Action: START_COPY_TRADING
+
+By signing this message, you authorize DEXMT to copy trades from the specified trader to your wallet.`;
+
+    // Request signature from user
+    const signature = (await provider.request({
+      method: "personal_sign",
+      params: [message, provider.selectedAddress],
+    })) as string;
+
+    // Send request to backend with signature
+    const response = await fetch("/api/copy-trading/start", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        traderAddress: currentUser.address,
+        copierAddress: provider.selectedAddress,
+        message: message,
+        signature: signature,
+        timestamp: timestamp,
+      }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || "Failed to start copy trading");
+    }
+
+    // Update UI state
+    isCopyingTrades = true;
+    updateCopyTradesButton(true);
+
+    alert(
+      `Successfully started copying trades from ${currentUser.address.slice(0, 6)}...${currentUser.address.slice(-4)}`
+    );
+  } catch (error) {
+    console.error("Error starting copy trades:", error);
+    if (error instanceof Error) {
+      alert(`Failed to start copy trading: ${error.message}`);
+    } else {
+      alert("Failed to start copy trading. Please try again.");
+    }
+  }
+}
+
+async function stopCopyingTrades(): Promise<void> {
+  if (!provider || !currentUser) return;
+
+  try {
+    // Create a message to sign
+    const timestamp = Date.now();
+    const message = `DEXMT Copy Trading Termination
+Trader: ${currentUser.address}
+Timestamp: ${timestamp}
+Action: STOP_COPY_TRADING
+
+By signing this message, you authorize DEXMT to stop copying trades from the specified trader.`;
+
+    // Request signature from user
+    const signature = (await provider.request({
+      method: "personal_sign",
+      params: [message, provider.selectedAddress],
+    })) as string;
+
+    // Send request to backend with signature
+    const response = await fetch("/api/copy-trading/stop", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        traderAddress: currentUser.address,
+        copierAddress: provider.selectedAddress,
+        message: message,
+        signature: signature,
+        timestamp: timestamp,
+      }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || "Failed to stop copy trading");
+    }
+
+    // Update UI state
+    isCopyingTrades = false;
+    updateCopyTradesButton(false);
+
+    alert(
+      `Successfully stopped copying trades from ${currentUser.address.slice(0, 6)}...${currentUser.address.slice(-4)}`
+    );
+  } catch (error) {
+    console.error("Error stopping copy trades:", error);
+    if (error instanceof Error) {
+      alert(`Failed to stop copy trading: ${error.message}`);
+    } else {
+      alert("Failed to stop copy trading. Please try again.");
+    }
+  }
+}
+
+function updateCopyTradesButton(isActive: boolean): void {
+  const copyTradesButton = document.getElementById("copyTradesButton");
+  if (!copyTradesButton) return;
+
+  if (isActive) {
+    copyTradesButton.classList.add("active");
+    copyTradesButton.innerHTML = `
+      <svg
+        slot="icon"
+        xmlns="http://www.w3.org/2000/svg"
+        height="20"
+        viewBox="0 0 24 24"
+        width="20"
+      >
+        <path d="M0 0h24v24H0z" fill="none"/>
+        <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>
+      </svg>
+      Copying Trades
+    `;
+  } else {
+    copyTradesButton.classList.remove("active");
+    copyTradesButton.innerHTML = `
+      <svg
+        slot="icon"
+        xmlns="http://www.w3.org/2000/svg"
+        height="20"
+        viewBox="0 0 24 24"
+        width="20"
+      >
+        <path d="M0 0h24v24H0z" fill="none"/>
+        <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+      </svg>
+      Copy Trades
+    `;
+  }
+}
+
+// Check copy trading status when user info loads
+async function checkCopyTradingStatus(): Promise<void> {
+  if (!provider || !currentUser) return;
+
+  try {
+    const response = await fetch(
+      `/api/copy-trading/status?traderAddress=${currentUser.address}&copierAddress=${provider.selectedAddress}`
+    );
+    if (response.ok) {
+      const result = await response.json();
+      console.log("Copy trading status:", result);
+      isCopyingTrades = result.isActive || false;
+      updateCopyTradesButton(isCopyingTrades);
+    }
+  } catch (error) {
+    console.error("Error checking copy trading status:", error);
+  }
 }
 
 function populateUserData(user: User): void {
@@ -79,6 +317,9 @@ function populateUserData(user: User): void {
 
   // Load initial performance metrics
   updatePerformanceMetrics("today");
+
+  // Check if we're already copying this user's trades
+  checkCopyTradingStatus();
 }
 
 function updatePerformanceMetrics(period: string): void {

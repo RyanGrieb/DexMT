@@ -383,8 +383,49 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   abbreviateNumber: () => (/* binding */ abbreviateNumber),
 /* harmony export */   showUserInfo: () => (/* binding */ showUserInfo)
 /* harmony export */ });
+/* harmony import */ var _metamask__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./metamask */ "./static/ts-front-end/metamask.ts");
+/* harmony import */ var _users__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./users */ "./static/ts-front-end/users.ts");
+var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __generator = (undefined && undefined.__generator) || function (thisArg, body) {
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
+            }
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+    }
+};
+
+
 var currentUser = null;
 var currentPeriod = "today";
+var isCopyingTrades = false;
 function showUserInfo(user) {
     currentUser = user;
     // Load user info HTML
@@ -404,13 +445,59 @@ function showUserInfo(user) {
     });
 }
 function initializeUserInfo() {
+    var _this = this;
     // Back button
     var backButton = document.getElementById("backToUsers");
     if (backButton) {
         backButton.addEventListener("click", function () {
-            // Reload the main view
-            location.reload();
+            // Fetch and load the top traders HTML
+            fetch("/html/top-traders.html")
+                .then(function (response) { return response.text(); })
+                .then(function (html) {
+                var indexContent = document.querySelector(".index-content");
+                if (indexContent) {
+                    indexContent.innerHTML = html;
+                    // Re-populate the users list
+                    (0,_users__WEBPACK_IMPORTED_MODULE_1__.updateUsersUI)();
+                    // Update navigation button states
+                    var topTradersBtn = document.getElementById("topTradersBtn");
+                    var myCopiesBtn = document.getElementById("myCopiesBtn");
+                    if (topTradersBtn)
+                        topTradersBtn.classList.add("active");
+                    if (myCopiesBtn)
+                        myCopiesBtn.classList.remove("active");
+                }
+            })
+                .catch(function (error) {
+                console.error("Error loading top traders HTML:", error);
+            });
         });
+    }
+    // Copy trades button
+    var copyTradesButton = document.getElementById("copyTradesButton");
+    if (copyTradesButton) {
+        copyTradesButton.addEventListener("click", function () { return __awaiter(_this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        // Ensure the wallet is connected
+                        if (!(_metamask__WEBPACK_IMPORTED_MODULE_0__.provider === null || _metamask__WEBPACK_IMPORTED_MODULE_0__.provider === void 0 ? void 0 : _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.isConnected())) {
+                            alert("Wallet not connected. Please connect your wallet first.");
+                            return [2 /*return*/];
+                        }
+                        if (!currentUser) {
+                            alert("No user selected.");
+                            return [2 /*return*/];
+                        }
+                        // Toggle copy trading
+                        return [4 /*yield*/, toggleCopyTrades()];
+                    case 1:
+                        // Toggle copy trading
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
+        }); });
     }
     // Time period tabs
     var timeTabs = document.querySelectorAll(".time-tab");
@@ -424,6 +511,218 @@ function initializeUserInfo() {
             if (period) {
                 currentPeriod = period;
                 updatePerformanceMetrics(period);
+            }
+        });
+    });
+}
+function toggleCopyTrades() {
+    return __awaiter(this, void 0, void 0, function () {
+        var copyTradesButton, error_1;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    if (!_metamask__WEBPACK_IMPORTED_MODULE_0__.provider || !currentUser)
+                        return [2 /*return*/];
+                    copyTradesButton = document.getElementById("copyTradesButton");
+                    if (!copyTradesButton)
+                        return [2 /*return*/];
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 6, 7, 8]);
+                    // Disable button during operation
+                    copyTradesButton.setAttribute("disabled", "true");
+                    copyTradesButton.textContent = "Processing...";
+                    if (!isCopyingTrades) return [3 /*break*/, 3];
+                    // Stop copying trades
+                    return [4 /*yield*/, stopCopyingTrades()];
+                case 2:
+                    // Stop copying trades
+                    _a.sent();
+                    return [3 /*break*/, 5];
+                case 3: 
+                // Start copying trades
+                return [4 /*yield*/, startCopyingTrades()];
+                case 4:
+                    // Start copying trades
+                    _a.sent();
+                    _a.label = 5;
+                case 5: return [3 /*break*/, 8];
+                case 6:
+                    error_1 = _a.sent();
+                    console.error("Error toggling copy trades:", error_1);
+                    alert("Failed to toggle copy trading. Please try again.");
+                    return [3 /*break*/, 8];
+                case 7:
+                    // Re-enable button
+                    copyTradesButton.removeAttribute("disabled");
+                    return [7 /*endfinally*/];
+                case 8: return [2 /*return*/];
+            }
+        });
+    });
+}
+function startCopyingTrades() {
+    return __awaiter(this, void 0, void 0, function () {
+        var timestamp, message, signature, response, result, error_2;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    if (!_metamask__WEBPACK_IMPORTED_MODULE_0__.provider || !currentUser)
+                        return [2 /*return*/];
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 5, , 6]);
+                    timestamp = Date.now();
+                    message = "DEXMT Copy Trading Authorization\nTrader: ".concat(currentUser.address, "\nTimestamp: ").concat(timestamp, "\nAction: START_COPY_TRADING\n\nBy signing this message, you authorize DEXMT to copy trades from the specified trader to your wallet.");
+                    return [4 /*yield*/, _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.request({
+                            method: "personal_sign",
+                            params: [message, _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.selectedAddress],
+                        })];
+                case 2:
+                    signature = (_a.sent());
+                    return [4 /*yield*/, fetch("/api/copy-trading/start", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({
+                                traderAddress: currentUser.address,
+                                copierAddress: _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.selectedAddress,
+                                message: message,
+                                signature: signature,
+                                timestamp: timestamp,
+                            }),
+                        })];
+                case 3:
+                    response = _a.sent();
+                    return [4 /*yield*/, response.json()];
+                case 4:
+                    result = _a.sent();
+                    if (!response.ok) {
+                        throw new Error(result.error || "Failed to start copy trading");
+                    }
+                    // Update UI state
+                    isCopyingTrades = true;
+                    updateCopyTradesButton(true);
+                    alert("Successfully started copying trades from ".concat(currentUser.address.slice(0, 6), "...").concat(currentUser.address.slice(-4)));
+                    return [3 /*break*/, 6];
+                case 5:
+                    error_2 = _a.sent();
+                    console.error("Error starting copy trades:", error_2);
+                    if (error_2 instanceof Error) {
+                        alert("Failed to start copy trading: ".concat(error_2.message));
+                    }
+                    else {
+                        alert("Failed to start copy trading. Please try again.");
+                    }
+                    return [3 /*break*/, 6];
+                case 6: return [2 /*return*/];
+            }
+        });
+    });
+}
+function stopCopyingTrades() {
+    return __awaiter(this, void 0, void 0, function () {
+        var timestamp, message, signature, response, result, error_3;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    if (!_metamask__WEBPACK_IMPORTED_MODULE_0__.provider || !currentUser)
+                        return [2 /*return*/];
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 5, , 6]);
+                    timestamp = Date.now();
+                    message = "DEXMT Copy Trading Termination\nTrader: ".concat(currentUser.address, "\nTimestamp: ").concat(timestamp, "\nAction: STOP_COPY_TRADING\n\nBy signing this message, you authorize DEXMT to stop copying trades from the specified trader.");
+                    return [4 /*yield*/, _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.request({
+                            method: "personal_sign",
+                            params: [message, _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.selectedAddress],
+                        })];
+                case 2:
+                    signature = (_a.sent());
+                    return [4 /*yield*/, fetch("/api/copy-trading/stop", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({
+                                traderAddress: currentUser.address,
+                                copierAddress: _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.selectedAddress,
+                                message: message,
+                                signature: signature,
+                                timestamp: timestamp,
+                            }),
+                        })];
+                case 3:
+                    response = _a.sent();
+                    return [4 /*yield*/, response.json()];
+                case 4:
+                    result = _a.sent();
+                    if (!response.ok) {
+                        throw new Error(result.error || "Failed to stop copy trading");
+                    }
+                    // Update UI state
+                    isCopyingTrades = false;
+                    updateCopyTradesButton(false);
+                    alert("Successfully stopped copying trades from ".concat(currentUser.address.slice(0, 6), "...").concat(currentUser.address.slice(-4)));
+                    return [3 /*break*/, 6];
+                case 5:
+                    error_3 = _a.sent();
+                    console.error("Error stopping copy trades:", error_3);
+                    if (error_3 instanceof Error) {
+                        alert("Failed to stop copy trading: ".concat(error_3.message));
+                    }
+                    else {
+                        alert("Failed to stop copy trading. Please try again.");
+                    }
+                    return [3 /*break*/, 6];
+                case 6: return [2 /*return*/];
+            }
+        });
+    });
+}
+function updateCopyTradesButton(isActive) {
+    var copyTradesButton = document.getElementById("copyTradesButton");
+    if (!copyTradesButton)
+        return;
+    if (isActive) {
+        copyTradesButton.classList.add("active");
+        copyTradesButton.innerHTML = "\n      <svg\n        slot=\"icon\"\n        xmlns=\"http://www.w3.org/2000/svg\"\n        height=\"20\"\n        viewBox=\"0 0 24 24\"\n        width=\"20\"\n      >\n        <path d=\"M0 0h24v24H0z\" fill=\"none\"/>\n        <path d=\"M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z\"/>\n      </svg>\n      Copying Trades\n    ";
+    }
+    else {
+        copyTradesButton.classList.remove("active");
+        copyTradesButton.innerHTML = "\n      <svg\n        slot=\"icon\"\n        xmlns=\"http://www.w3.org/2000/svg\"\n        height=\"20\"\n        viewBox=\"0 0 24 24\"\n        width=\"20\"\n      >\n        <path d=\"M0 0h24v24H0z\" fill=\"none\"/>\n        <path d=\"M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z\"/>\n      </svg>\n      Copy Trades\n    ";
+    }
+}
+// Check copy trading status when user info loads
+function checkCopyTradingStatus() {
+    return __awaiter(this, void 0, void 0, function () {
+        var response, result, error_4;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    if (!_metamask__WEBPACK_IMPORTED_MODULE_0__.provider || !currentUser)
+                        return [2 /*return*/];
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 5, , 6]);
+                    return [4 /*yield*/, fetch("/api/copy-trading/status?traderAddress=".concat(currentUser.address, "&copierAddress=").concat(_metamask__WEBPACK_IMPORTED_MODULE_0__.provider.selectedAddress))];
+                case 2:
+                    response = _a.sent();
+                    if (!response.ok) return [3 /*break*/, 4];
+                    return [4 /*yield*/, response.json()];
+                case 3:
+                    result = _a.sent();
+                    console.log("Copy trading status:", result);
+                    isCopyingTrades = result.isActive || false;
+                    updateCopyTradesButton(isCopyingTrades);
+                    _a.label = 4;
+                case 4: return [3 /*break*/, 6];
+                case 5:
+                    error_4 = _a.sent();
+                    console.error("Error checking copy trading status:", error_4);
+                    return [3 /*break*/, 6];
+                case 6: return [2 /*return*/];
             }
         });
     });
@@ -452,6 +751,8 @@ function populateUserData(user) {
     }
     // Load initial performance metrics
     updatePerformanceMetrics("today");
+    // Check if we're already copying this user's trades
+    checkCopyTradingStatus();
 }
 function updatePerformanceMetrics(period) {
     // Mock data - replace with actual API calls later
@@ -883,6 +1184,42 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _trades__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./trades */ "./static/ts-front-end/trades.ts");
 /* harmony import */ var _users__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./users */ "./static/ts-front-end/users.ts");
 /* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./utils */ "./static/ts-front-end/utils.ts");
+var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __generator = (undefined && undefined.__generator) || function (thisArg, body) {
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
+            }
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+    }
+};
 // Import only what you need from each module
 
 
@@ -890,28 +1227,53 @@ __webpack_require__.r(__webpack_exports__);
 
 console.log("DEXMT JS file loaded");
 // Main application initialization
-document.addEventListener("DOMContentLoaded", function () {
-    console.log("DOM loaded, setting up DEXMT...");
-    // Setup wallet connection button
-    var connectButton = document.getElementById("connectButton");
-    if (connectButton) {
-        connectButton.addEventListener("click", function () {
-            if (_metamask__WEBPACK_IMPORTED_MODULE_0__.provider === null || _metamask__WEBPACK_IMPORTED_MODULE_0__.provider === void 0 ? void 0 : _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.isConnected()) {
-                (0,_metamask__WEBPACK_IMPORTED_MODULE_0__.disconnectWallet)();
-            }
-            else {
-                (0,_metamask__WEBPACK_IMPORTED_MODULE_0__.connectWallet)();
-            }
-        });
-    }
-    // Initialize users UI
-    (0,_users__WEBPACK_IMPORTED_MODULE_2__.updateUsersUI)();
-    // Refresh users every 10 seconds
-    setInterval(_users__WEBPACK_IMPORTED_MODULE_2__.updateUsersUI, 10000);
-    // Initialize trades UI
-    (0,_trades__WEBPACK_IMPORTED_MODULE_1__.updateTradesUI)();
-    console.log("DEXMT setup complete");
-});
+document.addEventListener("DOMContentLoaded", function () { return __awaiter(void 0, void 0, void 0, function () {
+    var response, html, indexContent, error_1, connectButton;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                console.log("DOM loaded, setting up DEXMT...");
+                _a.label = 1;
+            case 1:
+                _a.trys.push([1, 4, , 5]);
+                return [4 /*yield*/, fetch("/html/top-traders.html")];
+            case 2:
+                response = _a.sent();
+                return [4 /*yield*/, response.text()];
+            case 3:
+                html = _a.sent();
+                indexContent = document.querySelector(".index-content");
+                if (indexContent) {
+                    indexContent.innerHTML = html;
+                }
+                // Now that the HTML is loaded, initialize users UI
+                (0,_users__WEBPACK_IMPORTED_MODULE_2__.updateUsersUI)();
+                // Refresh users every 60 seconds
+                setInterval(_users__WEBPACK_IMPORTED_MODULE_2__.updateUsersUI, 60000);
+                return [3 /*break*/, 5];
+            case 4:
+                error_1 = _a.sent();
+                console.error("Error loading top traders HTML:", error_1);
+                (0,_utils__WEBPACK_IMPORTED_MODULE_3__.showToast)("Failed to load traders data", "error");
+                return [3 /*break*/, 5];
+            case 5:
+                connectButton = document.getElementById("connectButton");
+                if (connectButton) {
+                    connectButton.addEventListener("click", function () {
+                        if (_metamask__WEBPACK_IMPORTED_MODULE_0__.provider === null || _metamask__WEBPACK_IMPORTED_MODULE_0__.provider === void 0 ? void 0 : _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.isConnected()) {
+                            (0,_metamask__WEBPACK_IMPORTED_MODULE_0__.disconnectWallet)();
+                        }
+                        else {
+                            (0,_metamask__WEBPACK_IMPORTED_MODULE_0__.connectWallet)();
+                        }
+                    });
+                }
+                (0,_trades__WEBPACK_IMPORTED_MODULE_1__.updateTradesUI)();
+                console.log("DEXMT setup complete");
+                return [2 /*return*/];
+        }
+    });
+}); });
 // Global error handler
 window.addEventListener("error", function (event) {
     console.error("Global error:", event.error);
