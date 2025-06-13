@@ -1,0 +1,27 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "target": "ES5",
+    "module": "ES2020",
+    "moduleResolution": "bundler",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "types": [],
+    "noEmit": false,
+    "outDir": "./static/js-compiled",
+
+    // ↓ disable this here so TS won’t complain
+    "allowImportingTsExtensions": false,
+
+    "strict": true,
+    "allowJs": true,
+    "checkJs": false,
+    "declaration": false,
+    "declarationMap": false,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true
+  },
+  "include": ["static/ts-front-end/**/*"],
+  "exclude": ["node_modules", "src/**/*", "static/js/**/*.js"]
+}

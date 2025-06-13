@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DEXMT</title>
+
+    <!-- Google Fonts for Material Design -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Material Icons -->
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+
+    <!-- Your existing CSS -->
+    <link rel="stylesheet" href="/css/index.css" />
+
+    <!-- Favicons -->
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="/img/apple-touch-icon.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="/img/favicon-32x32.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="16x16"
+      href="/img/favicon-16x16.png"
+    />
+    <link rel="shortcut icon" href="/img/favicon.ico" />
+
+    <!-- Material Web Components via CDN -->
+    <script type="importmap">
+      {
+        "imports": {
+          "@material/web/": "https://esm.run/@material/web/"
+        }
+      }
+    </script>
+    <script type="module">
+      import "@material/web/all.js";
+      import { styles as typescaleStyles } from "@material/web/typography/md-typescale-styles.js";
+      document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
+    </script>
+
+    <script src="/js/app.bundle.js"></script>
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="top-bar">
+        <div class="logo">
+          <img src="/img/banner.png" alt="DEXMT Logo" />
+        </div>
+        <div class="wallet">
+          <md-filled-button id="connectButton">
+            <svg
+              slot="icon"
+              xmlns="http://www.w3.org/2000/svg"
+              height="24"
+              viewBox="0 0 24 24"
+              width="24"
+            >
+              <path d="M0 0h24v24H0z" fill="none" />
+              <path
+                d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"
+              />
+            </svg>
+            Connect Wallet
+          </md-filled-button>
+          <md-chip class="wallet-address" id="walletAddress"></md-chip>
+          <md-chip class="network-status" id="networkStatus"></md-chip>
+        </div>
+      </div>
+      <div class="index-content">
+        <md-card class="dex-users">
+          <div class="card-content">
+            <h3 class="md-typescale-headline-small">Top Traders</h3>
+
+            <!-- Replace div-based table with proper HTML table -->
+            <table class="user-table">
+              <thead>
+                <tr class="user-list-header">
+                  <th class="header-cell rank">Rank</th>
+                  <th class="header-cell platform">Platform</th>
+                  <th class="header-cell trader">Trader</th>
+                  <th class="header-cell pnl">PNL %</th>
+                  <th class="header-cell size">Avg Size</th>
+                  <th class="header-cell leverage">Avg Lev</th>
+                  <th class="header-cell winratio">Win Ratio</th>
+                  <th class="header-cell watching">Watching</th>
+                </tr>
+              </thead>
+              <tbody class="user-list">
+                <!-- Users will be populated here -->
+              </tbody>
+            </table>
+          </div>
+        </md-card>
+      </div>
+    </div>
+  </body>
+</html>

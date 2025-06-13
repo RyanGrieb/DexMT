@@ -1,0 +1,51 @@
+services:
+  hono:
+    build:
+      context: ./hono
+      dockerfile: Dockerfile
+    ports:
+      - "8787:8787"
+    environment:
+      - PORT=8787
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/dexmt
+    volumes:
+      - ./hono/src:/hono/src
+      - ./hono/static:/hono/static
+    depends_on:
+      - postgres
+    # Add memory and shared memory limits
+    mem_limit: 4g
+    shm_size: 1g
+    # Add security options for Chrome
+    security_opt:
+      - seccomp:unconfined
+    develop:
+      watch:
+        # Sync source code changes
+        - action: sync
+          path: ./hono/src
+          target: /hono/src
+        # Sync static file changes
+        - action: sync
+          path: ./hono/static
+          target: /hono/static
+        # Rebuild when package.json changes
+        - action: rebuild
+          path: ./hono/package.json
+        # Rebuild when Dockerfile changes
+        - action: rebuild
+          path: ./hono/Dockerfile
+
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=dexmt
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

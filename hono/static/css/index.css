@@ -1,0 +1,534 @@
+body {
+  background-color: #1a1a1a;
+  font-family: "Roboto", sans-serif;
+  margin: 0;
+  color: #e0e0e0;
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+li {
+  list-style: none;
+}
+
+.container {
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.top-bar {
+  display: flex;
+  justify-content: space-between; /* Changed from flex-end to space-between */
+  align-items: center;
+  padding: 16px 0px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+}
+
+.logo img {
+  height: 40px; /* Set a fixed height for the banner */
+  width: auto; /* Maintain aspect ratio */
+  max-width: 200px; /* Prevent it from getting too wide */
+}
+
+.wallet {
+  display: flex;
+  align-items: center;
+}
+
+.wallet-address,
+.network-status {
+  font-family: "Roboto Mono", monospace;
+}
+
+md-card {
+  --md-sys-color-surface: #2a2a2a;
+  --md-sys-color-on-surface: #e0e0e0;
+  --md-sys-color-outline: #404040;
+  padding: 0;
+  border-radius: 12px;
+}
+
+.index-content {
+  display: flex;
+  gap: 24px; /* space between the two panels */
+  justify-content: space-between;
+  align-items: stretch;
+  background-color: #3a3a3a;
+}
+
+.card-content {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.dex-users {
+  /* allow it to grow/shrink in the flex layout */
+  flex: 0 1 100%;
+}
+
+.index-content > md-card {
+  /* constrain its height so overflow can kick in */
+  max-height: calc(100vh - 84px);
+  /* enable vertical scrolling */
+  overflow-y: auto;
+  /* optional padding to avoid content touching the edge */
+  padding-right: 8px;
+}
+
+.user-list li {
+  padding: 12px;
+  margin-bottom: 4px;
+  background-color: #2a2a2a;
+}
+
+md-list {
+  background-color: transparent;
+}
+
+md-list-item {
+  --md-sys-color-surface: transparent;
+  --md-sys-color-on-surface: #e0e0e0;
+  border-bottom: 1px solid #404040;
+}
+
+md-list-item:last-child {
+  border-bottom: none;
+}
+
+/* Dark theme for Material components */
+md-filled-button {
+  --md-sys-color-primary: #8ee0f3;
+  --md-sys-color-on-primary: black;
+}
+
+md-chip {
+  --md-sys-color-surface: #3a3a3a;
+  --md-sys-color-on-surface: #e0e0e0;
+  --md-sys-color-outline: #606060;
+}
+
+/* Typography */
+.md-typescale-headline-small {
+  color: #e0e0e0;
+  margin: 0 0 16px 0;
+}
+
+/* User List Table Styling */
+.user-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: transparent;
+}
+
+.user-list-header {
+  background-color: #333333;
+  border-bottom: 1px solid #404040;
+  border-radius: 12px 12px 0 0;
+}
+
+.header-cell {
+  padding: 12px 16px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: #b0b0b0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: left;
+}
+
+.header-cell.rank {
+  text-align: center;
+  width: 60px;
+}
+
+.header-cell.platform {
+  text-align: center;
+  width: 80px;
+}
+
+.header-cell.trader {
+  width: 200px;
+}
+
+.header-cell.pnl,
+.header-cell.size,
+.header-cell.leverage,
+.header-cell.winratio {
+  text-align: right;
+  width: 120px;
+}
+
+.header-cell.size {
+  width: 100px;
+}
+
+.header-cell.leverage {
+  width: 100px;
+}
+
+.header-cell.watching {
+  text-align: center;
+  width: 80px;
+}
+
+.user-list {
+  background-color: transparent;
+}
+
+.user-item {
+  border-bottom: 1px solid #333333;
+  transition: background-color 0.2s ease;
+  cursor: pointer;
+}
+
+.user-item:hover {
+  background-color: #2a2a2a;
+}
+
+.user-item:last-child {
+  border-bottom: none;
+}
+
+.user-item td {
+  padding: 16px;
+  align-items: center;
+}
+
+.user-rank {
+  text-align: center;
+  font-weight: 600;
+  font-size: 1rem;
+  color: #bb86fc;
+}
+
+.user-trader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.trader-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #bb86fc, #03dac6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #000;
+  flex-shrink: 0;
+}
+
+.trader-address {
+  font-family: "Roboto Mono", monospace;
+  font-size: 0.875rem;
+  color: #e0e0e0;
+}
+
+.user-pnl {
+  text-align: right;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.user-pnl.positive {
+  color: #4caf50;
+}
+
+.user-pnl.negative {
+  color: #f44336;
+}
+
+.user-size,
+.user-leverage,
+.user-winratio {
+  text-align: right;
+  font-size: 0.875rem;
+  color: #b0b0b0;
+}
+
+.user-leverage {
+  font-weight: 500;
+}
+
+.user-winratio {
+  font-weight: 600;
+}
+
+.user-platform {
+  text-align: center;
+}
+
+.user-platform img {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+}
+
+.user-watching {
+  text-align: center;
+  font-size: 0.875rem;
+  color: #b0b0b0;
+  font-weight: 500;
+}
+
+/* User Info Styles */
+.user-info-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 16px;
+}
+
+.user-info-header {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.back-button {
+  align-self: flex-start;
+}
+
+.user-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.user-avatar .trader-icon {
+  width: 64px;
+  height: 64px;
+  font-size: 1.5rem;
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.user-details .user-address {
+  font-family: "Roboto Mono", monospace;
+  margin: 0;
+  color: #e0e0e0;
+}
+
+.user-platform-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.875rem;
+  color: #b0b0b0;
+}
+
+.performance-card,
+.positions-card {
+  width: 100%;
+}
+
+.performance-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.time-tab {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.time-tab.active {
+  --md-sys-color-surface: #4f46e5;
+  --md-sys-color-on-surface: white;
+}
+
+.performance-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 24px;
+}
+
+.metric-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  background-color: #333333;
+  border-radius: 8px;
+}
+
+.metric-label {
+  font-size: 0.875rem;
+  color: #b0b0b0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.metric-value {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #e0e0e0;
+}
+
+.metric-value.pnl.positive {
+  color: #4caf50;
+}
+
+.metric-value.pnl.negative {
+  color: #f44336;
+}
+
+/* Positions Table */
+.positions-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: transparent;
+}
+
+.positions-header {
+  background-color: #333333;
+  border-bottom: 1px solid #404040;
+}
+
+.positions-header .header-cell {
+  padding: 12px 16px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: #b0b0b0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: left;
+}
+
+.positions-header .header-cell.position {
+  width: 120px;
+}
+
+.positions-header .header-cell.leverage {
+  width: 100px;
+  text-align: center;
+}
+
+.positions-header .header-cell.size,
+.positions-header .header-cell.net-value,
+.positions-header .header-cell.collateral,
+.positions-header .header-cell.entry-price,
+.positions-header .header-cell.mark-price,
+.positions-header .header-cell.liq-price {
+  width: 120px;
+  text-align: right;
+}
+
+.position-item {
+  border-bottom: 1px solid #333333;
+  transition: background-color 0.2s ease;
+}
+
+.position-item:hover {
+  background-color: #2a2a2a;
+}
+
+.position-item:last-child {
+  border-bottom: none;
+}
+
+.position-item td {
+  padding: 16px;
+  align-items: center;
+  font-size: 0.875rem;
+}
+
+.position-side {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.position-side.long {
+  color: #4caf50;
+}
+
+.position-side.short {
+  color: #f44336;
+}
+
+.position-leverage {
+  text-align: center;
+  font-weight: 500;
+}
+
+.position-size,
+.position-net-value,
+.position-collateral,
+.position-entry-price,
+.position-mark-price,
+.position-liq-price {
+  text-align: right;
+  font-family: "Roboto Mono", monospace;
+}
+
+.position-net-value.positive {
+  color: #4caf50;
+}
+
+.position-net-value.negative {
+  color: #f44336;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .header-cell,
+  .user-item td {
+    padding: 12px 8px;
+    font-size: 0.75rem;
+  }
+
+  .trader-icon {
+    width: 24px;
+    height: 24px;
+    font-size: 0.75rem;
+  }
+
+  .trader-address {
+    font-size: 0.75rem;
+  }
+
+  .performance-metrics {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+  }
+
+  .user-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .positions-table {
+    font-size: 0.75rem;
+  }
+
+  .positions-header .header-cell,
+  .position-item td {
+    padding: 8px 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-cell,
+  .user-item td {
+    padding: 8px 4px;
+    font-size: 0.7rem;
+  }
+}

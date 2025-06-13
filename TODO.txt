@@ -1,0 +1,8 @@
+* Improve DB security. Get better password storage, and don't do pure SQL calls,
+have us use an ORM like https://kysely.dev/.
+
+Use a secrets manager, environment variables (DO NOT commit `.env` files to your repository), or a similar solution, to avoid hardcoding database credentials in your code.
+
+
+* Get the correct leverage amount based on the smart contract? The website changes it based on the price or something else...
+I want the original leverage.

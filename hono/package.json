@@ -1,0 +1,32 @@
+{
+  "name": "hono",
+  "scripts": {
+    "build:webpack": "webpack --config webpack.config.js",
+    "build:webpack:watch": "webpack --config webpack.config.js --watch",
+    "dev": "concurrently \"npm run build:webpack:watch\" \"nodemon --watch src --watch static --ext ts,tsx,html,css,js --exec tsx src/index.tsx\"",
+    "start": "tsx src/index.tsx"
+  },
+  "dependencies": {
+    "@gmx-io/sdk": "^1.1.1",
+    "@hono/node-server": "^1.14.0",
+    "@metamask/detect-provider": "^2.0.0",
+    "@metamask/providers": "^22.1.0",
+    "hono": "^4.0.0",
+    "kysely": "^0.28.2",
+    "pg": "^8.11.3",
+    "puppeteer": "^24.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.30",
+    "@types/pg": "^8.10.9",
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.0.0",
+    "prettier": "^3.5.3",
+    "source-map-loader": "^5.0.0",
+    "ts-loader": "^9.5.2",
+    "tsx": "^4.0.0",
+    "typescript": "^5.8.3",
+    "webpack": "^5.99.9",
+    "webpack-cli": "^6.0.1"
+  }
+}
