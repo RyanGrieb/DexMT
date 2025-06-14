@@ -71,8 +71,44 @@ export function showToast(message: string, type: ToastType = "info"): void {
   console.log(`[${type.toUpperCase()}] ${message}`);
 }
 
-// Export to global window (for compatibility)
-(window as any).Utils = {
+function getPlatformIcon(platform: string | null): string {
+  if (!platform) {
+    return '<span style="color:#666;">-</span>';
+  }
+
+  const platformLower = platform.toLowerCase();
+
+  switch (platformLower) {
+    case "gmx":
+      return `
+        <svg width="24" height="24" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="gmx-gradient-watched" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#4f46e5;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#06b6d4;stop-opacity:1" />
+            </linearGradient>
+          </defs>
+          <path fill="url(#gmx-gradient-watched)" transform="translate(-525.667 -696) scale(1)" d="m555.182 717.462-14.735-21.462-14.78 21.462h20.592l-5.812-8.191-2.883 4.256h-3.064l5.949-8.557 8.6 12.493z"/>
+        </svg>
+      `;
+    case "dydx":
+      return `<span style="font-size:0.75rem;color:#888;">DYDX</span>`;
+    case "hyperliquid":
+      return `<span style="font-size:0.75rem;color:#888;">HL</span>`;
+    default:
+      return `<span style="font-size:0.75rem;color:#888;">${platform.toUpperCase()}</span>`;
+  }
+}
+
+function generateIconColor(address: string): string {
+  const hash = address.slice(2, 8);
+  const r = parseInt(hash.slice(0, 2), 16);
+  const g = parseInt(hash.slice(2, 4), 16);
+  const b = parseInt(hash.slice(4, 6), 16);
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
+const utils = {
   formatNumber,
   formatCurrency,
   formatPercentage,
@@ -82,4 +118,8 @@ export function showToast(message: string, type: ToastType = "info"): void {
   timeAgo,
   createElement,
   showToast,
+  getPlatformIcon,
+  generateIconColor,
 };
+
+export default utils;

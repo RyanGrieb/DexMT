@@ -1,3 +1,6 @@
+* Fix wallet getting disconnected when navigating the webpage.
+
+
 * Improve DB security. Get better password storage, and don't do pure SQL calls,
 have us use an ORM like https://kysely.dev/.
 

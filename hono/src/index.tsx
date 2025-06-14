@@ -9,6 +9,26 @@ import { Database } from "./dbtypes";
 import gmxSdk from "./gmxsdk";
 import scraper from "./scraper";
 
+interface User {
+  address: string;
+  balance: string;
+  chainId: string;
+  platform_ranking: number | null;
+  dex_platform: string | null;
+  pnl: number | null;
+  pnlPercentage: number | null;
+  avgSize: number | null;
+  avgLeverage: number | null;
+  winRatio: number | null;
+  watching?: number | null;
+  updatedAt: string;
+}
+
+interface WatchedUser extends User {
+  copyStatus: "active" | "inactive";
+  watching: number;
+}
+
 const UPDATE_USERS_ON_START = false;
 
 const app = new Hono();
@@ -344,76 +364,37 @@ function startUpdateUserDataTask() {
   }
 }
 
-app.get("/", async (c) => {
+app.get("/", (c) => {
+  return c.redirect("/toptraders");
+});
+
+app.get("/toptraders", async (c) => {
   const htmlResponse = await app.request("/html/index.html");
   let html = await htmlResponse.text();
 
-  const liveReloadScript = `
-        <script>
-            let lastCheck = ${startTime};
-            let retryCount = 0;
-            const maxRetries = 10;
-            
-            async function checkForReload() {
-                try {
-                    const response = await fetch('/health');
-                    const data = await response.json();
-                    
-                    if (data.startTime !== lastCheck) {
-                        console.log('Server restarted, attempting reload...');
-                        await waitForServerReady();
-                    }
-                    
-                    // Reset retry count on successful check
-                    retryCount = 0;
-                } catch (e) {
-                    console.log('Health check failed:', e.message);
-                    retryCount++;
-                    
-                    if (retryCount >= maxRetries) {
-                        console.log('Max retries reached, reloading anyway...');
-                        window.location.reload();
-                    }
-                }
-            }
-            
-            async function waitForServerReady() {
-                const maxWaitTime = 2000; // 2 second max wait
-                const startWait = Date.now();
-                
-                while (Date.now() - startWait < maxWaitTime) {
-                    try {
-                        const response = await fetch('/health');
-                        if (response.ok) {
-                            console.log('Server is ready, reloading page...');
-                            window.location.reload();
-                            return;
-                        }
-                    } catch (e) {
-                        // Server not ready yet, wait a bit
-                    }
-                    
-                    // Wait with exponential backoff
-                    await new Promise(resolve => setTimeout(resolve, Math.min(100 * Math.pow(2, retryCount), 1000)));
-                    retryCount++;
-                }
-                
-                // If we get here, just reload anyway
-                console.log('Timeout waiting for server, reloading anyway...');
-                window.location.reload();
-            }
-            
-            // Check every 1000ms
-            setInterval(checkForReload, 1000);
-        </script>
-    `;
-  html = html.replace("</body>", `${liveReloadScript}</body>`);
+  // Inject the server start time for live reload
+  html = html.replace(
+    "window.SERVER_START_TIME = null;",
+    `window.SERVER_START_TIME = ${startTime};`
+  );
 
   return c.html(html);
 });
 
-// API endpoint to register wallet connection using Kysely
-app.post("/api/wallet/connect", async (c) => {
+app.get("/mywatchlist", async (c) => {
+  const htmlResponse = await app.request("/html/index.html");
+  let html = await htmlResponse.text();
+
+  // Inject the server start time for live reload
+  html = html.replace(
+    "window.SERVER_START_TIME = null;",
+    `window.SERVER_START_TIME = ${startTime};`
+  );
+
+  return c.html(html);
+});
+
+app.get("/api/wallet/connect", async (c) => {
   const { address, chainId } = await c.req.json();
 
   if (!address || !chainId) {
@@ -681,6 +662,45 @@ app.get("/users/:address/positions", async (c) => {
     return c.json({ error: "Failed to fetch user positions" }, 500);
   }
 });
+app.get("/api/watched_traders", async (c) => {
+  try {
+    const copierAddr = c.req.query("walletAddress");
+
+    if (!copierAddr) {
+      return c.json({ error: "Missing required parameters" }, 400);
+    }
+
+    const watchedDBTraders: { trader_address: string }[] = await db
+      .selectFrom("copy_trading")
+      .select(["trader_address"])
+      .distinctOn("trader_address")
+      .where("copier_address", "=", copierAddr)
+      .where("is_active", "=", true)
+      .execute();
+
+    if (!watchedDBTraders || watchedDBTraders.length === 0) {
+      return c.json({ copier_addr: copierAddr, traders: [] }, 200);
+    }
+
+    // Get user data for all watched trader addresses
+    const traderAddresses = watchedDBTraders.map(
+      (trader) => trader.trader_address
+    );
+    const users = await getUsersFromDatabase(traderAddresses);
+
+    // Convert User objects to WatchedUser objects
+    const watchedTraders: WatchedUser[] = users.map((user) => ({
+      ...user,
+      copyStatus: "inactive" as const, // Default to inactive, you can enhance this later
+      watching: 1, //FIXME: Make this dynamic based on actual watching count
+    }));
+
+    return c.json({ copier_addr: copierAddr, traders: watchedTraders }, 200);
+  } catch (error) {
+    console.error("Error fetching watched traders:", error);
+    return c.json({ error: "Failed to fetch watched traders" }, 500);
+  }
+});
 
 // API endpoint to get connected wallets
 app.get("/api/wallets", (c) => {
@@ -690,40 +710,8 @@ app.get("/api/wallets", (c) => {
 // API endpoint to get users from database with all trading data
 app.get("/api/users", async (c) => {
   try {
-    const users = await db
-      .selectFrom("users")
-      .select([
-        "address",
-        "balance",
-        "chain_id",
-        "platform_ranking",
-        "dex_platform",
-        "pnl",
-        "pnl_percentage",
-        "avg_size",
-        "avg_leverage",
-        "win_ratio",
-        "updated_at",
-      ])
-      .where("dexmt_user", "=", false)
-      .orderBy("platform_ranking", "asc")
-      .execute();
-
-    const formattedUsers = users.map((user) => ({
-      address: user.address,
-      balance: user.balance,
-      chainId: user.chain_id,
-      platform_ranking: user.platform_ranking,
-      dex_platform: user.dex_platform,
-      pnl: user.pnl,
-      pnlPercentage: user.pnl_percentage,
-      avgSize: user.avg_size,
-      avgLeverage: user.avg_leverage,
-      winRatio: user.win_ratio,
-      updatedAt: user.updated_at,
-    }));
-
-    return c.json(formattedUsers);
+    const users = await getUsersFromDatabase();
+    return c.json(users);
   } catch (error) {
     console.error("Error fetching users:", error);
     return c.json({ error: "Failed to fetch users" }, 500);
@@ -803,6 +791,54 @@ app.get("/img/*", async (c) => {
 app.get("/health", (c) => {
   return c.json({ startTime });
 });
+
+// Add this function after the existing helper functions
+async function getUsersFromDatabase(addressFilter?: string[]): Promise<User[]> {
+  try {
+    let query = db
+      .selectFrom("users")
+      .select([
+        "address",
+        "balance",
+        "chain_id",
+        "platform_ranking",
+        "dex_platform",
+        "pnl",
+        "pnl_percentage",
+        "avg_size",
+        "avg_leverage",
+        "win_ratio",
+        "updated_at",
+      ])
+      .where("dexmt_user", "=", false);
+
+    // If addressFilter is provided, filter by those addresses
+    if (addressFilter && addressFilter.length > 0) {
+      query = query.where("address", "in", addressFilter);
+    }
+
+    const db_users = await query.orderBy("platform_ranking", "asc").execute();
+
+    const users: User[] = db_users.map((user) => ({
+      address: user.address,
+      balance: user.balance,
+      chainId: user.chain_id,
+      platform_ranking: user.platform_ranking,
+      dex_platform: user.dex_platform,
+      pnl: user.pnl,
+      pnlPercentage: user.pnl_percentage,
+      avgSize: user.avg_size,
+      avgLeverage: user.avg_leverage,
+      winRatio: user.win_ratio,
+      updatedAt: user.updated_at.toISOString(),
+    }));
+
+    return users;
+  } catch (error) {
+    console.error("Error fetching users from database:", error);
+    throw error;
+  }
+}
 
 const port = Number(process.env.PORT);
 console.log(`Server is running on port ${port}`);

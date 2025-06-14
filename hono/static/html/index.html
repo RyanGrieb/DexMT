@@ -54,8 +54,6 @@
       import { styles as typescaleStyles } from "@material/web/typography/md-typescale-styles.js";
       document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
     </script>
-
-    <script src="/js/app.bundle.js"></script>
   </head>
 
   <body>
@@ -65,7 +63,7 @@
           <img src="/img/banner.png" alt="DEXMT Logo" />
         </div>
         <div class="navigation">
-          <md-text-button id="topTradersBtn" class="nav-button active">
+          <md-text-button id="topTradersBtn" class="nav-button">
             <svg
               slot="icon"
               xmlns="http://www.w3.org/2000/svg"
@@ -79,7 +77,7 @@
             </svg>
             Top Traders
           </md-text-button>
-          <md-text-button id="myCopiesBtn" class="nav-button">
+          <md-text-button id="myWatchListBtn" class="nav-button">
             <svg
               slot="icon"
               xmlns="http://www.w3.org/2000/svg"
@@ -91,7 +89,7 @@
                 d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"
               />
             </svg>
-            My Copies
+            My Watch List
           </md-text-button>
         </div>
         <div class="wallet">
@@ -108,15 +106,23 @@
                 d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"
               />
             </svg>
-            Connect Wallet
+            <p>Connect Wallet</p>
           </md-filled-button>
           <md-chip class="wallet-address" id="walletAddress"></md-chip>
           <md-chip class="network-status" id="networkStatus"></md-chip>
         </div>
       </div>
       <div class="index-content">
-        <!-- This content will be loaded dynamically from top-traders.html -->
+        <!-- Content will be loaded by router -->
       </div>
     </div>
+
+    <script></script>
+
+    <!-- Load live reload script in development -->
+    <script id="live-reload-config">
+      window.SERVER_START_TIME = null; // Will be set by server
+    </script>
+    <script src="/js/app.bundle.js"></script>
   </body>
 </html>

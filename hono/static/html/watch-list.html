@@ -1,0 +1,66 @@
+<div class="watch-list-container">
+  <!-- Watched Users Column -->
+  <md-card class="watched-users-card">
+    <div class="card-content">
+      <div class="section-header">
+        <h3 class="md-typescale-headline-small">Watched Traders</h3>
+        <md-text-button id="addTraderBtn" class="add-trader-btn">
+          <svg
+            slot="icon"
+            xmlns="http://www.w3.org/2000/svg"
+            height="20"
+            viewBox="0 0 24 24"
+            width="20"
+          >
+            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+          </svg>
+          Add Trader
+        </md-text-button>
+      </div>
+
+      <table class="watched-users-table">
+        <thead>
+          <tr class="watched-users-header">
+            <th class="header-cell checkbox">
+              <md-checkbox id="selectAllTraders"></md-checkbox>
+            </th>
+            <th class="header-cell rank">Rank</th>
+            <th class="header-cell platform">Platform</th>
+            <th class="header-cell trader">Trader</th>
+            <th class="header-cell pnl">PNL %</th>
+            <th class="header-cell winratio">Win Ratio</th>
+            <th class="header-cell watching">Watching</th>
+            <th class="header-cell actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="watched-users-list">
+          <!-- Watched users will be populated here -->
+        </tbody>
+      </table>
+    </div>
+  </md-card>
+
+  <!-- Open Positions Column -->
+  <md-card class="watched-positions-card">
+    <div class="card-content">
+      <h3 class="md-typescale-headline-small">Watched Positions</h3>
+
+      <table class="watched-positions-table">
+        <thead>
+          <tr class="watched-positions-header">
+            <th class="header-cell trader">Trader</th>
+            <th class="header-cell position">Position</th>
+            <th class="header-cell size">Size</th>
+            <th class="header-cell pnl">PNL</th>
+            <th class="header-cell entry">Entry Price</th>
+            <th class="header-cell current">Current Price</th>
+            <th class="header-cell copy">Copy</th>
+          </tr>
+        </thead>
+        <tbody class="watched-positions-list">
+          <!-- Watched positions will be populated here -->
+        </tbody>
+      </table>
+    </div>
+  </md-card>
+</div>
