@@ -162,17 +162,12 @@ function toggleCopyTrades() {
                     copyTradesButton.setAttribute("disabled", "true");
                     copyTradesButton.textContent = "Processing...";
                     if (!isCopyingTrades) return [3 /*break*/, 3];
-                    // Stop copying trades
                     return [4 /*yield*/, stopCopyingTrades()];
                 case 2:
-                    // Stop copying trades
                     _a.sent();
                     return [3 /*break*/, 5];
-                case 3: 
-                // Start copying trades
-                return [4 /*yield*/, startCopyingTrades()];
+                case 3: return [4 /*yield*/, favoriteUser()];
                 case 4:
-                    // Start copying trades
                     _a.sent();
                     _a.label = 5;
                 case 5: return [3 /*break*/, 8];
@@ -190,7 +185,7 @@ function toggleCopyTrades() {
         });
     });
 }
-function startCopyingTrades() {
+function favoriteUser() {
     return __awaiter(this, void 0, void 0, function () {
         var timestamp, message, signature, response, result, error_2;
         return __generator(this, function (_a) {
@@ -209,7 +204,7 @@ function startCopyingTrades() {
                         })];
                 case 2:
                     signature = (_a.sent());
-                    return [4 /*yield*/, fetch("/api/copy-trading/start", {
+                    return [4 /*yield*/, fetch("/api/trader/favorite", {
                             method: "POST",
                             headers: {
                                 "Content-Type": "application/json",

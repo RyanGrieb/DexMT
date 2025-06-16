@@ -7,14 +7,13 @@ import {
 } from "kysely";
 
 export interface Database {
-  users: UserTable;
-  trades: TradeTable;
-  positions: PositionTable;
-  copy_trading: CopyTradingTable;
+  traders: TradersTable;
+  trades: TradesTable;
+  positions: OpenPositionsTable;
+  favorited_traders: FavoritedTradersTable;
 }
 
-// Users table interface
-export interface UserTable {
+export interface TradersTable {
   id: Generated<number>;
   address: string;
   balance: string;
@@ -22,7 +21,6 @@ export interface UserTable {
   dexmt_user: boolean;
   dex_platform: string | null;
   platform_ranking: number | null;
-  // Add new columns for scraped data
   pnl: number | null;
   pnl_percentage: number | null;
   avg_size: number | null;
@@ -30,12 +28,12 @@ export interface UserTable {
   win_ratio: number | null;
   created_at: ColumnType<Date, string | undefined, never>;
   updated_at: ColumnType<Date, string | undefined, string | undefined>;
+  mirroring_trades: boolean;
 }
 
-// Trades table interface
-export interface TradeTable {
+export interface TradesTable {
   id: Generated<number>;
-  user_address: string;
+  trader_address: string;
   token_in: string;
   token_out: string;
   amount_in: string;
@@ -49,10 +47,9 @@ export interface TradeTable {
   updated_at: ColumnType<Date, string | undefined, string | undefined>;
 }
 
-// Positions table interface
-export interface PositionTable {
+export interface OpenPositionsTable {
   id: Generated<number>;
-  user_address: string;
+  trader_address: string;
   token: string;
   collateral: number;
   leverage: number;
@@ -62,35 +59,31 @@ export interface PositionTable {
   updated_at: ColumnType<Date, string | undefined, string | undefined>;
 }
 
-// Copy Trading table interface
-export interface CopyTradingTable {
+export interface FavoritedTradersTable {
   id: Generated<number>;
-  copier_address: string;
-  trader_address: string;
+  follower_address: string;
+  favorited_address: string;
   signature: string;
   message: string;
   timestamp: bigint;
-  is_active: boolean;
+  selected: boolean;
   created_at: ColumnType<Date, string | undefined, never>;
   updated_at: ColumnType<Date, string | undefined, string | undefined>;
 }
 
-// Type helpers for Users
-export type User = Selectable<UserTable>;
-export type NewUser = Insertable<UserTable>;
-export type UserUpdate = Updateable<UserTable>;
+// Type helpers for Traders
+export type Trader = Selectable<TradersTable>;
+export type NewTrader = Insertable<TradersTable>;
+export type TraderUpdate = Updateable<TradersTable>;
 
-// Type helpers for Trades
-export type Trade = Selectable<TradeTable>;
-export type NewTrade = Insertable<TradeTable>;
-export type TradeUpdate = Updateable<TradeTable>;
+export type Trade = Selectable<TradesTable>;
+export type NewTrade = Insertable<TradesTable>;
+export type TradeUpdate = Updateable<TradesTable>;
 
-// Type helpers for Positions
-export type Position = Selectable<PositionTable>;
-export type NewPosition = Insertable<PositionTable>;
-export type PositionUpdate = Updateable<PositionTable>;
+export type Position = Selectable<OpenPositionsTable>;
+export type NewPosition = Insertable<OpenPositionsTable>;
+export type PositionUpdate = Updateable<OpenPositionsTable>;
 
-// Type helpers for Copy Trading
-export type CopyTrading = Selectable<CopyTradingTable>;
-export type NewCopyTrading = Insertable<CopyTradingTable>;
-export type CopyTradingUpdate = Updateable<CopyTradingTable>;
+export type CopyTrading = Selectable<FavoritedTradersTable>;
+export type NewCopyTrading = Insertable<FavoritedTradersTable>;
+export type CopyTradingUpdate = Updateable<FavoritedTradersTable>;

@@ -104,11 +104,9 @@ async function toggleCopyTrades(): Promise<void> {
     copyTradesButton.textContent = "Processing...";
 
     if (isCopyingTrades) {
-      // Stop copying trades
       await stopCopyingTrades();
     } else {
-      // Start copying trades
-      await startCopyingTrades();
+      await favoriteUser();
     }
   } catch (error) {
     console.error("Error toggling copy trades:", error);
@@ -119,7 +117,7 @@ async function toggleCopyTrades(): Promise<void> {
   }
 }
 
-async function startCopyingTrades(): Promise<void> {
+async function favoriteUser(): Promise<void> {
   if (!provider || !currentUser) return;
 
   try {
@@ -139,7 +137,7 @@ By signing this message, you authorize DEXMT to copy trades from the specified t
     })) as string;
 
     // Send request to backend with signature
-    const response = await fetch("/api/copy-trading/start", {
+    const response = await fetch("/api/trader/favorite", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

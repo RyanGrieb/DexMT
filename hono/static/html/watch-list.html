@@ -1,6 +1,27 @@
 <div class="watch-list-container">
-  <!-- Watched Users Column -->
-  <md-card class="watched-users-card">
+  <!-- Copy Trading Toggle -->
+  <md-card class="copy-trading-toggle-card">
+    <div class="card-content">
+      <div class="toggle-section">
+        <div class="toggle-info">
+          <h3 class="md-typescale-headline-small">Copy Trading</h3>
+          <p class="toggle-description">
+            Enable automatic copying of positions from watched traders
+          </p>
+        </div>
+        <div class="toggle-controls">
+          <md-switch
+            id="copyTradingToggle"
+            class="copy-trading-switch"
+          ></md-switch>
+          <span class="toggle-status" id="toggleStatus">Disabled</span>
+        </div>
+      </div>
+    </div>
+  </md-card>
+
+  <!-- Watched Traders Column -->
+  <md-card class="watched-traders-card">
     <div class="card-content">
       <div class="section-header">
         <h3 class="md-typescale-headline-small">Watched Traders</h3>
@@ -18,9 +39,9 @@
         </md-text-button>
       </div>
 
-      <table class="watched-users-table">
+      <table class="watched-traders-table">
         <thead>
-          <tr class="watched-users-header">
+          <tr class="watched-traders-header">
             <th class="header-cell checkbox">
               <md-checkbox id="selectAllTraders"></md-checkbox>
             </th>
@@ -33,32 +54,59 @@
             <th class="header-cell actions">Actions</th>
           </tr>
         </thead>
-        <tbody class="watched-users-list">
-          <!-- Watched users will be populated here -->
+        <tbody class="watched-traders-list">
+          <!-- Watched traders will be populated here -->
         </tbody>
       </table>
     </div>
   </md-card>
 
-  <!-- Open Positions Column -->
-  <md-card class="watched-positions-card">
+  <!-- Copied Positions Section -->
+  <md-card class="copied-positions-card">
     <div class="card-content">
-      <h3 class="md-typescale-headline-small">Watched Positions</h3>
+      <h3 class="md-typescale-headline-small">Copied Positions</h3>
 
-      <table class="watched-positions-table">
+      <table class="copied-positions-table">
         <thead>
-          <tr class="watched-positions-header">
+          <tr class="copied-positions-header">
+            <th class="header-cell trader">Original Trader</th>
+            <th class="header-cell position">Position</th>
+            <th class="header-cell size">My Size</th>
+            <th class="header-cell original-size">Original Size</th>
+            <th class="header-cell pnl">My PNL</th>
+            <th class="header-cell entry">Entry Price</th>
+            <th class="header-cell current">Current Price</th>
+            <th class="header-cell copy-ratio">Copy Ratio</th>
+            <th class="header-cell actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="copied-positions-list">
+          <!-- Copied positions will be populated here -->
+        </tbody>
+      </table>
+    </div>
+  </md-card>
+
+  <!-- Open Positions Section -->
+  <md-card class="open-positions-card">
+    <div class="card-content">
+      <h3 class="md-typescale-headline-small">Open Positions</h3>
+
+      <table class="open-positions-table">
+        <thead>
+          <tr class="open-positions-header">
             <th class="header-cell trader">Trader</th>
             <th class="header-cell position">Position</th>
             <th class="header-cell size">Size</th>
             <th class="header-cell pnl">PNL</th>
             <th class="header-cell entry">Entry Price</th>
             <th class="header-cell current">Current Price</th>
+            <th class="header-cell leverage">Leverage</th>
             <th class="header-cell copy">Copy</th>
           </tr>
         </thead>
-        <tbody class="watched-positions-list">
-          <!-- Watched positions will be populated here -->
+        <tbody class="open-positions-list">
+          <!-- Open positions of watched traders will be populated here -->
         </tbody>
       </table>
     </div>

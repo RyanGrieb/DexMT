@@ -1,22 +1,13 @@
 import puppeteer from "puppeteer";
-
-interface User {
-  address: `0x${string}`;
-  rank: number;
-  pnl: number;
-  pnlPercentage: number;
-  avgSize: number;
-  avgLeverage: number;
-  winRatio: number;
-}
+import { Trader } from "./types/trader";
 
 /**
- * Fetch top users for a given platform.
+ * Fetch top traders for a given platform.
  */
-async function getTopUsers(opts: {
+async function getTopTraders(opts: {
   platform: string;
   limit: number;
-}): Promise<User[]> {
+}): Promise<Trader[]> {
   const { platform, limit } = opts;
 
   if (platform !== "gmx" && platform !== "gmxv2") {
@@ -251,7 +242,7 @@ async function getTopUsers(opts: {
 
     console.log("Debug info from page:", JSON.stringify(debugInfo, null, 2));
 
-    // Extract the top traders data
+    // Extract the top traders data and convert to Trader objects
     const users = await page.evaluate((maxUsers) => {
       const rows = document.querySelectorAll("table tbody tr");
       const extractedUsers = [];
@@ -335,14 +326,9 @@ async function getTopUsers(opts: {
             }
 
             // Extract other data
-            // Our plnStr is in a '+x,xxx.xx' or '-xx.xx' format, we just take the number
             const plnStr = cells[2]?.textContent?.trim() || "0";
-            const pnlNum = parseFloat(plnStr.replace(/[+,$]/g, "")); // Remove +, $, and commas
+            const pnlNum = parseFloat(plnStr.replace(/[+,$]/g, ""));
             const pnl: number = isNaN(pnlNum) ? 0 : pnlNum;
-
-            if (isNaN(pnlNum)) {
-              debugLogs.push(`Row ${i} - Invalid PnL value: "${plnStr}"`);
-            }
 
             const pnlPercentageStr = cells[3]?.textContent?.trim() || "0";
             const pnlPercentageNum = parseFloat(
@@ -353,16 +339,9 @@ async function getTopUsers(opts: {
               : pnlPercentageNum;
 
             const avgSizeStr = cells[4]?.textContent?.trim() || "0";
-            const avgSizeNum = parseFloat(avgSizeStr.replace(/[$,]/g, "")); // Remove $ and commas
+            const avgSizeNum = parseFloat(avgSizeStr.replace(/[$,]/g, ""));
             const avgSize: number = isNaN(avgSizeNum) ? 0 : avgSizeNum;
 
-            if (isNaN(avgSizeNum)) {
-              debugLogs.push(
-                `Row ${i} - Invalid Avg Size value: "${avgSizeStr}"`
-              );
-            }
-
-            // avgLeverageStr comes in a 'nX' format, we just take the number
             const avgLeverageStr = cells[5]?.textContent?.trim() || "0";
             const avgLeverageNum = parseFloat(
               avgLeverageStr.replace(/[Xx]/g, "")
@@ -371,7 +350,6 @@ async function getTopUsers(opts: {
               ? 0
               : avgLeverageNum;
 
-            // winLoss comes in a 'XXX/YYY' format, we calculate the ratio
             const winLossText = cells[6]?.textContent?.trim() || "0/1";
             const winLossParts = winLossText.split("/");
             const wins = parseFloat(winLossParts[0] || "0");
@@ -391,10 +369,11 @@ async function getTopUsers(opts: {
               /^0x[a-fA-F0-9]{40}$/.test(address);
 
             if (isValidAddress) {
-              const extractedAddress = address.toLowerCase() as `0x${string}`; // Ensures we pass a valid address type to user.
+              const extractedAddress = address.toLowerCase();
+              // Return data that can be used to create Trader objects
               extractedUsers.push({
                 address: extractedAddress,
-                rank,
+                platform_ranking: rank,
                 pnl,
                 pnlPercentage,
                 avgSize,
@@ -427,17 +406,31 @@ async function getTopUsers(opts: {
       };
     }, limit);
 
-    // Log all the debug information from the browser context
-    //console.log("Browser debug logs:");
-    //users.debugLogs.forEach((log) => console.log("  ", log));
-
     const extractedUsers = users.users;
 
+    // Convert extracted data to Trader objects
+    const traders: Trader[] = extractedUsers.map((userData: any) => {
+      return new Trader({
+        address: userData.address,
+        balance: "0", // Default balance since GMX doesn't provide this
+        chainId: "0xa4b1", // Arbitrum chain ID for GMX
+        platformRanking: userData.platformRanking,
+        dexPlatform: platform, // Use the platform parameter (gmx/gmxv2)
+        isDexmtUser: false,
+        pnl: userData.pnl,
+        pnlPercentage: userData.pnlPercentage,
+        avgSize: userData.avgSize,
+        avgLeverage: userData.avgLeverage,
+        winRatio: userData.winRatio,
+        updatedAt: new Date().toISOString(), // Current timestamp
+      });
+    });
+
     console.log(
-      `Successfully extracted ${extractedUsers.length} users from GMX leaderboard`
+      `Successfully created ${traders.length} Trader objects from GMX leaderboard`
     );
 
-    return extractedUsers;
+    return traders;
   } catch (error) {
     console.error("Error scraping GMX leaderboard:", error);
     throw error;
@@ -463,7 +456,7 @@ async function getTopUsers(opts: {
 
 // bundle into a single object so you can do `scraper.getTopUsers()`
 const scraper = {
-  getTopUsers,
+  getTopTraders,
 };
 
 export default scraper;

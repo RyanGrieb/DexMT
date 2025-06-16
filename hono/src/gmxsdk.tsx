@@ -1,5 +1,6 @@
 import { GmxSdk } from "@gmx-io/sdk";
 import { PositionsData } from "@gmx-io/sdk/types/positions";
+import { TradeAction } from "@gmx-io/sdk/types/tradeHistory";
 
 export interface SerializedPosition {
   key: string;
@@ -73,7 +74,34 @@ function serializePositionData(data: PositionsData) {
   return serializedData;
 }
 
-async function getUserPositions(user_address: `0x${string}`): Promise<
+async function getTradeHistory(
+  address: string
+): Promise<TradeAction[] | undefined> {
+  const sdk = getGmxSdk();
+  sdk.setAccount(address as `0x${string}`);
+
+  try {
+    const { marketsInfoData, tokensData } = await sdk.markets.getMarketsInfo();
+    const tradeActions = await sdk.trades.getTradeHistory({
+      pageSize: 10,
+      pageIndex: 0,
+      marketsInfoData,
+      tokensData,
+    });
+
+    if (!tradeActions) {
+      console.error("Error: tradesResult is undefined.");
+      return;
+    }
+
+    console.log("Trade History:", tradeActions);
+    return tradeActions;
+  } catch (error) {
+    console.error("Error fetching trade history:", error);
+  }
+}
+
+async function getUserPositions(user_address: string): Promise<
   | {
       serializedPositionsData: SerializedPositionsData;
       positionsData: PositionsData;
@@ -85,7 +113,7 @@ async function getUserPositions(user_address: `0x${string}`): Promise<
 
   //console.log(marketsInfoData);
 
-  sdk.setAccount(user_address);
+  sdk.setAccount(user_address as `0x${string}`);
 
   if (!marketsInfoData) {
     console.error("Error: marketsInfoData is undefined.");
@@ -140,6 +168,7 @@ const gmxSdk = {
   getGmxSdk,
   getUserPositions,
   updateUserTrades,
+  getTradeHistory,
 };
 
 export default gmxSdk;
