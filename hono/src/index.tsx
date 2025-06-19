@@ -4,6 +4,9 @@ import { Hono } from "hono";
 import path from "path";
 import dexmtAPI from "./api/dexmt-api";
 import database from "./database";
+import { renderLeaderboard } from "./frontend/leaderboard";
+import { renderTraderProfile } from "./frontend/profile";
+import { renderWatchlist } from "./frontend/watchlist";
 import gmxSdk from "./gmxsdk";
 import scraper from "./scraper";
 
@@ -71,21 +74,77 @@ function startMirrorTradesTask() {
   setInterval(mirrorTrades, 300000); // 5 minutes
 }
 
+async function renderPageWithContent(contentRenderer: () => Promise<string>) {
+  const htmlResponse = await app.request("/html/index.html");
+  let html = await htmlResponse.text();
+  const content = await contentRenderer();
+
+  return html.replace(
+    '<div class="index-content">\n        <!-- Content will be loaded by router -->\n      </div>',
+    `<div class="index-content">\n        ${content}\n      </div>`
+  );
+}
+
 app.get("/", (c) => {
   return c.redirect("/toptraders");
 });
 
-app.get("/toptraders", async (c) => {
-  const htmlResponse = await app.request("/html/index.html");
-  let html = await htmlResponse.text();
+app.get("/api/html/traderprofile", async (c) => {
+  try {
+    const address = c.req.query("address");
+    if (!address) {
+      return c.html(
+        '<div class="error-message">Trader address is required</div>',
+        400
+      );
+    }
+    const traderProfileHTML = await renderTraderProfile(address);
+    return c.html(traderProfileHTML);
+  } catch (error) {
+    console.error("Error rendering trader profile:", error);
+    return c.html(
+      '<div class="error-message">Error loading trader profile</div>',
+      500
+    );
+  }
+});
 
+app.get("/api/html/toptraders", async (c) => {
+  try {
+    const leaderboardHTML = await renderLeaderboard();
+    return c.html(leaderboardHTML);
+  } catch (error) {
+    console.error("Error rendering leaderboard:", error);
+    return c.html(
+      '<div class="error-message">Error loading top traders</div>',
+      500
+    );
+  }
+});
+
+app.get("/api/html/mywatchlist", async (c) => {
+  try {
+    const userAddress =
+      c.req.query("address") || c.req.header("x-wallet-address");
+    const watchlistHTML = await renderWatchlist(userAddress);
+    return c.html(watchlistHTML);
+  } catch (error) {
+    console.error("Error rendering watchlist:", error);
+    return c.html(
+      '<div class="error-message">Error loading watchlist</div>',
+      500
+    );
+  }
+});
+
+app.get("/toptraders", async (c) => {
+  const html = await renderPageWithContent(() => renderLeaderboard());
   return c.html(html);
 });
 
 app.get("/mywatchlist", async (c) => {
-  const htmlResponse = await app.request("/html/index.html");
-  let html = await htmlResponse.text();
-
+  const userAddress = c.req.query("address");
+  const html = await renderPageWithContent(() => renderWatchlist(userAddress));
   return c.html(html);
 });
 
@@ -165,9 +224,12 @@ app.get("/health", (c) => {
 
 // Add this endpoint before the existing routes
 app.get("/api/live-reload", (c) => {
+  let clientController: ReadableStreamDefaultController;
+  let clientId: string;
   const stream = new ReadableStream({
     start(controller) {
-      const clientId = Math.random().toString(36).substr(2, 9);
+      clientController = controller;
+      clientId = Math.random().toString(36).substr(2, 9);
       sseClients.push({ id: clientId, controller });
 
       // Send initial connection message
@@ -179,7 +241,13 @@ app.get("/api/live-reload", (c) => {
     },
     cancel() {
       // Remove client when connection closes
-      sseClients = sseClients.filter((client) => client.controller !== this);
+      const clientIndex = sseClients.findIndex(
+        (client) => client.controller === clientController
+      );
+      if (clientIndex !== -1) {
+        console.log(`SSE client disconnected: ${sseClients[clientIndex].id}`);
+        sseClients.splice(clientIndex, 1);
+      }
     },
   });
 
@@ -196,13 +264,26 @@ app.get("/api/live-reload", (c) => {
 // Add function to notify all SSE clients of server restart
 function notifySSEClients(message: any) {
   const data = `data: ${JSON.stringify(message)}\n\n`;
-  sseClients.forEach((client) => {
+
+  // Create a copy of the array to avoid modification during iteration
+  const clientsCopy = [...sseClients];
+
+  clientsCopy.forEach((client, index) => {
     try {
       client.controller.enqueue(data);
     } catch (error) {
-      console.log("Failed to send SSE message to client:", error);
+      console.log(`Failed to send SSE message to client ${client.id}:`, error);
+
+      // Remove the client from the original array if the controller is closed
+      const originalIndex = sseClients.findIndex((c) => c.id === client.id);
+      if (originalIndex !== -1) {
+        console.log(`Removing closed SSE client: ${client.id}`);
+        sseClients.splice(originalIndex, 1);
+      }
     }
   });
+
+  console.log(`SSE message sent to ${sseClients.length} active clients`);
 }
 
 // Modify the startup function to notify on restart

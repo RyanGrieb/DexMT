@@ -409,27 +409,32 @@ async function getTopTraders(opts: {
     const extractedUsers = users.users;
 
     // Convert extracted data to Trader objects
-    const traders: Trader[] = extractedUsers.map((userData: any) => {
-      return new Trader({
-        address: userData.address,
-        balance: "0", // Default balance since GMX doesn't provide this
-        chainId: "0xa4b1", // Arbitrum chain ID for GMX
-        platformRanking: userData.platformRanking,
-        dexPlatform: platform, // Use the platform parameter (gmx/gmxv2)
-        isDexmtUser: false,
-        pnl: userData.pnl,
-        pnlPercentage: userData.pnlPercentage,
-        avgSize: userData.avgSize,
-        avgLeverage: userData.avgLeverage,
-        winRatio: userData.winRatio,
-        updatedAt: new Date().toISOString(), // Current timestamp
-      });
-    });
-
-    console.log(
-      `Successfully created ${traders.length} Trader objects from GMX leaderboard`
+    const traders: Trader[] = extractedUsers.map(
+      (userData: {
+        address: string;
+        platform_ranking: number;
+        pnl: number;
+        pnlPercentage: number;
+        avgSize: number;
+        avgLeverage: number;
+        winRatio: number;
+      }) => {
+        return new Trader({
+          address: userData.address,
+          balance: "0", // Default balance since GMX doesn't provide this
+          chainId: "0xa4b1", // Arbitrum chain ID for GMX
+          platformRanking: userData.platform_ranking,
+          dexPlatform: platform, // Use the platform parameter (gmx/gmxv2)
+          isDexmtTrader: false,
+          pnl: userData.pnl,
+          pnlPercentage: userData.pnlPercentage,
+          avgSize: userData.avgSize,
+          avgLeverage: userData.avgLeverage,
+          winRatio: userData.winRatio,
+          updatedAt: new Date().toISOString(), // Current timestamp
+        });
+      }
     );
-
     return traders;
   } catch (error) {
     console.error("Error scraping GMX leaderboard:", error);

@@ -21,36 +21,24 @@ li {
   flex-direction: column;
 }
 
-md-card {
-  --md-sys-color-surface: #2a2a2a;
-  --md-sys-color-on-surface: #e0e0e0;
-  --md-sys-color-outline: #404040;
-  padding: 0;
+/* Card-like containers */
+.card {
+  background-color: #2a2a2a;
+  border: 1px solid #404040;
   border-radius: 12px;
+  padding: 16px;
+  color: #e0e0e0;
 }
 
-md-list {
-  background-color: transparent;
+/* Button styles */
+button {
+  font-family: inherit;
+  border: none;
+  outline: none;
+  cursor: pointer;
 }
 
-md-list-item {
-  --md-sys-color-surface: transparent;
-  --md-sys-color-on-surface: #e0e0e0;
-  border-bottom: 1px solid #404040;
-}
-
-md-list-item:last-child {
-  border-bottom: none;
-}
-
-/* Dark theme for Material components */
-md-filled-button {
-  --md-sys-color-primary: #8ee0f3;
-  --md-sys-color-on-primary: black;
-}
-
-md-chip {
-  --md-sys-color-surface: #3a3a3a;
-  --md-sys-color-on-surface: #e0e0e0;
-  --md-sys-color-outline: #606060;
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }

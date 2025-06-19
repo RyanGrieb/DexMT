@@ -3,7 +3,7 @@ export class Trader {
   balance: string;
   chainId: string;
   updatedAt: string;
-  isDexmtUser: boolean;
+  isDexmtTrader: boolean;
   isMirroringTrades: boolean;
   platformRanking: number | undefined | null;
   dexPlatform: string | undefined | null;
@@ -18,7 +18,7 @@ export class Trader {
     balance: string;
     chainId: string;
     updatedAt: string;
-    isDexmtUser: boolean;
+    isDexmtTrader: boolean;
     isMirroringTrades?: boolean;
     platformRanking?: number | undefined | null;
     dexPlatform?: string | undefined | null;
@@ -33,7 +33,7 @@ export class Trader {
       balance,
       chainId,
       updatedAt,
-      isDexmtUser,
+      isDexmtTrader,
       isMirroringTrades = false,
       platformRanking = undefined,
       dexPlatform = undefined,
@@ -48,7 +48,7 @@ export class Trader {
     this.balance = balance;
     this.chainId = chainId;
     this.updatedAt = updatedAt;
-    this.isDexmtUser = isDexmtUser;
+    this.isDexmtTrader = isDexmtTrader;
     this.isMirroringTrades = isMirroringTrades;
     this.platformRanking = platformRanking;
     this.dexPlatform = dexPlatform;
@@ -68,7 +68,7 @@ export class WatchedTrader extends Trader {
     balance: string;
     chainId: string;
     updatedAt: string;
-    isDexmtUser: boolean;
+    isDexmtTrader: boolean;
     isMirroringTrades: boolean;
     watching: boolean;
     platformRanking: number | undefined;

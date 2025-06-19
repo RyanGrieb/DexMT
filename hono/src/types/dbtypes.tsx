@@ -18,7 +18,7 @@ export interface TradersTable {
   address: string;
   balance: string;
   chain_id: string;
-  dexmt_user: boolean;
+  dexmt_trader: boolean;
   dex_platform: string | null;
   platform_ranking: number | null;
   pnl: number | null;
@@ -72,7 +72,7 @@ export interface FavoritedTradersTable {
 }
 
 // Type helpers for Traders
-export type Trader = Selectable<TradersTable>;
+//export type Trader = Selectable<TradersTable>;
 export type NewTrader = Insertable<TradersTable>;
 export type TraderUpdate = Updateable<TradersTable>;
 

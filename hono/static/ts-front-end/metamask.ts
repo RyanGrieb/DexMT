@@ -51,35 +51,48 @@ export async function updateWalletUI(): Promise<void> {
     "connectButton"
   ) as HTMLButtonElement;
   if (!connectButton) return;
+
   const connected = provider?.isConnected() && provider.selectedAddress;
 
-  //FIXME: Determine why svg is null. We should never have a null svg here EVER. Determine why it is null.
-  const svg = document.getElementById("connectWalletIcon");
+  console.log(`Updating wallet UI, connected: ${connected}`);
 
-  console.log(`Updating wallet UI, connected: ${connected} svg: ${svg}`);
-
-  const buttonText = connectButton.querySelector("p");
-  if (buttonText) {
-    buttonText.innerHTML = `${connected ? "Disconnect Wallet" : "Connect Wallet"}`;
-  }
-
-  if (svg) {
-    if (connected) {
-      svg.classList.add("hidden");
-    } else {
-      svg.classList.remove("hidden");
+  // Update button text - the button contains both SVG and text
+  const buttonTextElement = connectButton.querySelector("p") || connectButton;
+  if (buttonTextElement.tagName === "P") {
+    buttonTextElement.textContent = connected
+      ? "Disconnect Wallet"
+      : "Connect Wallet";
+  } else {
+    // If no <p> element, update the button's text content while preserving the SVG
+    const svgElement = connectButton.querySelector("svg");
+    connectButton.innerHTML = "";
+    if (svgElement) {
+      connectButton.appendChild(svgElement);
     }
+    const textNode = document.createTextNode(
+      connected ? "Disconnect Wallet" : "Connect Wallet"
+    );
+    connectButton.appendChild(textNode);
   }
 
+  // Get wallet info elements - these have different IDs in your HTML
   const walletAddress = document.getElementById("walletAddress") as HTMLElement;
   const networkStatus = document.getElementById("networkStatus") as HTMLElement;
 
-  if (!walletAddress || !networkStatus) return;
+  if (!walletAddress || !networkStatus) {
+    console.warn("Wallet info elements not found in DOM");
+    return;
+  }
 
   if (connected) {
     const address = provider!.selectedAddress!;
+
+    // Update wallet address display
     walletAddress.textContent = `${address.slice(0, 6)}...${address.slice(-4)}`;
-    walletAddress.style.display = "inline-block";
+    walletAddress.classList.remove("hidden");
+
+    // Update network status
+    networkStatus.classList.remove("hidden");
 
     try {
       if (provider && provider.isMetaMask) {
@@ -91,9 +104,12 @@ export async function updateWalletUI(): Promise<void> {
       networkStatus.style.color = "red";
     }
   } else {
+    // Hide wallet info when disconnected
     walletAddress.textContent = "";
-    walletAddress.style.display = "none";
+    walletAddress.classList.add("hidden");
+
     networkStatus.textContent = "";
+    networkStatus.classList.add("hidden");
   }
 }
 

@@ -207,66 +207,6 @@ async function initializeDatabase() {
   }
 }
 
-/*
-// Add this function after the existing helper functions
-async function getTradersFromDatabase(
-  addressFilter?: string[]
-): Promise<Trader[]> {
-  if (!db) {
-    throw new Error("Database not initialized. Call initializeDatabase first.");
-  }
-
-  try {
-    let query = db
-      .selectFrom("traders")
-      .select([
-        "address",
-        "balance",
-        "chain_id",
-        "platform_ranking",
-        "dexmt_user",
-        "mirroring_trades",
-        "dex_platform",
-        "pnl",
-        "pnl_percentage",
-        "avg_size",
-        "avg_leverage",
-        "win_ratio",
-        "updated_at",
-      ])
-      .where("dexmt_user", "=", false);
-
-    // If addressFilter is provided, filter by those addresses
-    if (addressFilter && addressFilter.length > 0) {
-      query = query.where("address", "in", addressFilter);
-    }
-
-    const db_traders = await query.orderBy("platform_ranking", "asc").execute();
-
-    const traders: Trader[] = db_traders.map((trader) => ({
-      address: trader.address,
-      balance: trader.balance,
-      chainId: trader.chain_id,
-      isDexmtUser: trader.dexmt_user,
-      isMirroringTrades: trader.mirroring_trades,
-      platformRanking: trader.platform_ranking,
-      dexPlatform: trader.dex_platform,
-      pnl: trader.pnl,
-      pnlPercentage: trader.pnl_percentage,
-      avgSize: trader.avg_size,
-      avgLeverage: trader.avg_leverage,
-      winRatio: trader.win_ratio,
-      updatedAt: trader.updated_at.toISOString(),
-    }));
-
-    return traders;
-  } catch (error) {
-    console.error("Error fetching traders from database:", error);
-    throw error;
-  }
-}
-*/
-
 async function updateTraders(traders: Trader[]): Promise<void> {
   if (!db) {
     throw new Error("Database not initialized. Call initializeDatabase first.");
@@ -277,8 +217,9 @@ async function updateTraders(traders: Trader[]): Promise<void> {
     await db.transaction().execute(async (trx) => {
       for (const trader of traders) {
         await trx
-          .updateTable("traders")
-          .set({
+          .insertInto("traders")
+          .values({
+            address: trader.address,
             balance: trader.balance,
             chain_id: trader.chainId,
             platform_ranking: trader.platformRanking,
@@ -288,14 +229,29 @@ async function updateTraders(traders: Trader[]): Promise<void> {
             avg_size: trader.avgSize,
             avg_leverage: trader.avgLeverage,
             win_ratio: trader.winRatio,
+            dexmt_trader: trader.isDexmtTrader || false,
+            mirroring_trades: trader.isMirroringTrades || false,
             updated_at: sql`CURRENT_TIMESTAMP`,
           })
-          .where("address", "=", trader.address)
+          .onConflict((oc) =>
+            oc.column("address").doUpdateSet({
+              balance: trader.balance,
+              chain_id: trader.chainId,
+              platform_ranking: trader.platformRanking,
+              dex_platform: trader.dexPlatform,
+              pnl: trader.pnl,
+              pnl_percentage: trader.pnlPercentage,
+              avg_size: trader.avgSize,
+              avg_leverage: trader.avgLeverage,
+              win_ratio: trader.winRatio,
+              updated_at: sql`CURRENT_TIMESTAMP`,
+            })
+          )
           .execute();
       }
     });
 
-    console.log(`Updated ${traders.length} traders in database`);
+    console.log(`Updated/inserted ${traders.length} traders in database`);
   } catch (error) {
     console.error("Error updating traders in database:", error);
     throw error;
@@ -313,7 +269,7 @@ async function addTrader(trader: Trader) {
       .values({
         address: trader.address,
         chain_id: trader.chainId,
-        dexmt_user: trader.isDexmtUser,
+        dexmt_trader: trader.isDexmtTrader,
         mirroring_trades: false,
         balance: await wallet.getEthBalance(
           trader.address,
@@ -458,7 +414,7 @@ async function getTraders(selection_args?: {
         "balance",
         "chain_id",
         "platform_ranking",
-        "dexmt_user",
+        "dexmt_trader",
         "mirroring_trades",
         "dex_platform",
         "pnl",
@@ -526,7 +482,7 @@ async function getTraders(selection_args?: {
       address: trader.address,
       balance: trader.balance,
       chainId: trader.chain_id,
-      isDexmtUser: trader.dexmt_user,
+      isDexmtTrader: trader.dexmt_trader,
       isMirroringTrades: trader.mirroring_trades,
       platformRanking: trader.platform_ranking,
       dexPlatform: trader.dex_platform,

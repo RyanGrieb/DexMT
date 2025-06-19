@@ -161,34 +161,41 @@ function updateNetworkStatus(chainId) {
 }
 function updateWalletUI() {
     return __awaiter(this, void 0, void 0, function () {
-        var connectButton, connected, svg, buttonText, walletAddress, networkStatus, address;
+        var connectButton, connected, buttonTextElement, svgElement, textNode, walletAddress, networkStatus, address;
         return __generator(this, function (_a) {
             connectButton = document.getElementById("connectButton");
             if (!connectButton)
                 return [2 /*return*/];
             connected = (provider === null || provider === void 0 ? void 0 : provider.isConnected()) && provider.selectedAddress;
-            svg = document.getElementById("connectWalletIcon");
-            console.log("Updating wallet UI, connected: ".concat(connected, " svg: ").concat(svg));
-            buttonText = connectButton.querySelector("p");
-            if (buttonText) {
-                buttonText.innerHTML = "".concat(connected ? "Disconnect Wallet" : "Connect Wallet");
+            console.log("Updating wallet UI, connected: ".concat(connected));
+            buttonTextElement = connectButton.querySelector("p") || connectButton;
+            if (buttonTextElement.tagName === "P") {
+                buttonTextElement.textContent = connected
+                    ? "Disconnect Wallet"
+                    : "Connect Wallet";
             }
-            if (svg) {
-                if (connected) {
-                    svg.classList.add("hidden");
+            else {
+                svgElement = connectButton.querySelector("svg");
+                connectButton.innerHTML = "";
+                if (svgElement) {
+                    connectButton.appendChild(svgElement);
                 }
-                else {
-                    svg.classList.remove("hidden");
-                }
+                textNode = document.createTextNode(connected ? "Disconnect Wallet" : "Connect Wallet");
+                connectButton.appendChild(textNode);
             }
             walletAddress = document.getElementById("walletAddress");
             networkStatus = document.getElementById("networkStatus");
-            if (!walletAddress || !networkStatus)
+            if (!walletAddress || !networkStatus) {
+                console.warn("Wallet info elements not found in DOM");
                 return [2 /*return*/];
+            }
             if (connected) {
                 address = provider.selectedAddress;
+                // Update wallet address display
                 walletAddress.textContent = "".concat(address.slice(0, 6), "...").concat(address.slice(-4));
-                walletAddress.style.display = "inline-block";
+                walletAddress.classList.remove("hidden");
+                // Update network status
+                networkStatus.classList.remove("hidden");
                 try {
                     if (provider && provider.isMetaMask) {
                         updateNetworkStatus(provider.chainId || "");
@@ -201,9 +208,11 @@ function updateWalletUI() {
                 }
             }
             else {
+                // Hide wallet info when disconnected
                 walletAddress.textContent = "";
-                walletAddress.style.display = "none";
+                walletAddress.classList.add("hidden");
                 networkStatus.textContent = "";
+                networkStatus.classList.add("hidden");
             }
             return [2 /*return*/];
         });
@@ -571,260 +580,6 @@ function isWalletConnected() {
 
 /***/ }),
 
-/***/ "./static/ts-front-end/router.ts":
-/*!***************************************!*\
-  !*** ./static/ts-front-end/router.ts ***!
-  \***************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   Router: () => (/* binding */ Router),
-/* harmony export */   router: () => (/* binding */ router),
-/* harmony export */   routes: () => (/* binding */ routes)
-/* harmony export */ });
-var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-var __generator = (undefined && undefined.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
-    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
-    function verb(n) { return function (v) { return step([n, v]); }; }
-    function step(op) {
-        if (f) throw new TypeError("Generator is already executing.");
-        while (g && (g = 0, op[0] && (_ = 0)), _) try {
-            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
-            if (y = 0, t) op = [op[0] & 2, t.value];
-            switch (op[0]) {
-                case 0: case 1: t = op; break;
-                case 4: _.label++; return { value: op[1], done: false };
-                case 5: _.label++; y = op[1]; op = [0]; continue;
-                case 7: op = _.ops.pop(); _.trys.pop(); continue;
-                default:
-                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
-                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
-                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
-                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop();
-                    _.trys.pop(); continue;
-            }
-            op = body.call(thisArg, _);
-        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
-        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
-    }
-};
-var routes = [
-    {
-        path: "/toptraders",
-        view: "top-traders",
-        title: "Top Traders - DEXMT",
-    },
-    {
-        path: "/mywatchlist",
-        view: "watch-list",
-        title: "My Watch List - DEXMT",
-    },
-];
-var Router = /** @class */ (function () {
-    function Router() {
-        var _this = this;
-        this.currentView = "top-traders";
-        // Listen for browser back/forward navigation
-        window.addEventListener("popstate", function (event) {
-            var _a;
-            var view = ((_a = event.state) === null || _a === void 0 ? void 0 : _a.view) || _this.getViewFromPath();
-            _this.loadView(view, false); // false = don't push to history
-        });
-    }
-    // Get view from current URL path
-    Router.prototype.getViewFromPath = function () {
-        var path = window.location.pathname;
-        var route = routes.find(function (r) { return r.path === path; });
-        return (route === null || route === void 0 ? void 0 : route.view) || "top-traders";
-    };
-    // Navigate to a specific view
-    Router.prototype.navigateTo = function (view, pushToHistory) {
-        if (pushToHistory === void 0) { pushToHistory = true; }
-        var route = routes.find(function (r) { return r.view === view; });
-        if (!route)
-            return;
-        if (pushToHistory) {
-            window.history.pushState({ view: view }, route.title, route.path);
-        }
-        document.title = route.title;
-        this.currentView = view;
-        this.loadView(view, false);
-    };
-    // Load view content and update UI
-    Router.prototype.loadView = function (view_1) {
-        return __awaiter(this, arguments, void 0, function (view, pushToHistory) {
-            var error_1, showToast;
-            if (pushToHistory === void 0) { pushToHistory = true; }
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        _a.trys.push([0, 5, , 7]);
-                        // Update navigation buttons
-                        this.updateNavigationButtons(view);
-                        if (!(view === "top-traders")) return [3 /*break*/, 2];
-                        return [4 /*yield*/, this.loadTopTraders()];
-                    case 1:
-                        _a.sent();
-                        return [3 /*break*/, 4];
-                    case 2:
-                        if (!(view === "watch-list")) return [3 /*break*/, 4];
-                        return [4 /*yield*/, this.loadWatchList()];
-                    case 3:
-                        _a.sent();
-                        _a.label = 4;
-                    case 4:
-                        this.currentView = view;
-                        return [3 /*break*/, 7];
-                    case 5:
-                        error_1 = _a.sent();
-                        console.error("Error loading ".concat(view, " view:"), error_1);
-                        return [4 /*yield*/, Promise.resolve(/*! import() */).then(__webpack_require__.bind(__webpack_require__, /*! ./utils */ "./static/ts-front-end/utils.ts"))];
-                    case 6:
-                        showToast = (_a.sent()).showToast;
-                        showToast("Failed to load ".concat(view.replace("-", " ")), "error");
-                        return [3 /*break*/, 7];
-                    case 7: return [2 /*return*/];
-                }
-            });
-        });
-    };
-    Router.prototype.loadTopTraders = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            var response, html, indexContent, updateUsersUI;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, fetch("/html/top-traders.html")];
-                    case 1:
-                        response = _a.sent();
-                        return [4 /*yield*/, response.text()];
-                    case 2:
-                        html = _a.sent();
-                        indexContent = document.querySelector(".index-content");
-                        if (!indexContent) return [3 /*break*/, 4];
-                        indexContent.innerHTML = html;
-                        return [4 /*yield*/, __webpack_require__.e(/*! import() */ "static_ts-front-end_user-info_ts-static_ts-front-end_users_ts").then(__webpack_require__.bind(__webpack_require__, /*! ./users */ "./static/ts-front-end/users.ts"))];
-                    case 3:
-                        updateUsersUI = (_a.sent()).updateUsersUI;
-                        updateUsersUI();
-                        _a.label = 4;
-                    case 4: return [2 /*return*/];
-                }
-            });
-        });
-    };
-    Router.prototype.loadWatchList = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            var showWatchList;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, __webpack_require__.e(/*! import() */ "static_ts-front-end_watch-list_ts").then(__webpack_require__.bind(__webpack_require__, /*! ./watch-list */ "./static/ts-front-end/watch-list.ts"))];
-                    case 1:
-                        showWatchList = (_a.sent()).showWatchList;
-                        showWatchList();
-                        return [2 /*return*/];
-                }
-            });
-        });
-    };
-    Router.prototype.updateNavigationButtons = function (view) {
-        var topTradersBtn = document.getElementById("topTradersBtn");
-        var myWatchListBtn = document.getElementById("myWatchListBtn");
-        if (topTradersBtn && myWatchListBtn) {
-            // Remove active class from both
-            topTradersBtn.classList.remove("active");
-            myWatchListBtn.classList.remove("active");
-            // Add active class to current view
-            if (view === "top-traders") {
-                topTradersBtn.classList.add("active");
-            }
-            else if (view === "watch-list") {
-                myWatchListBtn.classList.add("active");
-            }
-        }
-    };
-    // Initialize router and load current view
-    Router.prototype.init = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            var initialView;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        initialView = this.getViewFromPath();
-                        return [4 /*yield*/, this.loadView(initialView, false)];
-                    case 1:
-                        _a.sent();
-                        return [2 /*return*/];
-                }
-            });
-        });
-    };
-    // Get current view
-    Router.prototype.getCurrentView = function () {
-        return this.currentView;
-    };
-    return Router;
-}());
-
-// Export singleton instance
-var router = new Router();
-
-
-/***/ }),
-
-/***/ "./static/ts-front-end/trades.ts":
-/*!***************************************!*\
-  !*** ./static/ts-front-end/trades.ts ***!
-  \***************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   displayUserTrades: () => (/* binding */ displayUserTrades),
-/* harmony export */   fetchUserTrades: () => (/* binding */ fetchUserTrades),
-/* harmony export */   updateTradesUI: () => (/* binding */ updateTradesUI)
-/* harmony export */ });
-function updateTradesUI() {
-    console.log("Updating trades UI...");
-    // TODO: Implement trades UI update
-}
-function fetchUserTrades(userAddress) {
-    console.log("Fetching trades for user: ".concat(userAddress));
-    return fetch("/api/trades/".concat(userAddress))
-        .then(function (response) { return response.json(); })
-        .then(function (trades) {
-        console.log("Loaded ".concat(trades.length, " trades for ").concat(userAddress));
-        return trades;
-    })
-        .catch(function (error) {
-        console.error("Error fetching trades:", error);
-        return [];
-    });
-}
-function displayUserTrades(trades) {
-    // TODO: Implement trade display logic
-    console.log("Displaying trades:", trades);
-}
-// Export to global window (for compatibility)
-window.TradesManager = {
-    updateTradesUI: updateTradesUI,
-    fetchUserTrades: fetchUserTrades,
-    displayUserTrades: displayUserTrades,
-};
-
-
-/***/ }),
-
 /***/ "./static/ts-front-end/utils.ts":
 /*!**************************************!*\
   !*** ./static/ts-front-end/utils.ts ***!
@@ -967,9 +722,6 @@ var utils = {
 /******/ 		return module.exports;
 /******/ 	}
 /******/ 	
-/******/ 	// expose the modules object (__webpack_modules__)
-/******/ 	__webpack_require__.m = __webpack_modules__;
-/******/ 	
 /************************************************************************/
 /******/ 	/* webpack/runtime/compat get default export */
 /******/ 	(() => {
@@ -995,77 +747,9 @@ var utils = {
 /******/ 		};
 /******/ 	})();
 /******/ 	
-/******/ 	/* webpack/runtime/ensure chunk */
-/******/ 	(() => {
-/******/ 		__webpack_require__.f = {};
-/******/ 		// This file contains only the entry chunk.
-/******/ 		// The chunk loading function for additional chunks
-/******/ 		__webpack_require__.e = (chunkId) => {
-/******/ 			return Promise.all(Object.keys(__webpack_require__.f).reduce((promises, key) => {
-/******/ 				__webpack_require__.f[key](chunkId, promises);
-/******/ 				return promises;
-/******/ 			}, []));
-/******/ 		};
-/******/ 	})();
-/******/ 	
-/******/ 	/* webpack/runtime/get javascript chunk filename */
-/******/ 	(() => {
-/******/ 		// This function allow to reference async chunks
-/******/ 		__webpack_require__.u = (chunkId) => {
-/******/ 			// return url for filenames based on template
-/******/ 			return "" + chunkId + ".app.bundle.js";
-/******/ 		};
-/******/ 	})();
-/******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */
 /******/ 	(() => {
 /******/ 		__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
-/******/ 	})();
-/******/ 	
-/******/ 	/* webpack/runtime/load script */
-/******/ 	(() => {
-/******/ 		var inProgress = {};
-/******/ 		var dataWebpackPrefix = "hono:";
-/******/ 		// loadScript function to load a script via script tag
-/******/ 		__webpack_require__.l = (url, done, key, chunkId) => {
-/******/ 			if(inProgress[url]) { inProgress[url].push(done); return; }
-/******/ 			var script, needAttach;
-/******/ 			if(key !== undefined) {
-/******/ 				var scripts = document.getElementsByTagName("script");
-/******/ 				for(var i = 0; i < scripts.length; i++) {
-/******/ 					var s = scripts[i];
-/******/ 					if(s.getAttribute("src") == url || s.getAttribute("data-webpack") == dataWebpackPrefix + key) { script = s; break; }
-/******/ 				}
-/******/ 			}
-/******/ 			if(!script) {
-/******/ 				needAttach = true;
-/******/ 				script = document.createElement('script');
-/******/ 		
-/******/ 				script.charset = 'utf-8';
-/******/ 				script.timeout = 120;
-/******/ 				if (__webpack_require__.nc) {
-/******/ 					script.setAttribute("nonce", __webpack_require__.nc);
-/******/ 				}
-/******/ 				script.setAttribute("data-webpack", dataWebpackPrefix + key);
-/******/ 		
-/******/ 				script.src = url;
-/******/ 			}
-/******/ 			inProgress[url] = [done];
-/******/ 			var onScriptComplete = (prev, event) => {
-/******/ 				// avoid mem leaks in IE.
-/******/ 				script.onerror = script.onload = null;
-/******/ 				clearTimeout(timeout);
-/******/ 				var doneFns = inProgress[url];
-/******/ 				delete inProgress[url];
-/******/ 				script.parentNode && script.parentNode.removeChild(script);
-/******/ 				doneFns && doneFns.forEach((fn) => (fn(event)));
-/******/ 				if(prev) return prev(event);
-/******/ 			}
-/******/ 			var timeout = setTimeout(onScriptComplete.bind(null, undefined, { type: 'timeout', target: script }), 120000);
-/******/ 			script.onerror = onScriptComplete.bind(null, script.onerror);
-/******/ 			script.onload = onScriptComplete.bind(null, script.onload);
-/******/ 			needAttach && document.head.appendChild(script);
-/******/ 		};
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/make namespace object */
@@ -1079,101 +763,6 @@ var utils = {
 /******/ 		};
 /******/ 	})();
 /******/ 	
-/******/ 	/* webpack/runtime/publicPath */
-/******/ 	(() => {
-/******/ 		__webpack_require__.p = "/js/";
-/******/ 	})();
-/******/ 	
-/******/ 	/* webpack/runtime/jsonp chunk loading */
-/******/ 	(() => {
-/******/ 		// no baseURI
-/******/ 		
-/******/ 		// object to store loaded and loading chunks
-/******/ 		// undefined = chunk not loaded, null = chunk preloaded/prefetched
-/******/ 		// [resolve, reject, Promise] = chunk loading, 0 = chunk loaded
-/******/ 		var installedChunks = {
-/******/ 			"main": 0
-/******/ 		};
-/******/ 		
-/******/ 		__webpack_require__.f.j = (chunkId, promises) => {
-/******/ 				// JSONP chunk loading for javascript
-/******/ 				var installedChunkData = __webpack_require__.o(installedChunks, chunkId) ? installedChunks[chunkId] : undefined;
-/******/ 				if(installedChunkData !== 0) { // 0 means "already installed".
-/******/ 		
-/******/ 					// a Promise means "currently loading".
-/******/ 					if(installedChunkData) {
-/******/ 						promises.push(installedChunkData[2]);
-/******/ 					} else {
-/******/ 						if(true) { // all chunks have JS
-/******/ 							// setup Promise in chunk cache
-/******/ 							var promise = new Promise((resolve, reject) => (installedChunkData = installedChunks[chunkId] = [resolve, reject]));
-/******/ 							promises.push(installedChunkData[2] = promise);
-/******/ 		
-/******/ 							// start chunk loading
-/******/ 							var url = __webpack_require__.p + __webpack_require__.u(chunkId);
-/******/ 							// create error before stack unwound to get useful stacktrace later
-/******/ 							var error = new Error();
-/******/ 							var loadingEnded = (event) => {
-/******/ 								if(__webpack_require__.o(installedChunks, chunkId)) {
-/******/ 									installedChunkData = installedChunks[chunkId];
-/******/ 									if(installedChunkData !== 0) installedChunks[chunkId] = undefined;
-/******/ 									if(installedChunkData) {
-/******/ 										var errorType = event && (event.type === 'load' ? 'missing' : event.type);
-/******/ 										var realSrc = event && event.target && event.target.src;
-/******/ 										error.message = 'Loading chunk ' + chunkId + ' failed.\n(' + errorType + ': ' + realSrc + ')';
-/******/ 										error.name = 'ChunkLoadError';
-/******/ 										error.type = errorType;
-/******/ 										error.request = realSrc;
-/******/ 										installedChunkData[1](error);
-/******/ 									}
-/******/ 								}
-/******/ 							};
-/******/ 							__webpack_require__.l(url, loadingEnded, "chunk-" + chunkId, chunkId);
-/******/ 						}
-/******/ 					}
-/******/ 				}
-/******/ 		};
-/******/ 		
-/******/ 		// no prefetching
-/******/ 		
-/******/ 		// no preloaded
-/******/ 		
-/******/ 		// no HMR
-/******/ 		
-/******/ 		// no HMR manifest
-/******/ 		
-/******/ 		// no on chunks loaded
-/******/ 		
-/******/ 		// install a JSONP callback for chunk loading
-/******/ 		var webpackJsonpCallback = (parentChunkLoadingFunction, data) => {
-/******/ 			var [chunkIds, moreModules, runtime] = data;
-/******/ 			// add "moreModules" to the modules object,
-/******/ 			// then flag all "chunkIds" as loaded and fire callback
-/******/ 			var moduleId, chunkId, i = 0;
-/******/ 			if(chunkIds.some((id) => (installedChunks[id] !== 0))) {
-/******/ 				for(moduleId in moreModules) {
-/******/ 					if(__webpack_require__.o(moreModules, moduleId)) {
-/******/ 						__webpack_require__.m[moduleId] = moreModules[moduleId];
-/******/ 					}
-/******/ 				}
-/******/ 				if(runtime) var result = runtime(__webpack_require__);
-/******/ 			}
-/******/ 			if(parentChunkLoadingFunction) parentChunkLoadingFunction(data);
-/******/ 			for(;i < chunkIds.length; i++) {
-/******/ 				chunkId = chunkIds[i];
-/******/ 				if(__webpack_require__.o(installedChunks, chunkId) && installedChunks[chunkId]) {
-/******/ 					installedChunks[chunkId][0]();
-/******/ 				}
-/******/ 				installedChunks[chunkId] = 0;
-/******/ 			}
-/******/ 		
-/******/ 		}
-/******/ 		
-/******/ 		var chunkLoadingGlobal = self["webpackChunkhono"] = self["webpackChunkhono"] || [];
-/******/ 		chunkLoadingGlobal.forEach(webpackJsonpCallback.bind(null, 0));
-/******/ 		chunkLoadingGlobal.push = webpackJsonpCallback.bind(null, chunkLoadingGlobal.push.bind(chunkLoadingGlobal));
-/******/ 	})();
-/******/ 	
 /************************************************************************/
 var __webpack_exports__ = {};
 // This entry needs to be wrapped in an IIFE because it needs to be isolated against other modules in the chunk.
@@ -1183,9 +772,7 @@ var __webpack_exports__ = {};
   \************************************/
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _metamask__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./metamask */ "./static/ts-front-end/metamask.ts");
-/* harmony import */ var _router__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./router */ "./static/ts-front-end/router.ts");
-/* harmony import */ var _trades__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./trades */ "./static/ts-front-end/trades.ts");
-/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./utils */ "./static/ts-front-end/utils.ts");
+/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./utils */ "./static/ts-front-end/utils.ts");
 var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -1225,19 +812,72 @@ var __generator = (undefined && undefined.__generator) || function (thisArg, bod
 // Import only what you need from each module
 
 
-
-
 console.log("DEXMT JS file loaded");
+// Helper function to update content without page refresh
+function loadContent(endpoint, title, userAddress) {
+    return __awaiter(this, void 0, void 0, function () {
+        var url, headers, response, html, contentArea, error_1;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 3, 4, 5]);
+                    showLoadingState();
+                    url = endpoint;
+                    headers = {};
+                    // Add wallet address to request if available
+                    if (userAddress) {
+                        url += "?address=".concat(encodeURIComponent(userAddress));
+                        headers["x-wallet-address"] = userAddress;
+                    }
+                    return [4 /*yield*/, fetch(url, { headers: headers })];
+                case 1:
+                    response = _a.sent();
+                    if (!response.ok) {
+                        throw new Error("HTTP error! status: ".concat(response.status));
+                    }
+                    return [4 /*yield*/, response.text()];
+                case 2:
+                    html = _a.sent();
+                    contentArea = document.querySelector(".index-content");
+                    if (contentArea) {
+                        contentArea.innerHTML = html;
+                        // Update page title and URL
+                        document.title = "DEXMT - ".concat(title);
+                        window.history.pushState({}, title, endpoint.replace("/api", ""));
+                        (0,_utils__WEBPACK_IMPORTED_MODULE_1__.showToast)("".concat(title, " loaded successfully"), "success");
+                    }
+                    else {
+                        throw new Error("Content area not found");
+                    }
+                    return [3 /*break*/, 5];
+                case 3:
+                    error_1 = _a.sent();
+                    console.error("Error loading ".concat(title, ":"), error_1);
+                    (0,_utils__WEBPACK_IMPORTED_MODULE_1__.showToast)("Error loading ".concat(title, ". Please try again."), "error");
+                    return [3 /*break*/, 5];
+                case 4: return [7 /*endfinally*/];
+                case 5: return [2 /*return*/];
+            }
+        });
+    });
+}
+// Show loading state
+function showLoadingState() {
+    var contentArea = document.querySelector(".index-content");
+    if (contentArea) {
+        contentArea.innerHTML = "\n      <div class=\"loading-container\">\n        <div class=\"loading-spinner\"></div>\n        <p>Loading...</p>\n      </div>\n    ";
+    }
+}
 // Main application initialization
 document.addEventListener("DOMContentLoaded", function () { return __awaiter(void 0, void 0, void 0, function () {
-    var error_1, topTradersBtn, myWatchListBtn, connectButton;
+    var error_2, topTradersBtn, myWatchListBtn, connectButton;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
                 console.log("DOM loaded, setting up DEXMT...");
                 _a.label = 1;
             case 1:
-                _a.trys.push([1, 5, , 6]);
+                _a.trys.push([1, 4, , 5]);
                 // Auto-reconnect wallet if previously connected
                 return [4 /*yield*/, (0,_metamask__WEBPACK_IMPORTED_MODULE_0__.autoReconnectWallet)()];
             case 2:
@@ -1248,29 +888,61 @@ document.addEventListener("DOMContentLoaded", function () { return __awaiter(voi
             case 3:
                 // sync the Connect/Disconnect button to real wallet state
                 _a.sent();
-                // Initialize router and load the appropriate view based on URL
-                return [4 /*yield*/, _router__WEBPACK_IMPORTED_MODULE_1__.router.init()];
+                return [3 /*break*/, 5];
             case 4:
-                // Initialize router and load the appropriate view based on URL
-                _a.sent();
-                return [3 /*break*/, 6];
+                error_2 = _a.sent();
+                console.error("Error during initialization:", error_2);
+                (0,_utils__WEBPACK_IMPORTED_MODULE_1__.showToast)("Initialization error", "error");
+                return [3 /*break*/, 5];
             case 5:
-                error_1 = _a.sent();
-                console.error("Error during initialization:", error_1);
-                (0,_utils__WEBPACK_IMPORTED_MODULE_3__.showToast)("Failed to initialize application", "error");
-                return [3 /*break*/, 6];
-            case 6:
                 topTradersBtn = document.getElementById("topTradersBtn");
                 myWatchListBtn = document.getElementById("myWatchListBtn");
                 if (topTradersBtn) {
-                    topTradersBtn.addEventListener("click", function () {
-                        _router__WEBPACK_IMPORTED_MODULE_1__.router.navigateTo("top-traders");
-                    });
+                    topTradersBtn.addEventListener("click", function () { return __awaiter(void 0, void 0, void 0, function () {
+                        return __generator(this, function (_a) {
+                            switch (_a.label) {
+                                case 0: return [4 /*yield*/, loadContent("/api/html/toptraders", "Top Traders")];
+                                case 1:
+                                    _a.sent();
+                                    return [2 /*return*/];
+                            }
+                        });
+                    }); });
                 }
                 if (myWatchListBtn) {
-                    myWatchListBtn.addEventListener("click", function () {
-                        _router__WEBPACK_IMPORTED_MODULE_1__.router.navigateTo("watch-list");
-                    });
+                    //FIXME: Authenticate user selected address before loading watchlist
+                    myWatchListBtn.addEventListener("click", function () { return __awaiter(void 0, void 0, void 0, function () {
+                        var walletAddress;
+                        return __generator(this, function (_a) {
+                            switch (_a.label) {
+                                case 0:
+                                    walletAddress = _metamask__WEBPACK_IMPORTED_MODULE_0__.provider === null || _metamask__WEBPACK_IMPORTED_MODULE_0__.provider === void 0 ? void 0 : _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.selectedAddress;
+                                    return [4 /*yield*/, loadContent("/api/html/mywatchlist", "My Watchlist", walletAddress || undefined)];
+                                case 1:
+                                    _a.sent();
+                                    return [2 /*return*/];
+                            }
+                        });
+                    }); });
+                    // Add click listeners to trader rows
+                    document.addEventListener("click", function (event) { return __awaiter(void 0, void 0, void 0, function () {
+                        var traderRow, address;
+                        return __generator(this, function (_a) {
+                            switch (_a.label) {
+                                case 0:
+                                    traderRow = event.target.closest("tr");
+                                    if (!traderRow)
+                                        return [2 /*return*/];
+                                    address = traderRow.getAttribute("address");
+                                    if (!address)
+                                        return [2 /*return*/];
+                                    return [4 /*yield*/, loadContent("/api/html/traderprofile?address=".concat(encodeURIComponent(address)), "Trader Profile")];
+                                case 1:
+                                    _a.sent();
+                                    return [2 /*return*/];
+                            }
+                        });
+                    }); });
                 }
                 connectButton = document.getElementById("connectButton");
                 if (connectButton) {
@@ -1295,7 +967,6 @@ document.addEventListener("DOMContentLoaded", function () { return __awaiter(voi
                         });
                     }); });
                 }
-                (0,_trades__WEBPACK_IMPORTED_MODULE_2__.updateTradesUI)();
                 console.log("DEXMT setup complete");
                 return [2 /*return*/];
         }
@@ -1304,13 +975,12 @@ document.addEventListener("DOMContentLoaded", function () { return __awaiter(voi
 // Global error handler
 window.addEventListener("error", function (event) {
     console.error("Global error:", event.error);
-    (0,_utils__WEBPACK_IMPORTED_MODULE_3__.showToast)("An error occurred. Please refresh the page.", "error");
+    (0,_utils__WEBPACK_IMPORTED_MODULE_1__.showToast)("An error occurred. Please refresh the page.", "error");
 });
 // Export for debugging/compatibility
 window.DEXMT = {
     version: "1.0.0",
     initialized: true,
-    router: _router__WEBPACK_IMPORTED_MODULE_1__.router,
 };
 
 })();
