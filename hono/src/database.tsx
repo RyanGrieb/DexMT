@@ -478,21 +478,24 @@ async function getTraders(selection_args?: {
 
     const db_traders = await query.orderBy("platform_ranking", "asc").execute();
 
-    const traders: Trader[] = db_traders.map((trader) => ({
-      address: trader.address,
-      balance: trader.balance,
-      chainId: trader.chain_id,
-      isDexmtTrader: trader.dexmt_trader,
-      isMirroringTrades: trader.mirroring_trades,
-      platformRanking: trader.platform_ranking,
-      dexPlatform: trader.dex_platform,
-      pnl: trader.pnl,
-      pnlPercentage: trader.pnl_percentage,
-      avgSize: trader.avg_size,
-      avgLeverage: trader.avg_leverage,
-      winRatio: trader.win_ratio,
-      updatedAt: trader.updated_at.toISOString(),
-    }));
+    const traders: Trader[] = db_traders.map(
+      (trader) =>
+        new Trader({
+          address: trader.address,
+          balance: trader.balance,
+          chainId: trader.chain_id,
+          isDexmtTrader: trader.dexmt_trader,
+          isMirroringTrades: trader.mirroring_trades,
+          platformRanking: trader.platform_ranking,
+          dexPlatform: trader.dex_platform,
+          pnl: trader.pnl,
+          pnlPercentage: trader.pnl_percentage,
+          avgSize: trader.avg_size,
+          avgLeverage: trader.avg_leverage,
+          winRatio: trader.win_ratio,
+          updatedAt: trader.updated_at.toISOString(),
+        })
+    );
 
     return traders;
   } catch (error) {
@@ -522,6 +525,7 @@ async function getSelectedTraders(followerAddress: string): Promise<string[]> {
   }
 }
 
+/*
 async function getPositions(address: string) {
   if (!db) {
     throw new Error("Database not initialized. Call initializeDatabase first.");
@@ -541,6 +545,8 @@ async function getPositions(address: string) {
   }
 }
 
+*/
+
 const database = {
   initializeDatabase,
   updateTraders,
@@ -549,7 +555,6 @@ const database = {
   selectTraders,
   mirrorTrades,
   getTraders,
-  getPositions,
   getSelectedTraders,
 };
 

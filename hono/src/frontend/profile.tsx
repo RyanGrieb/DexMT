@@ -1,6 +1,5 @@
 import database from "../database";
-import { Position } from "../types/dbtypes";
-import { Trader } from "../types/trader";
+import { DEXPosition, Trader } from "../types/trader";
 
 export async function renderTraderProfile(
   traderAddress: string
@@ -11,19 +10,18 @@ export async function renderTraderProfile(
     const trader = traders.find(
       (t) => t.address.toLowerCase() === traderAddress.toLowerCase()
     );
-    console.log("Trader found:", trader);
-    console.log("Trader address search:", traderAddress);
-    console.log(
-      "Available traders:",
-      traders.map((t) => t.address)
-    );
 
     if (!trader) {
       return renderTraderNotFound(traderAddress);
     }
 
     // Fetch positions for this trader
-    const positions = await database.getPositions(traderAddress);
+    const positions = await trader.getPositions();
+
+    if (!positions) {
+      console.error("Failed to fetch positions for trader:", trader.address);
+      return renderErrorPage();
+    }
 
     return renderProfileHTML(trader, positions);
   } catch (error) {
@@ -32,7 +30,7 @@ export async function renderTraderProfile(
   }
 }
 
-function renderProfileHTML(trader: Trader, positions: Position[]): string {
+function renderProfileHTML(trader: Trader, positions: DEXPosition[]): string {
   const addressHash = trader.address.slice(2, 4).toUpperCase();
   const iconColor = generateIconColor(trader.address);
   const platformIcon = getPlatformIcon(trader.dexPlatform);
@@ -178,7 +176,7 @@ function renderProfileHTML(trader: Trader, positions: Position[]): string {
   `;
 }
 
-function renderPositions(positions: Position[]): string {
+function renderPositions(positions: DEXPosition[]): string {
   if (!positions || positions.length === 0) {
     return `
       <tr>
@@ -194,32 +192,28 @@ function renderPositions(positions: Position[]): string {
 
   return positions
     .map((position) => {
-      // Calculate PNL based on position data - you might need to adjust this logic
-      const entryPrice = Number(position.entry_price) || 0;
-      const currentPrice = entryPrice; // Placeholder - you'd need current market price
-      const size = Number(position.size) || 0;
-      const pnlValue = 0; // Calculate based on your business logic
-      const pnlClass = pnlValue >= 0 ? "positive" : "negative";
+      // Use the properly calculated USD values from DEXPosition
+      const pnlClass = position.pnlUsd >= 0 ? "positive" : "negative";
 
-      // Determine side - you might need to add this to your Position interface
-      const side = size > 0 ? "LONG" : "SHORT"; // This is a guess - adjust based on your data
-      const sideClass = side === "LONG" ? "long" : "short";
+      // Determine side based on isLong
+      const side = position.isLong ? "LONG" : "SHORT";
+      const sideClass = position.isLong ? "long" : "short";
 
       return `
       <tr class="position-row">
         <td class="position-cell">
           <div class="position-info">
-            <span class="market-name">${position.token || "N/A"}</span>
+            <span class="market-name">${position.tokenName}</span>
             <span class="position-side ${sideClass}">${side}</span>
           </div>
         </td>
-        <td class="leverage-cell">${Number(position.leverage || 0).toFixed(1)}x</td>
-        <td class="size-cell">$${abbreviateNumber(Math.abs(position.size || 0))}</td>
-        <td class="net-value-cell ${pnlClass}">$${abbreviateNumber(pnlValue)}</td>
-        <td class="collateral-cell">$${abbreviateNumber(position.collateral || 0)}</td>
-        <td class="entry-price-cell">$${Number(position.entry_price || 0).toLocaleString()}</td>
-        <td class="mark-price-cell">$${Number(position.entry_price || 0).toLocaleString()}</td>
-        <td class="liq-price-cell">N/A</td>
+        <td class="leverage-cell">${position.leverage.toFixed(2)}x</td>
+        <td class="size-cell">$${abbreviateNumber(Math.abs(position.sizeUsd))}</td>
+        <td class="net-value-cell ${pnlClass}">$${abbreviateNumber(position.pnlUsd)}</td>
+        <td class="collateral-cell">$${abbreviateNumber(position.collateralAmountUsd)}</td>
+        <td class="entry-price-cell">$${position.entryPriceUsd > 0 ? position.entryPriceUsd.toFixed(2) : "N/A"}</td>
+        <td class="mark-price-cell">$${position.markPriceUsd > 0 ? position.markPriceUsd.toFixed(2) : "N/A"}</td>
+        <td class="liq-price-cell">$${position.liqPriceUsd > 0 ? position.liqPriceUsd.toFixed(4) : "N/A"}</td>
       </tr>
     `;
     })

@@ -16,11 +16,6 @@ const app = new Hono();
 const startTime = Date.now();
 const port = Number(process.env.PORT);
 
-let sseClients: Array<{
-  id: string;
-  controller: ReadableStreamDefaultController;
-}> = [];
-
 async function updateTraderLeaderboard() {
   try {
     console.log("Starting trader leaderboard update...");
@@ -53,10 +48,9 @@ async function mirrorTrades() {
       favoriteOfAddress: trader.address,
       selected: true,
     })) {
-      // Determine the differences in user positions
-      const positions = await gmxSdk.getUserPositions(selectedTrader.address);
+      // Determine the differences in user positions vs selected trader positions
+      const positions = await gmxSdk.getTraderPositions(selectedTrader.address);
       //const trades = await gmxSdk.getTradeHistory(selectedTrader.address);
-      const dbPositions = await database.getPositions(selectedTrader.address);
     }
   }
 }
@@ -238,81 +232,12 @@ app.get("/health", (c) => {
   return c.json({ startTime });
 });
 
-// Add this endpoint before the existing routes
-app.get("/api/live-reload", (c) => {
-  let clientController: ReadableStreamDefaultController;
-  let clientId: string;
-  const stream = new ReadableStream({
-    start(controller) {
-      clientController = controller;
-      clientId = Math.random().toString(36).substr(2, 9);
-      sseClients.push({ id: clientId, controller });
-
-      // Send initial connection message
-      controller.enqueue(
-        `data: {"type":"connected","startTime":${startTime}}\n\n`
-      );
-
-      console.log(`SSE client connected: ${clientId}`);
-    },
-    cancel() {
-      // Remove client when connection closes
-      const clientIndex = sseClients.findIndex(
-        (client) => client.controller === clientController
-      );
-      if (clientIndex !== -1) {
-        console.log(`SSE client disconnected: ${sseClients[clientIndex].id}`);
-        sseClients.splice(clientIndex, 1);
-      }
-    },
-  });
-
-  return new Response(stream, {
-    headers: {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
-      Connection: "keep-alive",
-      "Access-Control-Allow-Origin": "*",
-    },
-  });
-});
-
-// Add function to notify all SSE clients of server restart
-function notifySSEClients(message: any) {
-  const data = `data: ${JSON.stringify(message)}\n\n`;
-
-  // Create a copy of the array to avoid modification during iteration
-  const clientsCopy = [...sseClients];
-
-  clientsCopy.forEach((client, index) => {
-    try {
-      client.controller.enqueue(data);
-    } catch (error) {
-      console.log(`Failed to send SSE message to client ${client.id}:`, error);
-
-      // Remove the client from the original array if the controller is closed
-      const originalIndex = sseClients.findIndex((c) => c.id === client.id);
-      if (originalIndex !== -1) {
-        console.log(`Removing closed SSE client: ${client.id}`);
-        sseClients.splice(originalIndex, 1);
-      }
-    }
-  });
-
-  console.log(`SSE message sent to ${sseClients.length} active clients`);
-}
-
 // Modify the startup function to notify on restart
 async function startup() {
   await database.initializeDatabase();
   dexmtAPI.init(app);
   startUpdateUserDataTask();
   startMirrorTradesTask();
-
-  // Notify any existing SSE clients that server restarted
-  setTimeout(() => {
-    notifySSEClients({ type: "reload", startTime });
-  }, 1000);
 
   serve({
     fetch: app.fetch,

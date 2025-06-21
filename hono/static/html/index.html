@@ -101,58 +101,6 @@
       </div>
     </div>
 
-    <script>
-      (function () {
-        let initialStartTime = null;
-
-        function setupSSEReload() {
-          const eventSource = new EventSource("/api/live-reload");
-
-          eventSource.onmessage = function (event) {
-            try {
-              const data = JSON.parse(event.data);
-
-              if (data.type === "connected") {
-                if (initialStartTime === null) {
-                  initialStartTime = data.startTime;
-                  console.log(
-                    "Connected to live reload, server start time:",
-                    data.startTime
-                  );
-                } else if (data.startTime !== initialStartTime) {
-                  console.log("Server restarted, reloading page...");
-                  window.location.reload();
-                }
-              } else if (data.type === "reload") {
-                if (
-                  initialStartTime !== null &&
-                  data.startTime !== initialStartTime
-                ) {
-                  console.log("Server restart detected via SSE, reloading...");
-                  window.location.reload();
-                }
-              }
-            } catch (error) {
-              console.error("Error parsing SSE message:", error);
-            }
-          };
-
-          eventSource.onerror = function (error) {
-            console.log("SSE connection error, retrying in 0.5 seconds...");
-            eventSource.close();
-            setTimeout(setupSSEReload, 500);
-          };
-        }
-
-        // Start SSE live reload
-        setupSSEReload();
-      })();
-    </script>
-
-    <!-- Load live reload script in development -->
-    <script id="live-reload-config">
-      window.SERVER_START_TIME = null; // Will be set by server
-    </script>
     <script src="/js/app.bundle.js"></script>
   </body>
 </html>

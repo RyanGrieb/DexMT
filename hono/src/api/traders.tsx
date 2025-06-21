@@ -1,6 +1,5 @@
 import { Hono } from "hono";
 import database from "../database";
-import gmxSdk from "../gmxsdk";
 import wallet from "./wallet";
 
 async function init(app: Hono) {
@@ -80,6 +79,7 @@ async function init(app: Hono) {
     }
   });
 
+  /*
   app.get("/api/traders/:address/positions", async (c) => {
     const { address } = c.req.param();
 
@@ -91,19 +91,26 @@ async function init(app: Hono) {
     }
 
     try {
-      const positionsResponse = await gmxSdk.getUserPositions(validAddress);
+      const positionsResponse = await gmxSdk.getTraderPositions(validAddress);
 
       if (!positionsResponse) {
-        return c.json({ error: "Failed to fetch user positions" }, 500);
+        const body = json.stringify({
+          error: "Failed to fetch trader positions",
+        });
+        return c.body(body, 500, { "Content-Type": "application/json" });
       }
-      const { serializedPositionsData } = positionsResponse;
 
-      return c.json({ positions: serializedPositionsData });
+      const { positionsData } = positionsResponse;
+      const body = json.stringify({ positions: positionsData });
+      return c.body(body, 200, { "Content-Type": "application/json" });
     } catch (error) {
-      console.error("Error fetching user positions:", error);
-      return c.json({ error: "Failed to fetch user positions" }, 500);
+      console.error("Error fetching trader positions:", error);
+      const body = json.stringify({
+        error: "Failed to fetch trader positions",
+      });
+      return c.body(body, 500, { "Content-Type": "application/json" });
     }
-  });
+  });*/
 
   app.post("/api/traders/:address/mirror_trades", async (c) => {
     try {
