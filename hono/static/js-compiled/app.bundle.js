@@ -588,17 +588,44 @@ function isWalletConnected() {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   createElement: () => (/* binding */ createElement),
-/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__),
-/* harmony export */   formatCurrency: () => (/* binding */ formatCurrency),
-/* harmony export */   formatNumber: () => (/* binding */ formatNumber),
-/* harmony export */   formatPercentage: () => (/* binding */ formatPercentage),
-/* harmony export */   formatTimestamp: () => (/* binding */ formatTimestamp),
-/* harmony export */   isValidAddress: () => (/* binding */ isValidAddress),
-/* harmony export */   showToast: () => (/* binding */ showToast),
-/* harmony export */   timeAgo: () => (/* binding */ timeAgo),
-/* harmony export */   truncateAddress: () => (/* binding */ truncateAddress)
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
+var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __generator = (undefined && undefined.__generator) || function (thisArg, body) {
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
+            }
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+    }
+};
 // Number formatting utilities
 function formatNumber(value, decimals) {
     if (decimals === void 0) { decimals = 2; }
@@ -678,6 +705,88 @@ function generateIconColor(address) {
     var b = parseInt(hash.slice(4, 6), 16);
     return "rgb(".concat(r, ", ").concat(g, ", ").concat(b, ")");
 }
+// Helper function to update content without page refresh
+function loadContent(endpoint, userURL, title, userAddress) {
+    return __awaiter(this, void 0, void 0, function () {
+        var url, headers, response, html, contentArea, error_1;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 3, 4, 5]);
+                    showLoadingState();
+                    url = endpoint;
+                    headers = {};
+                    // Add wallet address to request if available
+                    if (userAddress) {
+                        url += "?address=".concat(encodeURIComponent(userAddress));
+                        headers["x-wallet-address"] = userAddress;
+                    }
+                    return [4 /*yield*/, fetch(url, { headers: headers })];
+                case 1:
+                    response = _a.sent();
+                    if (!response.ok) {
+                        throw new Error("HTTP error! status: ".concat(response.status));
+                    }
+                    return [4 /*yield*/, response.text()];
+                case 2:
+                    html = _a.sent();
+                    contentArea = document.querySelector(".index-content");
+                    if (contentArea) {
+                        contentArea.innerHTML = html;
+                        // Update page title and URL
+                        document.title = "DEXMT - ".concat(title);
+                        window.history.pushState({}, title, userURL);
+                        showToast("".concat(title, " loaded successfully"), "success");
+                    }
+                    else {
+                        throw new Error("Content area not found");
+                    }
+                    return [3 /*break*/, 5];
+                case 3:
+                    error_1 = _a.sent();
+                    console.error("Error loading ".concat(title, ":"), error_1);
+                    showToast("Error loading ".concat(title, ". Please try again."), "error");
+                    return [3 /*break*/, 5];
+                case 4: return [7 /*endfinally*/];
+                case 5: return [2 /*return*/];
+            }
+        });
+    });
+}
+// Show loading state
+function showLoadingState() {
+    var contentArea = document.querySelector(".index-content");
+    if (contentArea) {
+        contentArea.innerHTML = "\n      <div class=\"loading-container\">\n        <div class=\"loading-spinner\"></div>\n        <p>Loading...</p>\n      </div>\n    ";
+    }
+}
+function watchElementsOfClass(className, onElementLoad) {
+    // Handle existing elements on initial load
+    var existingElements = document.querySelectorAll(".".concat(className));
+    existingElements.forEach(function (el) { return onElementLoad(el); });
+    // Set up a MutationObserver for newly added elements
+    var observer = new MutationObserver(function (mutations) {
+        mutations.forEach(function (mutation) {
+            mutation.addedNodes.forEach(function (node) {
+                if (node.nodeType === Node.ELEMENT_NODE) {
+                    var element = node;
+                    // Check if the added node has our class
+                    if (element.classList.contains(className)) {
+                        onElementLoad(element);
+                    }
+                    // Check any child elements
+                    element.querySelectorAll(".".concat(className)).forEach(function (child) {
+                        onElementLoad(child);
+                    });
+                }
+            });
+        });
+    });
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+    });
+}
 var utils = {
     formatNumber: formatNumber,
     formatCurrency: formatCurrency,
@@ -690,6 +799,8 @@ var utils = {
     showToast: showToast,
     getPlatformIcon: getPlatformIcon,
     generateIconColor: generateIconColor,
+    loadContent: loadContent,
+    watchElementsOfClass: watchElementsOfClass,
 };
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (utils);
 
@@ -813,68 +924,18 @@ var __generator = (undefined && undefined.__generator) || function (thisArg, bod
 
 
 console.log("DEXMT JS file loaded");
-// Helper function to update content without page refresh
-function loadContent(endpoint, title, userAddress) {
-    return __awaiter(this, void 0, void 0, function () {
-        var url, headers, response, html, contentArea, error_1;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    _a.trys.push([0, 3, 4, 5]);
-                    showLoadingState();
-                    url = endpoint;
-                    headers = {};
-                    // Add wallet address to request if available
-                    if (userAddress) {
-                        url += "?address=".concat(encodeURIComponent(userAddress));
-                        headers["x-wallet-address"] = userAddress;
-                    }
-                    return [4 /*yield*/, fetch(url, { headers: headers })];
-                case 1:
-                    response = _a.sent();
-                    if (!response.ok) {
-                        throw new Error("HTTP error! status: ".concat(response.status));
-                    }
-                    return [4 /*yield*/, response.text()];
-                case 2:
-                    html = _a.sent();
-                    contentArea = document.querySelector(".index-content");
-                    if (contentArea) {
-                        contentArea.innerHTML = html;
-                        // Update page title and URL
-                        document.title = "DEXMT - ".concat(title);
-                        window.history.pushState({}, title, endpoint.replace("/api", ""));
-                        (0,_utils__WEBPACK_IMPORTED_MODULE_1__.showToast)("".concat(title, " loaded successfully"), "success");
-                    }
-                    else {
-                        throw new Error("Content area not found");
-                    }
-                    return [3 /*break*/, 5];
-                case 3:
-                    error_1 = _a.sent();
-                    console.error("Error loading ".concat(title, ":"), error_1);
-                    (0,_utils__WEBPACK_IMPORTED_MODULE_1__.showToast)("Error loading ".concat(title, ". Please try again."), "error");
-                    return [3 /*break*/, 5];
-                case 4: return [7 /*endfinally*/];
-                case 5: return [2 /*return*/];
-            }
-        });
-    });
-}
-// Show loading state
-function showLoadingState() {
-    var contentArea = document.querySelector(".index-content");
-    if (contentArea) {
-        contentArea.innerHTML = "\n      <div class=\"loading-container\">\n        <div class=\"loading-spinner\"></div>\n        <p>Loading...</p>\n      </div>\n    ";
-    }
-}
 // Main application initialization
 document.addEventListener("DOMContentLoaded", function () { return __awaiter(void 0, void 0, void 0, function () {
-    var error_2, topTradersBtn, myWatchListBtn, connectButton;
+    var error_1, topTradersBtn, myWatchListBtn, connectButton;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
                 console.log("DOM loaded, setting up DEXMT...");
+                _utils__WEBPACK_IMPORTED_MODULE_1__["default"].watchElementsOfClass("back-button", function (button) {
+                    button.addEventListener("click", function () {
+                        _utils__WEBPACK_IMPORTED_MODULE_1__["default"].loadContent("/api/html/toptraders", "/toptraders", "Top Traders");
+                    });
+                });
                 _a.label = 1;
             case 1:
                 _a.trys.push([1, 4, , 5]);
@@ -890,9 +951,9 @@ document.addEventListener("DOMContentLoaded", function () { return __awaiter(voi
                 _a.sent();
                 return [3 /*break*/, 5];
             case 4:
-                error_2 = _a.sent();
-                console.error("Error during initialization:", error_2);
-                (0,_utils__WEBPACK_IMPORTED_MODULE_1__.showToast)("Initialization error", "error");
+                error_1 = _a.sent();
+                console.error("Error during initialization:", error_1);
+                _utils__WEBPACK_IMPORTED_MODULE_1__["default"].showToast("Initialization error", "error");
                 return [3 /*break*/, 5];
             case 5:
                 topTradersBtn = document.getElementById("topTradersBtn");
@@ -901,7 +962,7 @@ document.addEventListener("DOMContentLoaded", function () { return __awaiter(voi
                     topTradersBtn.addEventListener("click", function () { return __awaiter(void 0, void 0, void 0, function () {
                         return __generator(this, function (_a) {
                             switch (_a.label) {
-                                case 0: return [4 /*yield*/, loadContent("/api/html/toptraders", "Top Traders")];
+                                case 0: return [4 /*yield*/, _utils__WEBPACK_IMPORTED_MODULE_1__["default"].loadContent("/api/html/toptraders", "/toptraders", "Top Traders")];
                                 case 1:
                                     _a.sent();
                                     return [2 /*return*/];
@@ -917,7 +978,7 @@ document.addEventListener("DOMContentLoaded", function () { return __awaiter(voi
                             switch (_a.label) {
                                 case 0:
                                     walletAddress = _metamask__WEBPACK_IMPORTED_MODULE_0__.provider === null || _metamask__WEBPACK_IMPORTED_MODULE_0__.provider === void 0 ? void 0 : _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.selectedAddress;
-                                    return [4 /*yield*/, loadContent("/api/html/mywatchlist", "My Watchlist", walletAddress || undefined)];
+                                    return [4 /*yield*/, _utils__WEBPACK_IMPORTED_MODULE_1__["default"].loadContent("/api/html/mywatchlist", "/mywatchlist", "My Watchlist", walletAddress || undefined)];
                                 case 1:
                                     _a.sent();
                                     return [2 /*return*/];
@@ -936,7 +997,7 @@ document.addEventListener("DOMContentLoaded", function () { return __awaiter(voi
                                     address = traderRow.getAttribute("address");
                                     if (!address)
                                         return [2 /*return*/];
-                                    return [4 /*yield*/, loadContent("/api/html/traderprofile?address=".concat(encodeURIComponent(address)), "Trader Profile")];
+                                    return [4 /*yield*/, _utils__WEBPACK_IMPORTED_MODULE_1__["default"].loadContent("/api/html/traderprofile?address=".concat(encodeURIComponent(address)), "/traderprofile?address=" + encodeURIComponent(address), "Trader Profile")];
                                 case 1:
                                     _a.sent();
                                     return [2 /*return*/];
@@ -975,7 +1036,7 @@ document.addEventListener("DOMContentLoaded", function () { return __awaiter(voi
 // Global error handler
 window.addEventListener("error", function (event) {
     console.error("Global error:", event.error);
-    (0,_utils__WEBPACK_IMPORTED_MODULE_1__.showToast)("An error occurred. Please refresh the page.", "error");
+    _utils__WEBPACK_IMPORTED_MODULE_1__["default"].showToast("An error occurred. Please refresh the page.", "error");
 });
 // Export for debugging/compatibility
 window.DEXMT = {

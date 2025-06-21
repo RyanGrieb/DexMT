@@ -2,15 +2,12 @@
 export type ToastType = "info" | "error" | "success" | "warning";
 
 // Number formatting utilities
-export function formatNumber(
-  value: number | string,
-  decimals: number = 2
-): string {
+function formatNumber(value: number | string, decimals: number = 2): string {
   const num = Number(value) || 0;
   return num.toFixed(decimals);
 }
 
-export function formatCurrency(
+function formatCurrency(
   value: number | string,
   currency: string = "$"
 ): string {
@@ -18,13 +15,13 @@ export function formatCurrency(
   return `${currency}${num.toLocaleString()}`;
 }
 
-export function formatPercentage(value: number | string): string {
+function formatPercentage(value: number | string): string {
   const num = Number(value) || 0;
   const sign = num >= 0 ? "+" : "";
   return `${sign}${num.toFixed(2)}%`;
 }
 
-export function truncateAddress(
+function truncateAddress(
   address: string,
   startLength: number = 6,
   endLength: number = 4
@@ -35,16 +32,16 @@ export function truncateAddress(
   return `${address.slice(0, startLength)}...${address.slice(-endLength)}`;
 }
 
-export function isValidAddress(address: string): boolean {
+function isValidAddress(address: string): boolean {
   return /^0x[a-fA-F0-9]{40}$/.test(address);
 }
 
-export function formatTimestamp(timestamp: string | number | Date): string {
+function formatTimestamp(timestamp: string | number | Date): string {
   const date = new Date(timestamp);
   return date.toLocaleString();
 }
 
-export function timeAgo(timestamp: string | number | Date): string {
+function timeAgo(timestamp: string | number | Date): string {
   const now = new Date();
   const past = new Date(timestamp);
   const diffInSeconds = Math.floor((now.getTime() - past.getTime()) / 1000);
@@ -55,7 +52,7 @@ export function timeAgo(timestamp: string | number | Date): string {
   return `${Math.floor(diffInSeconds / 86400)}d ago`;
 }
 
-export function createElement(
+function createElement(
   tag: string,
   className?: string,
   innerHTML?: string
@@ -66,7 +63,7 @@ export function createElement(
   return element;
 }
 
-export function showToast(message: string, type: ToastType = "info"): void {
+function showToast(message: string, type: ToastType = "info"): void {
   // TODO: Implement toast notification system
   console.log(`[${type.toUpperCase()}] ${message}`);
 }
@@ -108,6 +105,100 @@ function generateIconColor(address: string): string {
   return `rgb(${r}, ${g}, ${b})`;
 }
 
+// Helper function to update content without page refresh
+async function loadContent(
+  endpoint: string,
+  userURL: string,
+  title: string,
+  userAddress?: string
+): Promise<void> {
+  try {
+    showLoadingState();
+
+    let url = endpoint;
+    const headers: Record<string, string> = {};
+
+    // Add wallet address to request if available
+    if (userAddress) {
+      url += `?address=${encodeURIComponent(userAddress)}`;
+      headers["x-wallet-address"] = userAddress;
+    }
+
+    const response = await fetch(url, { headers });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const html = await response.text();
+
+    // Update the content area
+    const contentArea = document.querySelector(".index-content");
+    if (contentArea) {
+      contentArea.innerHTML = html;
+
+      // Update page title and URL
+      document.title = `DEXMT - ${title}`;
+      window.history.pushState({}, title, userURL);
+
+      showToast(`${title} loaded successfully`, "success");
+    } else {
+      throw new Error("Content area not found");
+    }
+  } catch (error) {
+    console.error(`Error loading ${title}:`, error);
+    showToast(`Error loading ${title}. Please try again.`, "error");
+  } finally {
+    //hideLoadingState();
+  }
+}
+
+// Show loading state
+function showLoadingState(): void {
+  const contentArea = document.querySelector(".index-content");
+  if (contentArea) {
+    contentArea.innerHTML = `
+      <div class="loading-container">
+        <div class="loading-spinner"></div>
+        <p>Loading...</p>
+      </div>
+    `;
+  }
+}
+
+function watchElementsOfClass(
+  className: string,
+  onElementLoad: (element: Element) => void
+) {
+  // Handle existing elements on initial load
+  const existingElements = document.querySelectorAll(`.${className}`);
+  existingElements.forEach((el) => onElementLoad(el));
+
+  // Set up a MutationObserver for newly added elements
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      mutation.addedNodes.forEach((node) => {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          const element = node as Element;
+          // Check if the added node has our class
+          if (element.classList.contains(className)) {
+            onElementLoad(element);
+          }
+          // Check any child elements
+          element.querySelectorAll(`.${className}`).forEach((child) => {
+            onElementLoad(child);
+          });
+        }
+      });
+    });
+  });
+
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+  });
+}
+
 const utils = {
   formatNumber,
   formatCurrency,
@@ -120,6 +211,8 @@ const utils = {
   showToast,
   getPlatformIcon,
   generateIconColor,
+  loadContent,
+  watchElementsOfClass,
 };
 
 export default utils;

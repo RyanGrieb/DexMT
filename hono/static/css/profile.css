@@ -85,7 +85,6 @@
 }
 
 .user-rank {
-  background-color: #4f46e5;
   color: white;
   padding: 4px 8px;
   border-radius: 4px;
@@ -243,6 +242,7 @@
 
 .positions-header .header-cell.position {
   width: 120px;
+  text-align: left;
 }
 
 .positions-header .header-cell.leverage {
@@ -310,6 +310,7 @@
 .leverage-cell {
   text-align: center;
   font-weight: 500;
+  color: #e0e0e0;
 }
 
 .size-cell,
@@ -320,6 +321,7 @@
 .liq-price-cell {
   text-align: right;
   font-family: "Roboto Mono", monospace;
+  color: #e0e0e0;
 }
 
 .net-value-cell.positive {

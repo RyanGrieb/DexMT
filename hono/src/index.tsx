@@ -148,6 +148,22 @@ app.get("/mywatchlist", async (c) => {
   return c.html(html);
 });
 
+app.get("/traderprofile", async (c) => {
+  const address = c.req.query("address");
+  if (!address) {
+    return c.html(
+      await renderPageWithContent(() =>
+        Promise.resolve(
+          '<div class="error-message">Trader address is required</div>'
+        )
+      )
+    );
+  }
+
+  const html = await renderPageWithContent(() => renderTraderProfile(address));
+  return c.html(html);
+});
+
 // Serve static files
 app.get("/html/*", async (c) => {
   const filePath = path.join(__dirname, "../static", c.req.path);

@@ -1,0 +1,337 @@
+/* Leaderboard View Styles */
+.top-traders-view {
+  padding: 24px;
+  max-height: calc(100vh - 84px);
+  overflow-y: auto;
+}
+
+.view-header {
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.view-title {
+  color: #e0e0e0;
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+}
+
+.view-subtitle {
+  color: #b0b0b0;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.leaderboard-container {
+  background-color: #2a2a2a;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+/* Leaderboard Table Styling */
+.leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed; /* Important for consistent column widths */
+}
+
+.leaderboard-table thead {
+  background-color: #333333;
+  border-bottom: 1px solid #404040;
+}
+
+.leaderboard-table thead th {
+  padding: 16px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: #b0b0b0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #404040;
+  vertical-align: middle;
+}
+
+/* Match each header class with its corresponding data class */
+.rank-col,
+.user-rank {
+  width: 80px;
+  text-align: center;
+}
+
+.platform-col,
+.user-platform {
+  width: 100px;
+  text-align: center;
+}
+
+.trader-col,
+.user-trader {
+  width: 250px;
+  text-align: left;
+}
+
+.pnl-col,
+.user-pnl {
+  width: 100px;
+  text-align: right;
+}
+
+.size-col,
+.user-size {
+  width: 100px;
+  text-align: right;
+}
+
+.leverage-col,
+.user-leverage {
+  width: 100px;
+  text-align: right;
+}
+
+.winratio-col,
+.user-winratio {
+  width: 100px;
+  text-align: right;
+}
+
+.watching-col,
+.user-watching {
+  width: 100px;
+  text-align: center;
+}
+
+/* Basic styling for rows/cells */
+.leaderboard-table tbody {
+  background-color: transparent;
+}
+
+.user-item {
+  border-bottom: 1px solid #333333;
+  transition: background-color 0.2s ease;
+  cursor: pointer;
+}
+
+.user-item:hover {
+  background-color: #2a2a2a;
+}
+
+.user-item:last-child {
+  border-bottom: none;
+}
+
+.user-item td {
+  padding: 16px;
+  vertical-align: middle;
+}
+
+.user-rank {
+  text-align: center;
+  font-weight: 600;
+  font-size: 1rem;
+  color: #bb86fc;
+}
+
+.user-trader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.trader-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #fff;
+  flex-shrink: 0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.trader-address {
+  font-family: "Roboto Mono", monospace;
+  font-size: 0.875rem;
+  color: #e0e0e0;
+  font-weight: 500;
+}
+
+.user-pnl {
+  text-align: right;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.user-pnl.positive {
+  color: #4caf50;
+}
+
+.user-pnl.negative {
+  color: #f44336;
+}
+
+.user-size,
+.user-leverage,
+.user-winratio {
+  text-align: right;
+  font-size: 0.875rem;
+  color: #b0b0b0;
+  font-weight: 500;
+}
+
+.user-leverage {
+  font-weight: 600;
+  color: #03dac6;
+}
+
+.user-winratio {
+  font-weight: 600;
+  color: #e0e0e0;
+}
+
+.user-platform {
+  text-align: center;
+}
+
+.user-platform svg {
+  width: 24px;
+  height: 24px;
+}
+
+.user-watching {
+  text-align: center;
+  font-size: 0.875rem;
+  color: #b0b0b0;
+  font-weight: 500;
+}
+
+/* Error container */
+.error-container {
+  text-align: center;
+  padding: 48px 24px;
+  color: #f44336;
+}
+
+.error-container h2 {
+  color: #f44336;
+  margin-bottom: 16px;
+}
+
+.error-container p {
+  color: #b0b0b0;
+}
+
+/* Responsive design for leaderboard */
+@media (max-width: 1024px) {
+  .top-traders-view {
+    padding: 16px;
+  }
+
+  .view-title {
+    font-size: 1.75rem;
+  }
+
+  .trader-col {
+    width: 200px;
+  }
+
+  .pnl-col,
+  .size-col,
+  .leverage-col,
+  .winratio-col,
+  .watching-col {
+    width: 100px;
+  }
+}
+
+@media (max-width: 768px) {
+  .top-traders-view {
+    padding: 12px;
+  }
+
+  .view-header {
+    margin-bottom: 24px;
+  }
+
+  .view-title {
+    font-size: 1.5rem;
+  }
+
+  .view-subtitle {
+    font-size: 0.875rem;
+  }
+
+  .leaderboard-table thead th,
+  .user-item td {
+    padding: 12px 8px;
+    font-size: 0.75rem;
+  }
+
+  .trader-icon {
+    width: 28px;
+    height: 28px;
+    font-size: 0.75rem;
+  }
+
+  .trader-address {
+    font-size: 0.75rem;
+  }
+
+  .rank-col {
+    width: 60px;
+  }
+
+  .platform-col {
+    width: 80px;
+  }
+
+  .trader-col {
+    width: 160px;
+  }
+
+  .pnl-col,
+  .size-col,
+  .leverage-col,
+  .winratio-col,
+  .watching-col {
+    width: 80px;
+  }
+}
+
+@media (max-width: 480px) {
+  .leaderboard-table thead th,
+  .user-item td {
+    padding: 8px 4px;
+    font-size: 0.7rem;
+  }
+
+  .trader-icon {
+    width: 24px;
+    height: 24px;
+    font-size: 0.7rem;
+  }
+
+  .user-trader {
+    gap: 8px;
+  }
+
+  .trader-address {
+    font-size: 0.7rem;
+  }
+
+  .view-title {
+    font-size: 1.25rem;
+  }
+
+  .view-subtitle {
+    font-size: 0.8rem;
+  }
+}

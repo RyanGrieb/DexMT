@@ -7,73 +7,19 @@ import {
   provider,
   updateWalletUI,
 } from "./metamask";
-import { showToast } from "./utils";
+import utils from "./utils";
 
 console.log("DEXMT JS file loaded");
-
-// Helper function to update content without page refresh
-async function loadContent(
-  endpoint: string,
-  title: string,
-  userAddress?: string
-): Promise<void> {
-  try {
-    showLoadingState();
-
-    let url = endpoint;
-    const headers: Record<string, string> = {};
-
-    // Add wallet address to request if available
-    if (userAddress) {
-      url += `?address=${encodeURIComponent(userAddress)}`;
-      headers["x-wallet-address"] = userAddress;
-    }
-
-    const response = await fetch(url, { headers });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const html = await response.text();
-
-    // Update the content area
-    const contentArea = document.querySelector(".index-content");
-    if (contentArea) {
-      contentArea.innerHTML = html;
-
-      // Update page title and URL
-      document.title = `DEXMT - ${title}`;
-      window.history.pushState({}, title, endpoint.replace("/api", ""));
-
-      showToast(`${title} loaded successfully`, "success");
-    } else {
-      throw new Error("Content area not found");
-    }
-  } catch (error) {
-    console.error(`Error loading ${title}:`, error);
-    showToast(`Error loading ${title}. Please try again.`, "error");
-  } finally {
-    //hideLoadingState();
-  }
-}
-
-// Show loading state
-function showLoadingState(): void {
-  const contentArea = document.querySelector(".index-content");
-  if (contentArea) {
-    contentArea.innerHTML = `
-      <div class="loading-container">
-        <div class="loading-spinner"></div>
-        <p>Loading...</p>
-      </div>
-    `;
-  }
-}
 
 // Main application initialization
 document.addEventListener("DOMContentLoaded", async () => {
   console.log("DOM loaded, setting up DEXMT...");
+
+  utils.watchElementsOfClass("back-button", (button) => {
+    button.addEventListener("click", () => {
+      utils.loadContent("/api/html/toptraders", "/toptraders", "Top Traders");
+    });
+  });
 
   try {
     // Auto-reconnect wallet if previously connected
@@ -82,7 +28,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     await updateWalletUI();
   } catch (error) {
     console.error("Error during initialization:", error);
-    showToast("Initialization error", "error");
+    utils.showToast("Initialization error", "error");
   }
 
   const topTradersBtn = document.getElementById("topTradersBtn");
@@ -90,7 +36,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (topTradersBtn) {
     topTradersBtn.addEventListener("click", async () => {
-      await loadContent("/api/html/toptraders", "Top Traders");
+      await utils.loadContent(
+        "/api/html/toptraders",
+        "/toptraders",
+        "Top Traders"
+      );
     });
   }
 
@@ -98,8 +48,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     //FIXME: Authenticate user selected address before loading watchlist
     myWatchListBtn.addEventListener("click", async () => {
       const walletAddress = provider?.selectedAddress;
-      await loadContent(
+      await utils.loadContent(
         "/api/html/mywatchlist",
+        "/mywatchlist",
         "My Watchlist",
         walletAddress || undefined
       );
@@ -115,8 +66,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       if (!address) return;
 
-      await loadContent(
+      await utils.loadContent(
         `/api/html/traderprofile?address=${encodeURIComponent(address)}`,
+        "/traderprofile?address=" + encodeURIComponent(address),
         "Trader Profile"
       );
     });
@@ -143,7 +95,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 // Global error handler
 window.addEventListener("error", (event: ErrorEvent) => {
   console.error("Global error:", event.error);
-  showToast("An error occurred. Please refresh the page.", "error");
+  utils.showToast("An error occurred. Please refresh the page.", "error");
 });
 
 // Export for debugging/compatibility

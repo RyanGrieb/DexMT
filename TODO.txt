@@ -9,3 +9,5 @@ Use a secrets manager, environment variables (DO NOT commit `.env` files to your
 
 * Get the correct leverage amount based on the smart contract? The website changes it based on the price or something else...
 I want the original leverage.
+
+* If a trader drops below rank 20, we don't properly update him and we end up with 2 traders with the rank #20.

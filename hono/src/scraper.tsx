@@ -369,7 +369,7 @@ async function getTopTraders(opts: {
               /^0x[a-fA-F0-9]{40}$/.test(address);
 
             if (isValidAddress) {
-              const extractedAddress = address.toLowerCase();
+              const extractedAddress = address;
               // Return data that can be used to create Trader objects
               extractedUsers.push({
                 address: extractedAddress,
