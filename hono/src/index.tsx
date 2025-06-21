@@ -86,13 +86,18 @@ app.get("/", (c) => {
 app.get("/api/html/traderprofile", async (c) => {
   try {
     const address = c.req.query("address");
+    const userAddress =
+      c.req.query("userAddress") || c.req.header("x-wallet-address");
+
+    console.log("User address:", userAddress);
+
     if (!address) {
       return c.html(
         '<div class="error-message">Trader address is required</div>',
         400
       );
     }
-    const traderProfileHTML = await renderTraderProfile(address);
+    const traderProfileHTML = await renderTraderProfile(address, userAddress);
     return c.html(traderProfileHTML);
   } catch (error) {
     console.error("Error rendering trader profile:", error);
@@ -144,6 +149,11 @@ app.get("/mywatchlist", async (c) => {
 
 app.get("/traderprofile", async (c) => {
   const address = c.req.query("address");
+  const userAddress =
+    c.req.query("userAddress") || c.req.header("x-wallet-address");
+
+  console.log("User address:", userAddress);
+
   if (!address) {
     return c.html(
       await renderPageWithContent(() =>
@@ -154,7 +164,9 @@ app.get("/traderprofile", async (c) => {
     );
   }
 
-  const html = await renderPageWithContent(() => renderTraderProfile(address));
+  const html = await renderPageWithContent(() =>
+    renderTraderProfile(address, userAddress)
+  );
   return c.html(html);
 });
 

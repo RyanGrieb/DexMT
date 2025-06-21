@@ -96,37 +96,40 @@
   margin-left: auto;
 }
 
-.copy-trades-button {
+.favorite-button {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 12px 20px;
-  background-color: #8ee0f3;
-  color: #000;
-  border: none;
+  background-color: #374151;
+  color: #e5e7eb;
+  border: 1px solid #4b5563;
   border-radius: 8px;
   font-family: "Roboto", sans-serif;
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  justify-content: center;
 }
 
-.copy-trades-button:hover {
-  background-color: #6dd5ed;
+.favorite-button:hover {
+  background-color: #4b5563;
+  border-color: #6b7280;
 }
 
-.copy-trades-button.copying {
-  background-color: #ff9800;
+.favorite-button.favorited {
+  background-color: #dc2626;
   color: white;
+  border-color: #dc2626;
 }
 
-.copy-trades-button.active {
-  background-color: #2196f3;
-  color: white;
+.favorite-button.favorited:hover {
+  background-color: #b91c1c;
+  border-color: #b91c1c;
 }
 
-.copy-trades-button svg {
+.favorite-button svg {
   fill: currentColor;
 }
 
@@ -402,10 +405,6 @@
   .user-actions {
     margin-left: 0;
     align-self: stretch;
-  }
-
-  .copy-trades-button {
-    justify-content: center;
   }
 
   .performance-metrics {

@@ -199,6 +199,38 @@ function watchElementsOfClass(
   });
 }
 
+function showNotification(
+  message: string,
+  type: "success" | "error" | "info"
+): void {
+  // Simple notification implementation
+  // You can replace this with your preferred notification library
+  console.log(`${type.toUpperCase()}: ${message}`);
+
+  // Optional: Create a simple toast notification
+  const notification = document.createElement("div");
+  notification.className = `notification ${type}`;
+  notification.textContent = message;
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    background: ${type === "success" ? "#10b981" : type === "error" ? "#ef4444" : "#3b82f6"};
+    color: white;
+    border-radius: 8px;
+    z-index: 1000;
+    transition: opacity 0.3s ease;
+  `;
+
+  document.body.appendChild(notification);
+
+  setTimeout(() => {
+    notification.style.opacity = "0";
+    setTimeout(() => notification.remove(), 300);
+  }, 3000);
+}
+
 const utils = {
   formatNumber,
   formatCurrency,
@@ -213,6 +245,7 @@ const utils = {
   generateIconColor,
   loadContent,
   watchElementsOfClass,
+  showNotification,
 };
 
 export default utils;

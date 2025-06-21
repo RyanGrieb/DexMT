@@ -7,6 +7,7 @@ import {
   provider,
   updateWalletUI,
 } from "./metamask";
+import profile from "./profile";
 import utils from "./utils";
 
 console.log("DEXMT JS file loaded");
@@ -15,11 +16,7 @@ console.log("DEXMT JS file loaded");
 document.addEventListener("DOMContentLoaded", async () => {
   console.log("DOM loaded, setting up DEXMT...");
 
-  utils.watchElementsOfClass("back-button", (button) => {
-    button.addEventListener("click", () => {
-      utils.loadContent("/api/html/toptraders", "/toptraders", "Top Traders");
-    });
-  });
+  profile.init();
 
   try {
     // Auto-reconnect wallet if previously connected
