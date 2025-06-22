@@ -1,15 +1,188 @@
+import { provider } from "./metamask";
 import utils from "./utils";
 
 function init() {
-  utils.watchElementsOfClass("select-trader", (button) => {
-    button.addEventListener("click", () => {
-      console.log("Select trader button clicked");
+  // Delegate all clicks on select/unselect buttons to one handler
+  document.body.addEventListener("click", async (e) => {
+    const btn = (e.target as HTMLElement).closest("button");
+    if (!btn) return;
+
+    // SELECT
+    if (btn.classList.contains("select-trader")) {
+      await handleSelect(btn as HTMLButtonElement);
+    }
+    // UNSELECT
+    else if (btn.classList.contains("selected")) {
+      await handleUnselect(btn as HTMLButtonElement);
+    }
+  });
+
+  // Handle auto‐copy toggle switch
+  utils.watchElementsOfQuery("#mirrorToggle", (mirrorToggle) => {
+    // Set initial state based on user's current auto-copy setting
+
+    mirrorToggle.addEventListener("change", async (e) => {
+      await handleMirrorToggle(mirrorToggle as HTMLInputElement);
     });
   });
 }
 
-const watchlist = {
-  init,
-};
+async function handleMirrorToggle(toggle: HTMLInputElement) {
+  if (!provider?.selectedAddress) {
+    utils.showNotification("Please connect your wallet first", "error");
+    // revert UI toggle if no wallet
+    toggle.checked = !toggle.checked;
+    return;
+  }
 
-export default watchlist;
+  const wallet = provider.selectedAddress;
+  const targetEnable = toggle.checked;
+
+  // immediately revert the checkbox so it only reflects confirmed state
+  toggle.checked = !targetEnable;
+  toggle.disabled = true;
+
+  // show awaiting‐signature text
+  const labelText = toggle.parentElement?.nextElementSibling as HTMLElement;
+  if (labelText) {
+    labelText.textContent = "Awaiting signature…";
+  }
+
+  try {
+    const ts = Date.now();
+    const msg = `${targetEnable ? "Enable" : "Disable"} auto-copy trading for ${wallet} at ${ts}`;
+    // prompt MetaMask signature
+    const sig = await provider.request({
+      method: "personal_sign",
+      params: [msg, wallet],
+    });
+
+    // call backend
+    const res = await fetch(`/api/traders/${wallet}/auto_copy`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: msg, signature: sig, timestamp: ts, enable: targetEnable }),
+    });
+    const json = await res.json();
+    if (!res.ok || !json.success) {
+      throw new Error(json.error || "Failed to update auto-copy setting");
+    }
+
+    // on success, reflect the new state
+    toggle.checked = targetEnable;
+    if (labelText) {
+      labelText.textContent = targetEnable ? "Disable Auto-Copy" : "Enable Auto-Copy";
+    }
+    utils.showNotification(`Auto-copy trading ${targetEnable ? "enabled" : "disabled"}`, "success");
+  } catch (err: any) {
+    console.error(err);
+    utils.showNotification(err.message, "error");
+
+    // on error, keep it reverted and restore correct label
+    if (labelText) {
+      labelText.textContent = targetEnable ? "Enable Auto-Copy" : "Disable Auto-Copy";
+    }
+  } finally {
+    toggle.disabled = false;
+  }
+}
+
+async function handleSelect(button: HTMLButtonElement) {
+  const copyAddr = button.dataset.address;
+  if (!copyAddr) return console.error("No trader address");
+  if (!provider?.selectedAddress) {
+    return utils.showNotification("Please connect your wallet first", "error");
+  }
+
+  const wallet = provider.selectedAddress;
+  const origText = button.textContent;
+  button.textContent = "Processing...";
+  button.disabled = true;
+
+  try {
+    const ts = Date.now();
+    const msg = `Select traders ${copyAddr} for ${wallet} at ${ts}`;
+    const sig = await provider.request({
+      method: "personal_sign",
+      params: [msg, wallet],
+    });
+
+    const res = await fetch(`/api/traders/${wallet}/select_traders`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        traderAddresses: [copyAddr],
+        signature: sig,
+        message: msg,
+        timestamp: ts,
+      }),
+    });
+    const json = await res.json();
+    if (!res.ok || !json.success) {
+      throw new Error(json.error || "Failed to select trader");
+    }
+
+    utils.showNotification("Trader selected", "success");
+    button.textContent = "✓ Selected for Copying";
+    button.classList.replace("select-trader", "unselect-trader");
+    button.classList.replace("btn-primary", "btn-success");
+    button.classList.add("selected");
+  } catch (err: any) {
+    console.error(err);
+    utils.showNotification(err.message, "error");
+    button.textContent = origText;
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function handleUnselect(button: HTMLButtonElement) {
+  const copyAddr = button.dataset.address;
+  if (!copyAddr) return console.error("No trader address");
+  if (!provider?.selectedAddress) {
+    return utils.showNotification("Please connect your wallet first", "error");
+  }
+
+  const wallet = provider.selectedAddress;
+  const origText = button.textContent;
+  button.textContent = "Processing...";
+  button.disabled = true;
+
+  try {
+    const ts = Date.now();
+    const msg = `Unselect traders ${copyAddr} for ${wallet} at ${ts}`;
+    const sig = await provider.request({
+      method: "personal_sign",
+      params: [msg, wallet],
+    });
+
+    const res = await fetch(`/api/traders/${wallet}/unselect_traders`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        traderAddresses: [copyAddr],
+        signature: sig,
+        message: msg,
+        timestamp: ts,
+      }),
+    });
+    const json = await res.json();
+    if (!res.ok || !json.success) {
+      throw new Error(json.error || "Failed to unselect trader");
+    }
+
+    utils.showNotification("Trader unselected", "success");
+    button.textContent = "Select for Copying";
+    button.classList.replace("unselect-trader", "select-trader");
+    button.classList.replace("btn-success", "btn-primary");
+    button.classList.remove("selected");
+  } catch (err: any) {
+    console.error(err);
+    utils.showNotification(err.message, "error");
+    button.textContent = origText;
+  } finally {
+    button.disabled = false;
+  }
+}
+
+export default { init };

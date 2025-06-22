@@ -37,8 +37,8 @@
 /* Leaderboard Table Styling */
 .leaderboard-table {
   width: 100%;
-  border-collapse: collapse;
-  table-layout: fixed; /* Important for consistent column widths */
+  border-collapse: separate; /* Change from collapse to separate */
+  border-spacing: 0; /* Keep cells tight together */
 }
 
 .leaderboard-table thead {
@@ -113,12 +113,8 @@
 
 .user-item {
   border-bottom: 1px solid #333333;
-  transition: background-color 0.2s ease;
+  transition: all 0.3s ease; /* Smooth transition for all properties */
   cursor: pointer;
-}
-
-.user-item:hover {
-  background-color: #2a2a2a;
 }
 
 .user-item:last-child {
@@ -128,6 +124,11 @@
 .user-item td {
   padding: 16px;
   vertical-align: middle;
+}
+
+.user-item:hover {
+  background-color: #3a3a3a !important; /* Slightly lighter than #2a2a2a for better contrast */
+  box-shadow: 0 0 2px rgba(68, 68, 68, 0.6); /* Outer glow effect */
 }
 
 .user-rank {

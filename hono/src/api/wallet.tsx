@@ -13,7 +13,7 @@ interface ConnectedWallet {
 let connectedWallets: ConnectedWallet[] = [];
 
 async function init(app: Hono) {
-  app.get("/api/wallet/connect", async (c) => {
+  app.post("/api/wallet/connect", async (c) => {
     const { address, chainId } = await c.req.json();
 
     if (!address || !chainId) {
@@ -21,9 +21,7 @@ async function init(app: Hono) {
     }
 
     // Store wallet connection
-    const existingIndex = connectedWallets.findIndex(
-      (w) => w.address === address
-    );
+    const existingIndex = connectedWallets.findIndex((w) => w.address === address);
     if (existingIndex >= 0) {
       connectedWallets[existingIndex] = {
         address,
@@ -40,7 +38,7 @@ async function init(app: Hono) {
       balance: await getEthBalance(address, "https://arb1.arbitrum.io/rpc"),
       chainId: chainId,
       updatedAt: new Date().toISOString(),
-      isDexmtUser: true,
+      isDexmtTrader: true,
     });
     db.addTrader(trader);
 
@@ -65,11 +63,7 @@ async function init(app: Hono) {
 }
 
 // Utility function to verify signature
-function verifySignature(
-  message: string,
-  signature: string,
-  expectedAddress: string
-): boolean {
+function verifySignature(message: string, signature: string, expectedAddress: string): boolean {
   try {
     const recoveredAddress = ethers.verifyMessage(message, signature);
     return recoveredAddress.toLowerCase() === expectedAddress.toLowerCase();

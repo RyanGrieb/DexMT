@@ -47,9 +47,7 @@ function updateNetworkStatus(chainId: string): void {
 }
 
 export async function updateWalletUI(): Promise<void> {
-  const connectButton = document.getElementById(
-    "connectButton"
-  ) as HTMLButtonElement;
+  const connectButton = document.getElementById("connectButton") as HTMLButtonElement;
   if (!connectButton) return;
 
   const connected = provider?.isConnected() && provider.selectedAddress;
@@ -59,9 +57,7 @@ export async function updateWalletUI(): Promise<void> {
   // Update button text - the button contains both SVG and text
   const buttonTextElement = connectButton.querySelector("p") || connectButton;
   if (buttonTextElement.tagName === "P") {
-    buttonTextElement.textContent = connected
-      ? "Disconnect Wallet"
-      : "Connect Wallet";
+    buttonTextElement.textContent = connected ? "Disconnect Wallet" : "Connect Wallet";
   } else {
     // If no <p> element, update the button's text content while preserving the SVG
     const svgElement = connectButton.querySelector("svg");
@@ -69,9 +65,7 @@ export async function updateWalletUI(): Promise<void> {
     if (svgElement) {
       connectButton.appendChild(svgElement);
     }
-    const textNode = document.createTextNode(
-      connected ? "Disconnect Wallet" : "Connect Wallet"
-    );
+    const textNode = document.createTextNode(connected ? "Disconnect Wallet" : "Connect Wallet");
     connectButton.appendChild(textNode);
   }
 
@@ -139,13 +133,22 @@ export async function connectWallet(): Promise<void> {
     // Store connection timestamp for our 7-day expiry rule
     localStorage.setItem(CONNECTION_TIME_KEY, Date.now().toString());
 
+    // Post request to /api/wallet/connect to notify backend of connection
+    await fetch("/api/wallet/connect", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        address: provider.selectedAddress,
+        chainId: provider.chainId,
+      }),
+    });
+
     // Update UI immediately after successful connection
     await updateWalletUI();
 
-    console.log(
-      "Wallet connection successful, connected account:",
-      provider.selectedAddress
-    );
+    console.log("Wallet connection successful, connected account:", provider.selectedAddress);
   } catch (error: any) {
     console.error("Full error object:", error);
     if (error.code === 4001) {
@@ -180,9 +183,7 @@ export async function checkExistingConnection(): Promise<boolean> {
       method: "wallet_getPermissions",
     })) as any[];
 
-    const accountsPermission = permissions.find(
-      (permission) => permission.parentCapability === "eth_accounts"
-    );
+    const accountsPermission = permissions.find((permission) => permission.parentCapability === "eth_accounts");
 
     if (accountsPermission) {
       // We have permissions, now get the accounts
@@ -221,10 +222,7 @@ export async function disconnectWallet(): Promise<void> {
           }),
         });
       } catch (fetchError) {
-        console.warn(
-          "Failed to notify backend of wallet disconnection:",
-          fetchError
-        );
+        console.warn("Failed to notify backend of wallet disconnection:", fetchError);
       }
     }
 
@@ -387,9 +385,7 @@ export async function isWalletConnected(): Promise<boolean> {
       method: "wallet_getPermissions",
     })) as any[];
 
-    const accountsPermission = permissions.find(
-      (permission) => permission.parentCapability === "eth_accounts"
-    );
+    const accountsPermission = permissions.find((permission) => permission.parentCapability === "eth_accounts");
 
     if (!accountsPermission) {
       console.log("No eth_accounts permission found");
@@ -402,12 +398,7 @@ export async function isWalletConnected(): Promise<boolean> {
     })) as string[];
 
     const connected = accounts.length > 0;
-    console.log(
-      "Wallet connection check result:",
-      connected,
-      "accounts:",
-      accounts.length
-    );
+    console.log("Wallet connection check result:", connected, "accounts:", accounts.length);
     return connected;
   } catch (error) {
     console.error("Error checking wallet connection:", error);

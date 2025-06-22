@@ -170,9 +170,7 @@ function updateWalletUI() {
             console.log("Updating wallet UI, connected: ".concat(connected));
             buttonTextElement = connectButton.querySelector("p") || connectButton;
             if (buttonTextElement.tagName === "P") {
-                buttonTextElement.textContent = connected
-                    ? "Disconnect Wallet"
-                    : "Connect Wallet";
+                buttonTextElement.textContent = connected ? "Disconnect Wallet" : "Connect Wallet";
             }
             else {
                 svgElement = connectButton.querySelector("svg");
@@ -227,7 +225,7 @@ function connectWallet() {
                     console.log("Connect wallet called");
                     _a.label = 1;
                 case 1:
-                    _a.trys.push([1, 5, , 7]);
+                    _a.trys.push([1, 6, , 8]);
                     // Always ensure we have a fresh provider reference
                     return [4 /*yield*/, waitForMetaMaskProvider()];
                 case 2:
@@ -248,14 +246,28 @@ function connectWallet() {
                     console.log("Permission result:", result);
                     // Store connection timestamp for our 7-day expiry rule
                     localStorage.setItem(CONNECTION_TIME_KEY, Date.now().toString());
+                    // Post request to /api/wallet/connect to notify backend of connection
+                    return [4 /*yield*/, fetch("/api/wallet/connect", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({
+                                address: provider.selectedAddress,
+                                chainId: provider.chainId,
+                            }),
+                        })];
+                case 4:
+                    // Post request to /api/wallet/connect to notify backend of connection
+                    _a.sent();
                     // Update UI immediately after successful connection
                     return [4 /*yield*/, updateWalletUI()];
-                case 4:
+                case 5:
                     // Update UI immediately after successful connection
                     _a.sent();
                     console.log("Wallet connection successful, connected account:", provider.selectedAddress);
-                    return [3 /*break*/, 7];
-                case 5:
+                    return [3 /*break*/, 8];
+                case 6:
                     error_1 = _a.sent();
                     console.error("Full error object:", error_1);
                     if (error_1.code === 4001) {
@@ -271,11 +283,11 @@ function connectWallet() {
                     }
                     // Ensure UI is updated even on error
                     return [4 /*yield*/, updateWalletUI()];
-                case 6:
+                case 7:
                     // Ensure UI is updated even on error
                     _a.sent();
-                    return [3 /*break*/, 7];
-                case 7: return [2 /*return*/];
+                    return [3 /*break*/, 8];
+                case 8: return [2 /*return*/];
             }
         });
     });
@@ -632,7 +644,7 @@ var __generator = (undefined && undefined.__generator) || function (thisArg, bod
 
 function init() {
     var _this = this;
-    _utils__WEBPACK_IMPORTED_MODULE_1__["default"].watchElementsOfClass("back-button", function (button) {
+    _utils__WEBPACK_IMPORTED_MODULE_1__["default"].watchElementsOfQuery(".back-button", function (button) {
         button.addEventListener("click", function () {
             _utils__WEBPACK_IMPORTED_MODULE_1__["default"].loadContent({
                 apiUrl: "/api/html/toptraders",
@@ -641,7 +653,7 @@ function init() {
             });
         });
     });
-    _utils__WEBPACK_IMPORTED_MODULE_1__["default"].watchElementsOfClass("favorite-button", function (button) {
+    _utils__WEBPACK_IMPORTED_MODULE_1__["default"].watchElementsOfQuery(".favorite-button", function (button) {
         console.log("Found favorite button");
         button.addEventListener("click", function () { return __awaiter(_this, void 0, void 0, function () {
             var favoriteAddr, walletAddress, originalText, isFavorited, icon, error_1;
@@ -959,9 +971,9 @@ function showLoadingState() {
         contentArea.innerHTML = "\n      <div class=\"loading-container\">\n        <div class=\"loading-spinner\"></div>\n        <p>Loading...</p>\n      </div>\n    ";
     }
 }
-function watchElementsOfClass(className, onElementLoad) {
+function watchElementsOfQuery(query, onElementLoad) {
     // Handle existing elements on initial load
-    var existingElements = document.querySelectorAll(".".concat(className));
+    var existingElements = document.querySelectorAll(query);
     existingElements.forEach(function (el) { return onElementLoad(el); });
     // Set up a MutationObserver for newly added elements
     var observer = new MutationObserver(function (mutations) {
@@ -969,12 +981,12 @@ function watchElementsOfClass(className, onElementLoad) {
             mutation.addedNodes.forEach(function (node) {
                 if (node.nodeType === Node.ELEMENT_NODE) {
                     var element = node;
-                    // Check if the added node has our class
-                    if (element.classList.contains(className)) {
+                    // Check if the added node matches our query
+                    if (element.matches(query)) {
                         onElementLoad(element);
                     }
                     // Check any child elements
-                    element.querySelectorAll(".".concat(className)).forEach(function (child) {
+                    element.querySelectorAll(query).forEach(function (child) {
                         onElementLoad(child);
                     });
                 }
@@ -1014,7 +1026,7 @@ var utils = {
     getPlatformIcon: getPlatformIcon,
     generateIconColor: generateIconColor,
     loadContent: loadContent,
-    watchElementsOfClass: watchElementsOfClass,
+    watchElementsOfQuery: watchElementsOfQuery,
     showNotification: showNotification,
 };
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (utils);
@@ -1032,19 +1044,288 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./utils */ "./static/ts-front-end/utils.ts");
+/* harmony import */ var _metamask__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./metamask */ "./static/ts-front-end/metamask.ts");
+/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./utils */ "./static/ts-front-end/utils.ts");
+var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __generator = (undefined && undefined.__generator) || function (thisArg, body) {
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
+            }
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+    }
+};
+
 
 function init() {
-    _utils__WEBPACK_IMPORTED_MODULE_0__["default"].watchElementsOfClass("select-trader", function (button) {
-        button.addEventListener("click", function () {
-            console.log("Select trader button clicked");
+    var _this = this;
+    // Delegate all clicks on select/unselect buttons to one handler
+    document.body.addEventListener("click", function (e) { return __awaiter(_this, void 0, void 0, function () {
+        var btn;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    btn = e.target.closest("button");
+                    if (!btn)
+                        return [2 /*return*/];
+                    if (!btn.classList.contains("select-trader")) return [3 /*break*/, 2];
+                    return [4 /*yield*/, handleSelect(btn)];
+                case 1:
+                    _a.sent();
+                    return [3 /*break*/, 4];
+                case 2:
+                    if (!btn.classList.contains("selected")) return [3 /*break*/, 4];
+                    return [4 /*yield*/, handleUnselect(btn)];
+                case 3:
+                    _a.sent();
+                    _a.label = 4;
+                case 4: return [2 /*return*/];
+            }
+        });
+    }); });
+    // Handle auto‐copy toggle switch
+    _utils__WEBPACK_IMPORTED_MODULE_1__["default"].watchElementsOfQuery("#mirrorToggle", function (mirrorToggle) {
+        // Set initial state based on user's current auto-copy setting
+        mirrorToggle.addEventListener("change", function (e) { return __awaiter(_this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, handleMirrorToggle(mirrorToggle)];
+                    case 1:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
+        }); });
+    });
+}
+function handleMirrorToggle(toggle) {
+    return __awaiter(this, void 0, void 0, function () {
+        var wallet, targetEnable, labelText, ts, msg, sig, res, json, err_1;
+        var _a;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
+                case 0:
+                    if (!(_metamask__WEBPACK_IMPORTED_MODULE_0__.provider === null || _metamask__WEBPACK_IMPORTED_MODULE_0__.provider === void 0 ? void 0 : _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.selectedAddress)) {
+                        _utils__WEBPACK_IMPORTED_MODULE_1__["default"].showNotification("Please connect your wallet first", "error");
+                        // revert UI toggle if no wallet
+                        toggle.checked = !toggle.checked;
+                        return [2 /*return*/];
+                    }
+                    wallet = _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.selectedAddress;
+                    targetEnable = toggle.checked;
+                    // immediately revert the checkbox so it only reflects confirmed state
+                    toggle.checked = !targetEnable;
+                    toggle.disabled = true;
+                    labelText = (_a = toggle.parentElement) === null || _a === void 0 ? void 0 : _a.nextElementSibling;
+                    if (labelText) {
+                        labelText.textContent = "Awaiting signature…";
+                    }
+                    _b.label = 1;
+                case 1:
+                    _b.trys.push([1, 5, 6, 7]);
+                    ts = Date.now();
+                    msg = "".concat(targetEnable ? "Enable" : "Disable", " auto-copy trading for ").concat(wallet, " at ").concat(ts);
+                    return [4 /*yield*/, _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.request({
+                            method: "personal_sign",
+                            params: [msg, wallet],
+                        })];
+                case 2:
+                    sig = _b.sent();
+                    return [4 /*yield*/, fetch("/api/traders/".concat(wallet, "/auto_copy"), {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ message: msg, signature: sig, timestamp: ts, enable: targetEnable }),
+                        })];
+                case 3:
+                    res = _b.sent();
+                    return [4 /*yield*/, res.json()];
+                case 4:
+                    json = _b.sent();
+                    if (!res.ok || !json.success) {
+                        throw new Error(json.error || "Failed to update auto-copy setting");
+                    }
+                    // on success, reflect the new state
+                    toggle.checked = targetEnable;
+                    if (labelText) {
+                        labelText.textContent = targetEnable ? "Disable Auto-Copy" : "Enable Auto-Copy";
+                    }
+                    _utils__WEBPACK_IMPORTED_MODULE_1__["default"].showNotification("Auto-copy trading ".concat(targetEnable ? "enabled" : "disabled"), "success");
+                    return [3 /*break*/, 7];
+                case 5:
+                    err_1 = _b.sent();
+                    console.error(err_1);
+                    _utils__WEBPACK_IMPORTED_MODULE_1__["default"].showNotification(err_1.message, "error");
+                    // on error, keep it reverted and restore correct label
+                    if (labelText) {
+                        labelText.textContent = targetEnable ? "Enable Auto-Copy" : "Disable Auto-Copy";
+                    }
+                    return [3 /*break*/, 7];
+                case 6:
+                    toggle.disabled = false;
+                    return [7 /*endfinally*/];
+                case 7: return [2 /*return*/];
+            }
         });
     });
 }
-var watchlist = {
-    init: init,
-};
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (watchlist);
+function handleSelect(button) {
+    return __awaiter(this, void 0, void 0, function () {
+        var copyAddr, wallet, origText, ts, msg, sig, res, json, err_2;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    copyAddr = button.dataset.address;
+                    if (!copyAddr)
+                        return [2 /*return*/, console.error("No trader address")];
+                    if (!(_metamask__WEBPACK_IMPORTED_MODULE_0__.provider === null || _metamask__WEBPACK_IMPORTED_MODULE_0__.provider === void 0 ? void 0 : _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.selectedAddress)) {
+                        return [2 /*return*/, _utils__WEBPACK_IMPORTED_MODULE_1__["default"].showNotification("Please connect your wallet first", "error")];
+                    }
+                    wallet = _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.selectedAddress;
+                    origText = button.textContent;
+                    button.textContent = "Processing...";
+                    button.disabled = true;
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 5, 6, 7]);
+                    ts = Date.now();
+                    msg = "Select traders ".concat(copyAddr, " for ").concat(wallet, " at ").concat(ts);
+                    return [4 /*yield*/, _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.request({
+                            method: "personal_sign",
+                            params: [msg, wallet],
+                        })];
+                case 2:
+                    sig = _a.sent();
+                    return [4 /*yield*/, fetch("/api/traders/".concat(wallet, "/select_traders"), {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                traderAddresses: [copyAddr],
+                                signature: sig,
+                                message: msg,
+                                timestamp: ts,
+                            }),
+                        })];
+                case 3:
+                    res = _a.sent();
+                    return [4 /*yield*/, res.json()];
+                case 4:
+                    json = _a.sent();
+                    if (!res.ok || !json.success) {
+                        throw new Error(json.error || "Failed to select trader");
+                    }
+                    _utils__WEBPACK_IMPORTED_MODULE_1__["default"].showNotification("Trader selected", "success");
+                    button.textContent = "✓ Selected for Copying";
+                    button.classList.replace("select-trader", "unselect-trader");
+                    button.classList.replace("btn-primary", "btn-success");
+                    button.classList.add("selected");
+                    return [3 /*break*/, 7];
+                case 5:
+                    err_2 = _a.sent();
+                    console.error(err_2);
+                    _utils__WEBPACK_IMPORTED_MODULE_1__["default"].showNotification(err_2.message, "error");
+                    button.textContent = origText;
+                    return [3 /*break*/, 7];
+                case 6:
+                    button.disabled = false;
+                    return [7 /*endfinally*/];
+                case 7: return [2 /*return*/];
+            }
+        });
+    });
+}
+function handleUnselect(button) {
+    return __awaiter(this, void 0, void 0, function () {
+        var copyAddr, wallet, origText, ts, msg, sig, res, json, err_3;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    copyAddr = button.dataset.address;
+                    if (!copyAddr)
+                        return [2 /*return*/, console.error("No trader address")];
+                    if (!(_metamask__WEBPACK_IMPORTED_MODULE_0__.provider === null || _metamask__WEBPACK_IMPORTED_MODULE_0__.provider === void 0 ? void 0 : _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.selectedAddress)) {
+                        return [2 /*return*/, _utils__WEBPACK_IMPORTED_MODULE_1__["default"].showNotification("Please connect your wallet first", "error")];
+                    }
+                    wallet = _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.selectedAddress;
+                    origText = button.textContent;
+                    button.textContent = "Processing...";
+                    button.disabled = true;
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 5, 6, 7]);
+                    ts = Date.now();
+                    msg = "Unselect traders ".concat(copyAddr, " for ").concat(wallet, " at ").concat(ts);
+                    return [4 /*yield*/, _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.request({
+                            method: "personal_sign",
+                            params: [msg, wallet],
+                        })];
+                case 2:
+                    sig = _a.sent();
+                    return [4 /*yield*/, fetch("/api/traders/".concat(wallet, "/unselect_traders"), {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                traderAddresses: [copyAddr],
+                                signature: sig,
+                                message: msg,
+                                timestamp: ts,
+                            }),
+                        })];
+                case 3:
+                    res = _a.sent();
+                    return [4 /*yield*/, res.json()];
+                case 4:
+                    json = _a.sent();
+                    if (!res.ok || !json.success) {
+                        throw new Error(json.error || "Failed to unselect trader");
+                    }
+                    _utils__WEBPACK_IMPORTED_MODULE_1__["default"].showNotification("Trader unselected", "success");
+                    button.textContent = "Select for Copying";
+                    button.classList.replace("unselect-trader", "select-trader");
+                    button.classList.replace("btn-success", "btn-primary");
+                    button.classList.remove("selected");
+                    return [3 /*break*/, 7];
+                case 5:
+                    err_3 = _a.sent();
+                    console.error(err_3);
+                    _utils__WEBPACK_IMPORTED_MODULE_1__["default"].showNotification(err_3.message, "error");
+                    button.textContent = origText;
+                    return [3 /*break*/, 7];
+                case 6:
+                    button.disabled = false;
+                    return [7 /*endfinally*/];
+                case 7: return [2 /*return*/];
+            }
+        });
+    });
+}
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({ init: init });
 
 
 /***/ })

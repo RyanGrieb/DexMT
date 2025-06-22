@@ -2,7 +2,7 @@ import { provider } from "./metamask";
 import utils from "./utils";
 
 function init() {
-  utils.watchElementsOfClass("back-button", (button) => {
+  utils.watchElementsOfQuery(".back-button", (button) => {
     button.addEventListener("click", () => {
       utils.loadContent({
         apiUrl: "/api/html/toptraders",
@@ -12,7 +12,7 @@ function init() {
     });
   });
 
-  utils.watchElementsOfClass("favorite-button", (button) => {
+  utils.watchElementsOfQuery(".favorite-button", (button) => {
     console.log("Found favorite button");
     button.addEventListener("click", async () => {
       const favoriteAddr = button.getAttribute("data-address");
@@ -41,10 +41,7 @@ function init() {
 
         if (isFavorited) {
           // TODO: Implement unfavorite functionality
-          utils.showNotification(
-            "Unfavorite functionality not yet implemented",
-            "info"
-          );
+          utils.showNotification("Unfavorite functionality not yet implemented", "info");
           return;
         }
 
@@ -71,10 +68,7 @@ function init() {
   });
 }
 
-async function favoriteTrader(
-  followerAddr: string,
-  favoriteAddr: string
-): Promise<void> {
+async function favoriteTrader(followerAddr: string, favoriteAddr: string): Promise<void> {
   try {
     // Create timestamp
     const timestamp = Date.now();
@@ -97,21 +91,18 @@ async function favoriteTrader(
     }
 
     // Send request to backend
-    const response = await fetch(
-      `/api/traders/${followerAddr}/favorite_trader`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          favoriteAddr,
-          signature,
-          message,
-          timestamp,
-        }),
-      }
-    );
+    const response = await fetch(`/api/traders/${followerAddr}/favorite_trader`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        favoriteAddr,
+        signature,
+        message,
+        timestamp,
+      }),
+    });
 
     if (!response.ok) {
       const errorData = await response.json();

@@ -39,11 +39,12 @@ export async function renderWatchlist(userAddress?: string): Promise<string> {
       selected: true,
     });
 
+    // Create a Set of selected trader addresses for quick lookup
+    const selectedAddresses = new Set(selectedTraders.map((trader) => trader.address));
+
     // Check if user has copy trading enabled
     const userTraders = await database.getTraders({ isMirroring: true });
-    const isUserMirroring = userTraders.some(
-      (trader) => trader.address.toLowerCase() === userAddress.toLowerCase()
-    );
+    const isUserMirroring = userTraders.some((trader) => trader.address.toLowerCase() === userAddress.toLowerCase());
 
     return `
       <div class="watchlist-container">
@@ -57,7 +58,7 @@ export async function renderWatchlist(userAddress?: string): Promise<string> {
                 <input type="checkbox" id="mirrorToggle" ${isUserMirroring ? "checked" : ""}>
                 <span class="slider round"></span>
               </label>
-              <span>Enable Auto-Copy</span>
+              <span>${isUserMirroring ? "Disable Auto-Copy" : "Enable Auto-Copy"}</span>
             </div>
           </div>
         </div>
@@ -70,7 +71,7 @@ export async function renderWatchlist(userAddress?: string): Promise<string> {
 
         <div class="tab-content">
           <div id="favorited-tab" class="tab-pane active">
-            ${renderFavoritedTraders(favoritedTraders, userAddress)}
+            ${renderFavoritedTraders(favoritedTraders, userAddress, selectedAddresses)}
           </div>
           
           <div id="selected-tab" class="tab-pane">
@@ -96,7 +97,7 @@ export async function renderWatchlist(userAddress?: string): Promise<string> {
   }
 }
 
-function renderFavoritedTraders(traders: any[], userAddress: string): string {
+function renderFavoritedTraders(traders: any[], userAddress: string, selectedAddresses: Set<string>): string {
   if (traders.length === 0) {
     return `
       <div class="empty-state">
@@ -110,8 +111,9 @@ function renderFavoritedTraders(traders: any[], userAddress: string): string {
   return `
     <div class="traders-grid">
       ${traders
-        .map(
-          (trader) => `
+        .map((trader) => {
+          const isSelected = selectedAddresses.has(trader.address);
+          return `
         <div class="trader-card" data-address="${trader.address}">
           <div class="trader-info">
             <div class="trader-address">
@@ -136,16 +138,22 @@ function renderFavoritedTraders(traders: any[], userAddress: string): string {
             </div>
           </div>
           <div class="trader-actions">
-            <button class="btn btn-small btn-primary select-trader" data-address="${trader.address}">
-              Select for Copying
-            </button>
+            ${
+              isSelected
+                ? `<button class="btn btn-small btn-success selected" data-address="${trader.address}">
+                   ✓ Selected for Copying
+                 </button>`
+                : `<button class="btn btn-small btn-primary select-trader" data-address="${trader.address}">
+                   Select for Copying
+                 </button>`
+            }
             <button class="btn btn-small btn-danger remove-trader" data-address="${trader.address}">
               Remove
             </button>
           </div>
         </div>
-      `
-        )
+      `;
+        })
         .join("")}
     </div>
   `;

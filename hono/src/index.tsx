@@ -169,7 +169,6 @@ app.get("/js/*", async (c) => {
 
   //List all files in the js-compiled directory
   const files = await fs.readdir(path.join(__dirname, "../static/js-compiled"));
-  console.log("Compiled JS files:", files);
 
   try {
     const content = await fs.readFile(filePath, "utf-8");

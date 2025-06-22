@@ -120,7 +120,7 @@ async function init(app: Hono) {
         return c.json({ error: "Missing required fields" }, 400);
       }
 
-      console.log(`Received request to ${enable ? "enable" : "disable"} auto-copying trades:`);
+      console.log(`Received request to '${enable ? "enable" : "disable"}' auto-copying trades:`);
 
       const tsValidation = validateTimestamp(timestamp);
 
@@ -185,7 +185,9 @@ async function handleTraderSelection(c: any, selected: boolean) {
     }
 
     // Verify the message contains the expected content
-    const expectedMessage = `Select traders ${traderAddresses.join(",")} for ${address} at ${timestampMs}`;
+    const expectedMessage = selected
+      ? `Select traders ${traderAddresses.join(",")} for ${address} at ${timestampMs}`
+      : `Unselect traders ${traderAddresses.join(",")} for ${address} at ${timestampMs}`;
     if (message !== expectedMessage) {
       return c.json({ error: "Invalid message format" }, 400);
     }

@@ -187,9 +187,9 @@ function showLoadingState(): void {
   }
 }
 
-function watchElementsOfClass(className: string, onElementLoad: (element: Element) => void) {
+function watchElementsOfQuery(query: string, onElementLoad: (element: Element) => void) {
   // Handle existing elements on initial load
-  const existingElements = document.querySelectorAll(`.${className}`);
+  const existingElements = document.querySelectorAll(query);
   existingElements.forEach((el) => onElementLoad(el));
 
   // Set up a MutationObserver for newly added elements
@@ -198,12 +198,12 @@ function watchElementsOfClass(className: string, onElementLoad: (element: Elemen
       mutation.addedNodes.forEach((node) => {
         if (node.nodeType === Node.ELEMENT_NODE) {
           const element = node as Element;
-          // Check if the added node has our class
-          if (element.classList.contains(className)) {
+          // Check if the added node matches our query
+          if (element.matches(query)) {
             onElementLoad(element);
           }
           // Check any child elements
-          element.querySelectorAll(`.${className}`).forEach((child) => {
+          element.querySelectorAll(query).forEach((child) => {
             onElementLoad(child);
           });
         }
@@ -259,7 +259,7 @@ const utils = {
   getPlatformIcon,
   generateIconColor,
   loadContent,
-  watchElementsOfClass,
+  watchElementsOfQuery,
   showNotification,
 };
 

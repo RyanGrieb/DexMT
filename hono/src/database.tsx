@@ -341,8 +341,6 @@ async function mirrorTrades(args: { address: string; enable: boolean }) {
       })
       .where("address", "=", address)
       .execute();
-
-    console.log(`Copy trading ${enable ? "enabled" : "disabled"} for: ${address}`);
   } catch (error) {
     console.error("Error updating trader mirroring status:", error);
     throw error;
@@ -386,7 +384,7 @@ async function getTraders(selection_args?: {
             selectFrom("favorited_traders")
               .select("id")
               .where("favorited_traders.follower_address", "=", selection_args.favoriteOfAddress!)
-              .where("favorited_traders.favorited_address", "=", "traders.address" as any)
+              .whereRef("favorited_traders.favorited_address", "=", "traders.address")
               .where("favorited_traders.selected", "=", selection_args.selected!)
           )
         );
