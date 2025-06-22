@@ -23,7 +23,8 @@ async function init(app: Hono) {
     return handleTraderSelection(c, false);
   });
 
-  app.post("/api/traders/:address/favorite_trader", async (c) => {
+  // Generic handler for favorite/unfavorite
+  async function handleFavoriteTrader(c: any, favorite: boolean) {
     try {
       const { address } = c.req.param();
       const { favoriteAddr, signature, message, timestamp } = await c.req.json();
@@ -31,84 +32,57 @@ async function init(app: Hono) {
       // Validate required parameters
       if (!address || !favoriteAddr || !signature || !message || !timestamp) {
         return c.json(
-          {
-            error: "Missing required parameters: address, favoriteAddr, signature, message, timestamp",
-          },
+          { error: "Missing required parameters: address, favoriteAddr, signature, message, timestamp" },
           400
         );
       }
 
+      // Validate timestamp
       const tsValidation = validateTimestamp(timestamp);
       const timestampMs = tsValidation.timestamp;
-
       if (!tsValidation.isValid) {
         return c.json({ error: tsValidation.error }, 400);
       }
 
-      // Verify the message contains the expected content
-      const expectedMessage = `Favorite trader ${favoriteAddr} for ${address} at ${timestampMs}`;
+      // Build and verify expected message
+      const action = favorite ? "Favorite" : "Unfavorite";
+      const expectedMessage = `${action} trader ${favoriteAddr} for ${address} at ${timestampMs}`;
       if (message !== expectedMessage) {
         return c.json({ error: "Invalid message format" }, 400);
       }
-
       if (!wallet.verifySignature(message, signature, address)) {
         return c.json({ error: "Invalid wallet signature" }, 401);
       }
 
-      await database.favoriteTrader({
+      // Perform DB action
+      const dbMethod = favorite ? database.favoriteTrader : database.unfavoriteTrader;
+      await dbMethod({
         followerAddr: address,
-        favoriteAddr: favoriteAddr,
-        signature: signature,
-        message: message,
+        favoriteAddr,
+        signature,
+        message,
         timestamp: timestampMs,
       });
 
+      // Build response
+      const respKey = favorite ? "favorite_trader" : "unfavorited_trader";
       return c.json(
         {
           success: true,
           follower_address: address,
-          favorite_trader: favoriteAddr,
+          [respKey]: favoriteAddr,
         },
         200
       );
     } catch (error) {
-      console.error("Error favoriting trader:", error);
-      return c.json({ error: "Failed to favorite trader" }, 500);
+      console.error(`Error ${favorite ? "favoriting" : "unfavoriting"} trader:`, error);
+      return c.json({ error: `Failed to ${favorite ? "favorite" : "unfavorite"} trader` }, 500);
     }
-  });
+  }
 
-  /*
-  app.get("/api/traders/:address/positions", async (c) => {
-    const { address } = c.req.param();
-
-    // FIXME: Ensure this is a valid address
-    const validAddress: `0x${string}` = address as `0x${string}`;
-
-    if (!address) {
-      return c.json({ error: "Missing address parameter" }, 400);
-    }
-
-    try {
-      const positionsResponse = await gmxSdk.getTraderPositions(validAddress);
-
-      if (!positionsResponse) {
-        const body = json.stringify({
-          error: "Failed to fetch trader positions",
-        });
-        return c.body(body, 500, { "Content-Type": "application/json" });
-      }
-
-      const { positionsData } = positionsResponse;
-      const body = json.stringify({ positions: positionsData });
-      return c.body(body, 200, { "Content-Type": "application/json" });
-    } catch (error) {
-      console.error("Error fetching trader positions:", error);
-      const body = json.stringify({
-        error: "Failed to fetch trader positions",
-      });
-      return c.body(body, 500, { "Content-Type": "application/json" });
-    }
-  });*/
+  // Route registrations
+  app.post("/api/traders/:address/favorite_trader", async (c) => await handleFavoriteTrader(c, true));
+  app.post("/api/traders/:address/unfavorite_trader", async (c) => await handleFavoriteTrader(c, false));
 
   app.post("/api/traders/:address/auto_copy", async (c) => {
     try {

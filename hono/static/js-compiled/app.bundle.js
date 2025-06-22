@@ -656,12 +656,12 @@ function init() {
     _utils__WEBPACK_IMPORTED_MODULE_1__["default"].watchElementsOfQuery(".favorite-button", function (button) {
         console.log("Found favorite button");
         button.addEventListener("click", function () { return __awaiter(_this, void 0, void 0, function () {
-            var favoriteAddr, walletAddress, originalText, isFavorited, icon, error_1;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
+            var favoriteAddr, walletAddress, originalText, isFavorited, heartPath, svgElement, path1, path2, error_1;
+            var _a;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
                     case 0:
                         favoriteAddr = button.getAttribute("data-address");
-                        console.log("Favoriting trader:", favoriteAddr);
                         if (!favoriteAddr) {
                             console.error("No trader address found");
                             return [2 /*return*/];
@@ -672,47 +672,123 @@ function init() {
                             return [2 /*return*/];
                         }
                         walletAddress = _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.selectedAddress;
-                        originalText = button.textContent;
+                        originalText = ((_a = button.textContent) === null || _a === void 0 ? void 0 : _a.trim()) || "";
                         button.textContent = "Processing...";
-                        _a.label = 1;
+                        _b.label = 1;
                     case 1:
-                        _a.trys.push([1, 3, 4, 5]);
+                        _b.trys.push([1, 6, , 7]);
                         isFavorited = button.classList.contains("favorited");
-                        if (isFavorited) {
-                            // TODO: Implement unfavorite functionality
-                            _utils__WEBPACK_IMPORTED_MODULE_1__["default"].showNotification("Unfavorite functionality not yet implemented", "info");
-                            return [2 /*return*/];
-                        }
-                        // Send favorite request to server
-                        return [4 /*yield*/, favoriteTrader(walletAddress, favoriteAddr)];
+                        console.log("Favoriting trader:", !isFavorited);
+                        heartPath = isFavorited
+                            ? "M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+                            : "M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3zM12.1 18.55l-.1.1-.1-.1C7.14 14.24 4 11.39 4 8.5 4 6.5 5.5 5 7.5 5c1.54 0 3.04.99 3.57 2.36h1.87C13.46 5.99 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5 0 2.89-3.14 5.74-7.9 10.05z";
+                        if (!isFavorited) return [3 /*break*/, 3];
+                        return [4 /*yield*/, unfavoriteTrader(walletAddress, favoriteAddr)];
                     case 2:
+                        _b.sent();
+                        button.classList.remove("favorited");
+                        button.textContent = "Favorite";
+                        _utils__WEBPACK_IMPORTED_MODULE_1__["default"].showNotification("Trader unfavorited successfully", "success");
+                        return [3 /*break*/, 5];
+                    case 3: 
+                    // Send favorite request to server
+                    return [4 /*yield*/, favoriteTrader(walletAddress, favoriteAddr)];
+                    case 4:
                         // Send favorite request to server
-                        _a.sent();
+                        _b.sent();
                         // Toggle favorite state on success
                         button.classList.add("favorited");
-                        icon = button.querySelector("svg path:last-child");
-                        // Filled heart icon
-                        icon === null || icon === void 0 ? void 0 : icon.setAttribute("d", "M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z");
+                        button.textContent = "Unfavorite";
                         _utils__WEBPACK_IMPORTED_MODULE_1__["default"].showNotification("Trader favorited successfully", "success");
-                        return [3 /*break*/, 5];
-                    case 3:
-                        error_1 = _a.sent();
+                        _b.label = 5;
+                    case 5:
+                        svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                        svgElement.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+                        svgElement.setAttribute("height", "20");
+                        svgElement.setAttribute("viewBox", "0 0 24 24");
+                        svgElement.setAttribute("width", "20");
+                        path1 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                        path1.setAttribute("d", "M0 0h24v24H0z");
+                        path1.setAttribute("fill", "none");
+                        path2 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                        path2.setAttribute("d", heartPath);
+                        svgElement.appendChild(path1);
+                        svgElement.appendChild(path2);
+                        button.insertBefore(svgElement, button.firstChild);
+                        return [3 /*break*/, 7];
+                    case 6:
+                        error_1 = _b.sent();
                         console.error("Error favoriting trader:", error_1);
                         _utils__WEBPACK_IMPORTED_MODULE_1__["default"].showNotification("Failed to favorite trader", "error");
-                        return [3 /*break*/, 5];
-                    case 4:
-                        // Re-enable button
-                        button.textContent = originalText;
-                        return [7 /*endfinally*/];
-                    case 5: return [2 /*return*/];
+                        // Restore original text and state in case of error
+                        if (originalText) {
+                            button.textContent = originalText;
+                        }
+                        return [3 /*break*/, 7];
+                    case 7: return [2 /*return*/];
                 }
             });
         }); });
     });
 }
-function favoriteTrader(followerAddr, favoriteAddr) {
+function unfavoriteTrader(followerAddr, favoriteAddr) {
     return __awaiter(this, void 0, void 0, function () {
         var timestamp, message, signature, response, errorData, result, error_2;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 6, , 7]);
+                    timestamp = Date.now();
+                    message = "Unfavorite trader ".concat(favoriteAddr, " for ").concat(followerAddr, " at ").concat(timestamp);
+                    // Request wallet signature using MetaMask provider
+                    if (!_metamask__WEBPACK_IMPORTED_MODULE_0__.provider) {
+                        throw new Error("MetaMask provider not available");
+                    }
+                    return [4 /*yield*/, _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.request({
+                            method: "personal_sign",
+                            params: [message, followerAddr],
+                        })];
+                case 1:
+                    signature = (_a.sent());
+                    if (!signature) {
+                        throw new Error("Failed to get wallet signature");
+                    }
+                    return [4 /*yield*/, fetch("/api/traders/".concat(followerAddr, "/unfavorite_trader"), {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({
+                                favoriteAddr: favoriteAddr,
+                                signature: signature,
+                                message: message,
+                                timestamp: timestamp,
+                            }),
+                        })];
+                case 2:
+                    response = _a.sent();
+                    if (!!response.ok) return [3 /*break*/, 4];
+                    return [4 /*yield*/, response.json()];
+                case 3:
+                    errorData = _a.sent();
+                    throw new Error(errorData || "Failed to unfavorite trader");
+                case 4: return [4 /*yield*/, response.json()];
+                case 5:
+                    result = _a.sent();
+                    console.log("Unfavorite trader response:", result);
+                    return [3 /*break*/, 7];
+                case 6:
+                    error_2 = _a.sent();
+                    console.error("Error in unfavoriteTrader:", error_2);
+                    throw error_2;
+                case 7: return [2 /*return*/];
+            }
+        });
+    });
+}
+function favoriteTrader(followerAddr, favoriteAddr) {
+    return __awaiter(this, void 0, void 0, function () {
+        var timestamp, message, signature, response, errorData, result, error_3;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -757,9 +833,9 @@ function favoriteTrader(followerAddr, favoriteAddr) {
                     console.log("Favorite trader response:", result);
                     return [3 /*break*/, 7];
                 case 6:
-                    error_2 = _a.sent();
-                    console.error("Error in favoriteTrader:", error_2);
-                    throw error_2;
+                    error_3 = _a.sent();
+                    console.error("Error in favoriteTrader:", error_3);
+                    throw error_3;
                 case 7: return [2 /*return*/];
             }
         });
@@ -767,6 +843,8 @@ function favoriteTrader(followerAddr, favoriteAddr) {
 }
 var profile = {
     init: init,
+    favoriteTrader: favoriteTrader,
+    unfavoriteTrader: unfavoriteTrader,
 };
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (profile);
 

@@ -287,6 +287,36 @@ async function favoriteTrader(args: {
   }
 }
 
+// Add this function to your database object
+
+async function unfavoriteTrader(args: {
+  followerAddr: string;
+  favoriteAddr: string;
+  signature: string;
+  message: string;
+  timestamp: bigint;
+}) {
+  if (!db) {
+    throw new Error("Database not initialized. Call initializeDatabase first.");
+  }
+
+  const { followerAddr, favoriteAddr, signature, message, timestamp } = args;
+
+  try {
+    // Delete the favorite relationship
+    await db
+      .deleteFrom("favorited_traders")
+      .where("follower_address", "=", followerAddr)
+      .where("favorited_address", "=", favoriteAddr)
+      .execute();
+
+    console.log(`Trader unfavorited: ${favoriteAddr} by user: ${followerAddr}`);
+  } catch (error) {
+    console.error("Error unfavoriting trader:", error);
+    throw error;
+  }
+}
+
 async function selectTraders(args: {
   followerAddr: string;
   traderAddresses: string[];
@@ -482,6 +512,7 @@ const database = {
   updateTraders,
   addTrader,
   favoriteTrader,
+  unfavoriteTrader,
   selectTraders,
   mirrorTrades,
   getTraders,
