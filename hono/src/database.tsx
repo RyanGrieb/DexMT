@@ -8,9 +8,7 @@ import { Trader } from "./types/trader";
 const dialect = new PostgresDialect({
   pool: new Pool({
     database: "dexmt",
-    host: process.env.DATABASE_URL?.includes("postgres")
-      ? "postgres"
-      : "localhost",
+    host: process.env.DATABASE_URL?.includes("postgres") ? "postgres" : "localhost",
     user: "postgres",
     password: "password",
     port: 5432,
@@ -40,12 +38,8 @@ async function initializeDatabase() {
       .addColumn("message", "text", (col) => col.notNull())
       .addColumn("timestamp", "bigint", (col) => col.notNull())
       .addColumn("selected", "boolean", (col) => col.defaultTo(false))
-      .addColumn("created_at", "timestamp", (col) =>
-        col.defaultTo(sql`CURRENT_TIMESTAMP`).notNull()
-      )
-      .addColumn("updated_at", "timestamp", (col) =>
-        col.defaultTo(sql`CURRENT_TIMESTAMP`).notNull()
-      )
+      .addColumn("created_at", "timestamp", (col) => col.defaultTo(sql`CURRENT_TIMESTAMP`).notNull())
+      .addColumn("updated_at", "timestamp", (col) => col.defaultTo(sql`CURRENT_TIMESTAMP`).notNull())
       .execute();
     console.log("Copy trading table created/verified");
 
@@ -66,12 +60,8 @@ async function initializeDatabase() {
       .addColumn("avg_size", "numeric", (col) => col.defaultTo(null))
       .addColumn("avg_leverage", "numeric", (col) => col.defaultTo(null))
       .addColumn("win_ratio", "numeric", (col) => col.defaultTo(null))
-      .addColumn("created_at", "timestamp", (col) =>
-        col.defaultTo(sql`CURRENT_TIMESTAMP`).notNull()
-      )
-      .addColumn("updated_at", "timestamp", (col) =>
-        col.defaultTo(sql`CURRENT_TIMESTAMP`).notNull()
-      )
+      .addColumn("created_at", "timestamp", (col) => col.defaultTo(sql`CURRENT_TIMESTAMP`).notNull())
+      .addColumn("updated_at", "timestamp", (col) => col.defaultTo(sql`CURRENT_TIMESTAMP`).notNull())
       .addColumn("mirroring_trades", "boolean", (col) => col.defaultTo(false))
       .execute();
 
@@ -88,18 +78,12 @@ async function initializeDatabase() {
       .addColumn("amount_in", "varchar(50)", (col) => col.notNull())
       .addColumn("amount_out", "varchar(50)", (col) => col.notNull())
       .addColumn("price", "varchar(50)", (col) => col.notNull())
-      .addColumn("transaction_hash", "varchar(66)", (col) =>
-        col.unique().notNull()
-      )
+      .addColumn("transaction_hash", "varchar(66)", (col) => col.unique().notNull())
       .addColumn("block_number", "bigint", (col) => col.notNull())
       .addColumn("chain_id", "varchar(10)", (col) => col.notNull())
       .addColumn("status", "varchar(20)", (col) => col.defaultTo("pending"))
-      .addColumn("created_at", "timestamp", (col) =>
-        col.defaultTo(sql`CURRENT_TIMESTAMP`).notNull()
-      )
-      .addColumn("updated_at", "timestamp", (col) =>
-        col.defaultTo(sql`CURRENT_TIMESTAMP`).notNull()
-      )
+      .addColumn("created_at", "timestamp", (col) => col.defaultTo(sql`CURRENT_TIMESTAMP`).notNull())
+      .addColumn("updated_at", "timestamp", (col) => col.defaultTo(sql`CURRENT_TIMESTAMP`).notNull())
       .execute();
     console.log("Trades table created/verified");
 
@@ -114,12 +98,8 @@ async function initializeDatabase() {
       .addColumn("leverage", "numeric", (col) => col.notNull())
       .addColumn("size", "numeric", (col) => col.notNull())
       .addColumn("entry_price", "numeric", (col) => col.notNull())
-      .addColumn("created_at", "timestamp", (col) =>
-        col.defaultTo(sql`CURRENT_TIMESTAMP`).notNull()
-      )
-      .addColumn("updated_at", "timestamp", (col) =>
-        col.defaultTo(sql`CURRENT_TIMESTAMP`).notNull()
-      )
+      .addColumn("created_at", "timestamp", (col) => col.defaultTo(sql`CURRENT_TIMESTAMP`).notNull())
+      .addColumn("updated_at", "timestamp", (col) => col.defaultTo(sql`CURRENT_TIMESTAMP`).notNull())
       .execute();
 
     console.log("Positions table created/verified");
@@ -128,33 +108,19 @@ async function initializeDatabase() {
     try {
       await db.schema
         .alterTable("trades")
-        .addForeignKeyConstraint(
-          "trades_trader_address_fkey",
-          ["trader_address"],
-          "traders",
-          ["address"]
-        )
+        .addForeignKeyConstraint("trades_trader_address_fkey", ["trader_address"], "traders", ["address"])
         .execute();
     } catch (error) {
-      console.log(
-        "Foreign key constraint for trades table already exists or failed to create"
-      );
+      console.log("Foreign key constraint for trades table already exists or failed to create");
     }
 
     try {
       await db.schema
         .alterTable("positions")
-        .addForeignKeyConstraint(
-          "positions_trader_address_fkey",
-          ["trader_address"],
-          "traders",
-          ["address"]
-        )
+        .addForeignKeyConstraint("positions_trader_address_fkey", ["trader_address"], "traders", ["address"])
         .execute();
     } catch (error) {
-      console.log(
-        "Foreign key constraint for positions table already exists or failed to create"
-      );
+      console.log("Foreign key constraint for positions table already exists or failed to create");
     }
 
     // Add indexes for better performance
@@ -271,10 +237,7 @@ async function addTrader(trader: Trader) {
         chain_id: trader.chainId,
         dexmt_trader: trader.isDexmtTrader,
         mirroring_trades: false,
-        balance: await wallet.getEthBalance(
-          trader.address,
-          "https://arb1.arbitrum.io/rpc"
-        ),
+        balance: await wallet.getEthBalance(trader.address, "https://arb1.arbitrum.io/rpc"),
       })
       .onConflict((oc) =>
         oc.column("address").doUpdateSet({
@@ -336,14 +299,7 @@ async function selectTraders(args: {
     throw new Error("Database not initialized. Call initializeDatabase first.");
   }
 
-  const {
-    followerAddr,
-    traderAddresses,
-    signature,
-    message,
-    timestamp,
-    selected,
-  } = args;
+  const { followerAddr, traderAddresses, signature, message, timestamp, selected } = args;
 
   try {
     // Use a transaction to ensure all traders are selected together
@@ -361,9 +317,7 @@ async function selectTraders(args: {
       }
     });
 
-    console.log(
-      `Traders selected: ${traderAddresses.join(", ")} by ${followerAddr}`
-    );
+    console.log(`Traders selected: ${traderAddresses.join(", ")} by ${followerAddr}`);
   } catch (error) {
     console.error("Error selecting traders:", error);
     throw error;
@@ -388,9 +342,7 @@ async function mirrorTrades(args: { address: string; enable: boolean }) {
       .where("address", "=", address)
       .execute();
 
-    console.log(
-      `Copy trading ${enable ? "enabled" : "disabled"} for: ${address}`
-    );
+    console.log(`Copy trading ${enable ? "enabled" : "disabled"} for: ${address}`);
   } catch (error) {
     console.error("Error updating trader mirroring status:", error);
     throw error;
@@ -428,44 +380,24 @@ async function getTraders(selection_args?: {
     // If favoriteOfAddress is specified, use EXISTS subquery approach
     if (selection_args?.favoriteOfAddress) {
       if (selection_args.selected !== undefined) {
-        // Use EXISTS with subquery to filter by both favorited and selected status
+        // Use EXISTS with subquery to filter by both 'favorited AND selected' status
         query = query.where(({ exists, selectFrom }) =>
           exists(
             selectFrom("favorited_traders")
               .select("id")
-              .where(
-                "favorited_traders.follower_address",
-                "=",
-                selection_args.favoriteOfAddress!
-              )
-              .where(
-                "favorited_traders.favorited_address",
-                "=",
-                "traders.address" as any
-              )
-              .where(
-                "favorited_traders.selected",
-                "=",
-                selection_args.selected!
-              )
+              .where("favorited_traders.follower_address", "=", selection_args.favoriteOfAddress!)
+              .where("favorited_traders.favorited_address", "=", "traders.address" as any)
+              .where("favorited_traders.selected", "=", selection_args.selected!)
           )
         );
       } else {
-        // Use EXISTS with subquery to filter by favorited only
+        // Use EXISTS with subquery to filter by favorites only
         query = query.where(({ exists, selectFrom }) =>
           exists(
             selectFrom("favorited_traders")
               .select("id")
-              .where(
-                "favorited_traders.follower_address",
-                "=",
-                selection_args.favoriteOfAddress!
-              )
-              .where(
-                "favorited_traders.favorited_address",
-                "=",
-                "traders.address" as any
-              )
+              .where("favorited_traders.follower_address", "=", selection_args.favoriteOfAddress!)
+              .whereRef("favorited_traders.favorited_address", "=", "traders.address")
           )
         );
       }

@@ -26,15 +26,13 @@ async function init(app: Hono) {
   app.post("/api/traders/:address/favorite_trader", async (c) => {
     try {
       const { address } = c.req.param();
-      const { favoriteAddr, signature, message, timestamp } =
-        await c.req.json();
+      const { favoriteAddr, signature, message, timestamp } = await c.req.json();
 
       // Validate required parameters
       if (!address || !favoriteAddr || !signature || !message || !timestamp) {
         return c.json(
           {
-            error:
-              "Missing required parameters: address, favoriteAddr, signature, message, timestamp",
+            error: "Missing required parameters: address, favoriteAddr, signature, message, timestamp",
           },
           400
         );
@@ -112,25 +110,17 @@ async function init(app: Hono) {
     }
   });*/
 
-  app.post("/api/traders/:address/mirror_trades", async (c) => {
+  app.post("/api/traders/:address/auto_copy", async (c) => {
     try {
       const { address } = c.req.param();
       const { message, signature, timestamp, enable } = await c.req.json();
 
       // Validate required fields
-      if (
-        !address ||
-        !message ||
-        !signature ||
-        !timestamp ||
-        enable === undefined
-      ) {
+      if (!address || !message || !signature || !timestamp || enable === undefined) {
         return c.json({ error: "Missing required fields" }, 400);
       }
 
-      console.log(
-        `Received request to ${enable ? "enable" : "disable"} mirroring trades:`
-      );
+      console.log(`Received request to ${enable ? "enable" : "disable"} auto-copying trades:`);
 
       const tsValidation = validateTimestamp(timestamp);
 
@@ -147,17 +137,15 @@ async function init(app: Hono) {
 
       await database.mirrorTrades({ address: address, enable: enable });
 
-      console.log(
-        `Copy trading ${enable ? "enabled" : "disabled"} for: ${address}`
-      );
+      console.log(`Copy trading ${enable ? "enabled" : "disabled"} for: ${address}`);
 
       return c.json({
         success: true,
-        message: "Copy trading started successfully",
+        message: `Auto-copy trading ${enable ? "enabled" : "disabled"} successfully`,
         address,
       });
     } catch (error) {
-      console.error("Error starting copy trading:", error);
+      console.error("Error starting auto-copy trading:", error);
       return c.json({ error: "Internal server error" }, 500);
     }
   });
@@ -166,15 +154,13 @@ async function init(app: Hono) {
 async function handleTraderSelection(c: any, selected: boolean) {
   try {
     const { address } = c.req.param();
-    const { traderAddresses, signature, message, timestamp } =
-      await c.req.json();
+    const { traderAddresses, signature, message, timestamp } = await c.req.json();
 
     // Validate required parameters
     if (!address || !traderAddresses || !signature || !message || !timestamp) {
       return c.json(
         {
-          error:
-            "Missing required parameters: address, traderAddresses, signature, message, timestamp",
+          error: "Missing required parameters: address, traderAddresses, signature, message, timestamp",
         },
         400
       );
@@ -240,8 +226,7 @@ function validateTimestamp(timestamp: string | number): {
   error?: string;
 } {
   const now = Date.now();
-  const timestampMs =
-    typeof timestamp === "string" ? parseInt(timestamp) : timestamp;
+  const timestampMs = typeof timestamp === "string" ? parseInt(timestamp) : timestamp;
 
   if (isNaN(timestampMs)) {
     return {

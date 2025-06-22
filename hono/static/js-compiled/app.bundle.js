@@ -634,7 +634,11 @@ function init() {
     var _this = this;
     _utils__WEBPACK_IMPORTED_MODULE_1__["default"].watchElementsOfClass("back-button", function (button) {
         button.addEventListener("click", function () {
-            _utils__WEBPACK_IMPORTED_MODULE_1__["default"].loadContent("/api/html/toptraders", "/toptraders", "Top Traders");
+            _utils__WEBPACK_IMPORTED_MODULE_1__["default"].loadContent({
+                apiUrl: "/api/html/toptraders",
+                browserUrl: "/toptraders",
+                title: "Top Traders",
+            });
         });
     });
     _utils__WEBPACK_IMPORTED_MODULE_1__["default"].watchElementsOfClass("favorite-button", function (button) {
@@ -767,6 +771,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
+/* harmony import */ var _metamask__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./metamask */ "./static/ts-front-end/metamask.ts");
 var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -803,6 +808,7 @@ var __generator = (undefined && undefined.__generator) || function (thisArg, bod
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+
 // Number formatting utilities
 function formatNumber(value, decimals) {
     if (decimals === void 0) { decimals = 2; }
@@ -882,55 +888,71 @@ function generateIconColor(address) {
     var b = parseInt(hash.slice(4, 6), 16);
     return "rgb(".concat(r, ", ").concat(g, ", ").concat(b, ")");
 }
-// Helper function to update content without page refresh
-function loadContent(endpoint, userURL, title, userAddress) {
-    return __awaiter(this, void 0, void 0, function () {
-        var url, headers, response, html, contentArea, error_1;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
+// Helper function to update content with optional URL change
+function loadContent(_a) {
+    return __awaiter(this, arguments, void 0, function (_b) {
+        var contentDiv_1, walletAddress, headers, response, html, contentDiv, error_1;
+        var apiUrl = _b.apiUrl, browserUrl = _b.browserUrl, title = _b.title, walletAddr = _b.walletAddr, content = _b.content, _c = _b.updateUrl, updateUrl = _c === void 0 ? true : _c;
+        return __generator(this, function (_d) {
+            switch (_d.label) {
                 case 0:
-                    _a.trys.push([0, 3, 4, 5]);
-                    showLoadingState();
-                    url = endpoint;
-                    headers = {};
-                    // Add wallet address to request if available
-                    if (userAddress) {
-                        url += "?address=".concat(encodeURIComponent(userAddress));
-                        headers["x-wallet-address"] = userAddress;
+                    _d.trys.push([0, 3, , 4]);
+                    if (content) {
+                        contentDiv_1 = document.querySelector(".index-content");
+                        if (contentDiv_1) {
+                            contentDiv_1.innerHTML = content;
+                        }
+                        document.title = title;
+                        // Update URL if requested and browserUrl is provided
+                        if (updateUrl && browserUrl) {
+                            window.history.pushState({}, title, browserUrl);
+                        }
+                        return [2 /*return*/];
                     }
-                    return [4 /*yield*/, fetch(url, { headers: headers })];
+                    if (!apiUrl) {
+                        throw new Error("No API URL or content provided");
+                    }
+                    showLoadingState();
+                    walletAddress = walletAddr || (_metamask__WEBPACK_IMPORTED_MODULE_0__.provider === null || _metamask__WEBPACK_IMPORTED_MODULE_0__.provider === void 0 ? void 0 : _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.selectedAddress);
+                    headers = {
+                        "Content-Type": "application/json",
+                    };
+                    // Add wallet address to headers if available
+                    if (walletAddress) {
+                        headers["x-wallet-address"] = walletAddress;
+                    }
+                    return [4 /*yield*/, fetch(apiUrl, {
+                            method: "GET",
+                            headers: headers,
+                        })];
                 case 1:
-                    response = _a.sent();
+                    response = _d.sent();
                     if (!response.ok) {
                         throw new Error("HTTP error! status: ".concat(response.status));
                     }
                     return [4 /*yield*/, response.text()];
                 case 2:
-                    html = _a.sent();
-                    contentArea = document.querySelector(".index-content");
-                    if (contentArea) {
-                        contentArea.innerHTML = html;
-                        // Update page title and URL
-                        document.title = "DEXMT - ".concat(title);
-                        window.history.pushState({}, title, userURL);
-                        showToast("".concat(title, " loaded successfully"), "success");
+                    html = _d.sent();
+                    contentDiv = document.querySelector(".index-content");
+                    if (contentDiv) {
+                        contentDiv.innerHTML = html;
                     }
-                    else {
-                        throw new Error("Content area not found");
+                    document.title = title;
+                    // Update browser URL if requested and browserUrl is provided
+                    if (updateUrl && browserUrl) {
+                        window.history.pushState({}, title, browserUrl);
                     }
-                    return [3 /*break*/, 5];
+                    return [3 /*break*/, 4];
                 case 3:
-                    error_1 = _a.sent();
-                    console.error("Error loading ".concat(title, ":"), error_1);
-                    showToast("Error loading ".concat(title, ". Please try again."), "error");
-                    return [3 /*break*/, 5];
-                case 4: return [7 /*endfinally*/];
-                case 5: return [2 /*return*/];
+                    error_1 = _d.sent();
+                    console.error("Error loading content:", error_1);
+                    showNotification("Error loading content", "error");
+                    return [3 /*break*/, 4];
+                case 4: return [2 /*return*/];
             }
         });
     });
 }
-// Show loading state
 function showLoadingState() {
     var contentArea = document.querySelector(".index-content");
     if (contentArea) {
@@ -996,6 +1018,33 @@ var utils = {
     showNotification: showNotification,
 };
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (utils);
+
+
+/***/ }),
+
+/***/ "./static/ts-front-end/watchlist.ts":
+/*!******************************************!*\
+  !*** ./static/ts-front-end/watchlist.ts ***!
+  \******************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./utils */ "./static/ts-front-end/utils.ts");
+
+function init() {
+    _utils__WEBPACK_IMPORTED_MODULE_0__["default"].watchElementsOfClass("select-trader", function (button) {
+        button.addEventListener("click", function () {
+            console.log("Select trader button clicked");
+        });
+    });
+}
+var watchlist = {
+    init: init,
+};
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (watchlist);
 
 
 /***/ })
@@ -1078,6 +1127,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _metamask__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./metamask */ "./static/ts-front-end/metamask.ts");
 /* harmony import */ var _profile__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./profile */ "./static/ts-front-end/profile.ts");
 /* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./utils */ "./static/ts-front-end/utils.ts");
+/* harmony import */ var _watchlist__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./watchlist */ "./static/ts-front-end/watchlist.ts");
 var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -1118,6 +1168,7 @@ var __generator = (undefined && undefined.__generator) || function (thisArg, bod
 
 
 
+
 console.log("DEXMT JS file loaded");
 // Main application initialization
 document.addEventListener("DOMContentLoaded", function () { return __awaiter(void 0, void 0, void 0, function () {
@@ -1127,6 +1178,7 @@ document.addEventListener("DOMContentLoaded", function () { return __awaiter(voi
             case 0:
                 console.log("DOM loaded, setting up DEXMT...");
                 _profile__WEBPACK_IMPORTED_MODULE_1__["default"].init();
+                _watchlist__WEBPACK_IMPORTED_MODULE_3__["default"].init();
                 _a.label = 1;
             case 1:
                 _a.trys.push([1, 4, , 5]);
@@ -1146,14 +1198,23 @@ document.addEventListener("DOMContentLoaded", function () { return __awaiter(voi
                 console.error("Error during initialization:", error_1);
                 _utils__WEBPACK_IMPORTED_MODULE_2__["default"].showToast("Initialization error", "error");
                 return [3 /*break*/, 5];
-            case 5:
+            case 5: 
+            // Load content based on current URL
+            return [4 /*yield*/, loadContentForCurrentPage()];
+            case 6:
+                // Load content based on current URL
+                _a.sent();
                 topTradersBtn = document.getElementById("topTradersBtn");
                 myWatchListBtn = document.getElementById("myWatchListBtn");
                 if (topTradersBtn) {
                     topTradersBtn.addEventListener("click", function () { return __awaiter(void 0, void 0, void 0, function () {
                         return __generator(this, function (_a) {
                             switch (_a.label) {
-                                case 0: return [4 /*yield*/, _utils__WEBPACK_IMPORTED_MODULE_2__["default"].loadContent("/api/html/toptraders", "/toptraders", "Top Traders")];
+                                case 0: return [4 /*yield*/, _utils__WEBPACK_IMPORTED_MODULE_2__["default"].loadContent({
+                                        apiUrl: "/api/html/toptraders",
+                                        browserUrl: "/toptraders",
+                                        title: "Top Traders",
+                                    })];
                                 case 1:
                                     _a.sent();
                                     return [2 /*return*/];
@@ -1169,26 +1230,12 @@ document.addEventListener("DOMContentLoaded", function () { return __awaiter(voi
                             switch (_a.label) {
                                 case 0:
                                     walletAddress = _metamask__WEBPACK_IMPORTED_MODULE_0__.provider === null || _metamask__WEBPACK_IMPORTED_MODULE_0__.provider === void 0 ? void 0 : _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.selectedAddress;
-                                    return [4 /*yield*/, _utils__WEBPACK_IMPORTED_MODULE_2__["default"].loadContent("/api/html/mywatchlist", "/mywatchlist", "My Watchlist", walletAddress || undefined)];
-                                case 1:
-                                    _a.sent();
-                                    return [2 /*return*/];
-                            }
-                        });
-                    }); });
-                    // Add click listeners to trader rows
-                    document.addEventListener("click", function (event) { return __awaiter(void 0, void 0, void 0, function () {
-                        var traderRow, address;
-                        return __generator(this, function (_a) {
-                            switch (_a.label) {
-                                case 0:
-                                    traderRow = event.target.closest("tr");
-                                    if (!traderRow)
-                                        return [2 /*return*/];
-                                    address = traderRow.getAttribute("address");
-                                    if (!address)
-                                        return [2 /*return*/];
-                                    return [4 /*yield*/, _utils__WEBPACK_IMPORTED_MODULE_2__["default"].loadContent("/api/html/traderprofile?address=".concat(encodeURIComponent(address)), "/traderprofile?address=" + encodeURIComponent(address), "Trader Profile")];
+                                    return [4 /*yield*/, _utils__WEBPACK_IMPORTED_MODULE_2__["default"].loadContent({
+                                            apiUrl: "/api/html/mywatchlist",
+                                            browserUrl: "/mywatchlist",
+                                            title: "My Watchlist",
+                                            walletAddr: walletAddress || undefined,
+                                        })];
                                 case 1:
                                     _a.sent();
                                     return [2 /*return*/];
@@ -1196,6 +1243,35 @@ document.addEventListener("DOMContentLoaded", function () { return __awaiter(voi
                         });
                     }); });
                 }
+                // Add click listeners to trader rows
+                document.addEventListener("click", function (event) { return __awaiter(void 0, void 0, void 0, function () {
+                    var traderRow, address, walletAddress, apiUrl;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                traderRow = event.target.closest("tr");
+                                if (!traderRow)
+                                    return [2 /*return*/];
+                                address = traderRow.getAttribute("address");
+                                if (!address)
+                                    return [2 /*return*/];
+                                walletAddress = _metamask__WEBPACK_IMPORTED_MODULE_0__.provider === null || _metamask__WEBPACK_IMPORTED_MODULE_0__.provider === void 0 ? void 0 : _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.selectedAddress;
+                                apiUrl = "/api/html/traderprofile?address=".concat(encodeURIComponent(address));
+                                if (walletAddress) {
+                                    apiUrl += "&userAddress=".concat(encodeURIComponent(walletAddress));
+                                }
+                                return [4 /*yield*/, _utils__WEBPACK_IMPORTED_MODULE_2__["default"].loadContent({
+                                        apiUrl: apiUrl,
+                                        browserUrl: "/traderprofile?address=" + encodeURIComponent(address),
+                                        title: "Trader Profile",
+                                        walletAddr: walletAddress || undefined,
+                                    })];
+                            case 1:
+                                _a.sent();
+                                return [2 /*return*/];
+                        }
+                    });
+                }); });
                 connectButton = document.getElementById("connectButton");
                 if (connectButton) {
                     connectButton.addEventListener("click", function () { return __awaiter(void 0, void 0, void 0, function () {
@@ -1224,6 +1300,81 @@ document.addEventListener("DOMContentLoaded", function () { return __awaiter(voi
         }
     });
 }); });
+// Function to load content based on current URL
+function loadContentForCurrentPage() {
+    return __awaiter(this, void 0, void 0, function () {
+        var currentPath, searchParams, walletAddress, _a, address, apiUrl, error_2;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
+                case 0:
+                    currentPath = window.location.pathname;
+                    searchParams = new URLSearchParams(window.location.search);
+                    walletAddress = _metamask__WEBPACK_IMPORTED_MODULE_0__.provider === null || _metamask__WEBPACK_IMPORTED_MODULE_0__.provider === void 0 ? void 0 : _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.selectedAddress;
+                    _b.label = 1;
+                case 1:
+                    _b.trys.push([1, 13, , 14]);
+                    _a = currentPath;
+                    switch (_a) {
+                        case "/toptraders": return [3 /*break*/, 2];
+                        case "/mywatchlist": return [3 /*break*/, 4];
+                        case "/traderprofile": return [3 /*break*/, 6];
+                    }
+                    return [3 /*break*/, 11];
+                case 2: return [4 /*yield*/, _utils__WEBPACK_IMPORTED_MODULE_2__["default"].loadContent({
+                        apiUrl: "/api/html/toptraders",
+                        title: "Top Traders",
+                        updateUrl: false, // Don't update URL on initial page load
+                    })];
+                case 3:
+                    _b.sent();
+                    return [3 /*break*/, 12];
+                case 4: return [4 /*yield*/, _utils__WEBPACK_IMPORTED_MODULE_2__["default"].loadContent({
+                        apiUrl: "/api/html/mywatchlist",
+                        title: "My Watchlist",
+                        walletAddr: walletAddress || undefined,
+                        updateUrl: false, // Don't update URL on initial page load
+                    })];
+                case 5:
+                    _b.sent();
+                    return [3 /*break*/, 12];
+                case 6:
+                    address = searchParams.get("address");
+                    if (!address) return [3 /*break*/, 8];
+                    apiUrl = "/api/html/traderprofile?address=".concat(encodeURIComponent(address));
+                    if (walletAddress) {
+                        apiUrl += "&userAddress=".concat(encodeURIComponent(walletAddress));
+                    }
+                    return [4 /*yield*/, _utils__WEBPACK_IMPORTED_MODULE_2__["default"].loadContent({
+                            apiUrl: apiUrl,
+                            title: "Trader Profile",
+                            walletAddr: walletAddress || undefined,
+                            updateUrl: false, // Don't update URL on initial page load
+                        })];
+                case 7:
+                    _b.sent();
+                    return [3 /*break*/, 10];
+                case 8: return [4 /*yield*/, _utils__WEBPACK_IMPORTED_MODULE_2__["default"].loadContent({
+                        title: "Trader Profile",
+                        content: '<div class="error-message">Trader address is required</div>',
+                        updateUrl: false,
+                    })];
+                case 9:
+                    _b.sent();
+                    _b.label = 10;
+                case 10: return [3 /*break*/, 12];
+                case 11: 
+                // For root or unknown paths, don't load anything (let redirect handle it)
+                return [3 /*break*/, 12];
+                case 12: return [3 /*break*/, 14];
+                case 13:
+                    error_2 = _b.sent();
+                    console.error("Error loading initial content:", error_2);
+                    return [3 /*break*/, 14];
+                case 14: return [2 /*return*/];
+            }
+        });
+    });
+}
 // Global error handler
 window.addEventListener("error", function (event) {
     console.error("Global error:", event.error);

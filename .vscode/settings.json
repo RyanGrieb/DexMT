@@ -3,12 +3,21 @@
   "javascript.preferences.semicolons": "insert",
   "typescript.preferences.includePackageJsonAutoImports": "auto",
   "typescript.suggest.autoImports": true,
+
+  // set Prettier’s max line length
+  "prettier.printWidth": 120,
+
+  // optional: VS Code word-wrap settings
+  "editor.wordWrap": "off",
+  "editor.wordWrapColumn": 120,
+
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
     "source.fixAll": "explicit",
     "source.organizeImports": "explicit"
   },
+
   "[typescript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.tabSize": 4,

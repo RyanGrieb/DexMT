@@ -79,6 +79,11 @@ async function renderPageWithContent(contentRenderer: () => Promise<string>) {
   );
 }
 
+async function renderPageWithoutContent() {
+  const htmlResponse = await app.request("/html/index.html");
+  return htmlResponse.text();
+}
+
 app.get("/", (c) => {
   return c.redirect("/toptraders");
 });
@@ -86,25 +91,16 @@ app.get("/", (c) => {
 app.get("/api/html/traderprofile", async (c) => {
   try {
     const address = c.req.query("address");
-    const userAddress =
-      c.req.query("userAddress") || c.req.header("x-wallet-address");
-
-    console.log("User address:", userAddress);
+    const userAddress = c.req.query("userAddress") || c.req.header("x-wallet-address");
 
     if (!address) {
-      return c.html(
-        '<div class="error-message">Trader address is required</div>',
-        400
-      );
+      return c.html('<div class="error-message">Trader address is required</div>', 400);
     }
     const traderProfileHTML = await renderTraderProfile(address, userAddress);
     return c.html(traderProfileHTML);
   } catch (error) {
     console.error("Error rendering trader profile:", error);
-    return c.html(
-      '<div class="error-message">Error loading trader profile</div>',
-      500
-    );
+    return c.html('<div class="error-message">Error loading trader profile</div>', 500);
   }
 });
 
@@ -114,60 +110,31 @@ app.get("/api/html/toptraders", async (c) => {
     return c.html(leaderboardHTML);
   } catch (error) {
     console.error("Error rendering leaderboard:", error);
-    return c.html(
-      '<div class="error-message">Error loading top traders</div>',
-      500
-    );
+    return c.html('<div class="error-message">Error loading top traders</div>', 500);
   }
 });
 
 app.get("/api/html/mywatchlist", async (c) => {
   try {
-    const userAddress =
-      c.req.query("address") || c.req.header("x-wallet-address");
+    const userAddress = c.req.query("address") || c.req.header("x-wallet-address");
     const watchlistHTML = await renderWatchlist(userAddress);
     return c.html(watchlistHTML);
   } catch (error) {
     console.error("Error rendering watchlist:", error);
-    return c.html(
-      '<div class="error-message">Error loading watchlist</div>',
-      500
-    );
+    return c.html('<div class="error-message">Error loading watchlist</div>', 500);
   }
 });
 
 app.get("/toptraders", async (c) => {
-  const html = await renderPageWithContent(() => renderLeaderboard());
-  return c.html(html);
+  return c.html(await renderPageWithoutContent());
 });
 
 app.get("/mywatchlist", async (c) => {
-  const userAddress = c.req.query("address");
-  const html = await renderPageWithContent(() => renderWatchlist(userAddress));
-  return c.html(html);
+  return c.html(await renderPageWithoutContent());
 });
 
 app.get("/traderprofile", async (c) => {
-  const address = c.req.query("address");
-  const userAddress =
-    c.req.query("userAddress") || c.req.header("x-wallet-address");
-
-  console.log("User address:", userAddress);
-
-  if (!address) {
-    return c.html(
-      await renderPageWithContent(() =>
-        Promise.resolve(
-          '<div class="error-message">Trader address is required</div>'
-        )
-      )
-    );
-  }
-
-  const html = await renderPageWithContent(() =>
-    renderTraderProfile(address, userAddress)
-  );
-  return c.html(html);
+  return c.html(await renderPageWithoutContent());
 });
 
 // Serve static files

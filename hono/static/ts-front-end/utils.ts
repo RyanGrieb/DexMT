@@ -1,3 +1,5 @@
+import { provider } from "./metamask";
+
 // Define utility types in this file
 export type ToastType = "info" | "error" | "success" | "warning";
 
@@ -7,10 +9,7 @@ function formatNumber(value: number | string, decimals: number = 2): string {
   return num.toFixed(decimals);
 }
 
-function formatCurrency(
-  value: number | string,
-  currency: string = "$"
-): string {
+function formatCurrency(value: number | string, currency: string = "$"): string {
   const num = Number(value) || 0;
   return `${currency}${num.toLocaleString()}`;
 }
@@ -21,11 +20,7 @@ function formatPercentage(value: number | string): string {
   return `${sign}${num.toFixed(2)}%`;
 }
 
-function truncateAddress(
-  address: string,
-  startLength: number = 6,
-  endLength: number = 4
-): string {
+function truncateAddress(address: string, startLength: number = 6, endLength: number = 4): string {
   if (!address || address.length < startLength + endLength) {
     return address;
   }
@@ -52,11 +47,7 @@ function timeAgo(timestamp: string | number | Date): string {
   return `${Math.floor(diffInSeconds / 86400)}d ago`;
 }
 
-function createElement(
-  tag: string,
-  className?: string,
-  innerHTML?: string
-): HTMLElement {
+function createElement(tag: string, className?: string, innerHTML?: string): HTMLElement {
   const element = document.createElement(tag);
   if (className) element.className = className;
   if (innerHTML) element.innerHTML = innerHTML;
@@ -105,26 +96,60 @@ function generateIconColor(address: string): string {
   return `rgb(${r}, ${g}, ${b})`;
 }
 
-// Helper function to update content without page refresh
-async function loadContent(
-  endpoint: string,
-  userURL: string,
-  title: string,
-  userAddress?: string
-): Promise<void> {
+// Helper function to update content with optional URL change
+async function loadContent({
+  apiUrl,
+  browserUrl,
+  title,
+  walletAddr,
+  content,
+  updateUrl = true,
+}: {
+  apiUrl?: string;
+  browserUrl?: string;
+  title: string;
+  walletAddr?: string;
+  content?: string;
+  updateUrl?: boolean;
+}): Promise<void> {
   try {
-    showLoadingState();
+    if (content) {
+      // Use provided content directly
+      const contentDiv = document.querySelector(".index-content");
+      if (contentDiv) {
+        contentDiv.innerHTML = content;
+      }
+      document.title = title;
 
-    let url = endpoint;
-    const headers: Record<string, string> = {};
-
-    // Add wallet address to request if available
-    if (userAddress) {
-      url += `?address=${encodeURIComponent(userAddress)}`;
-      headers["x-wallet-address"] = userAddress;
+      // Update URL if requested and browserUrl is provided
+      if (updateUrl && browserUrl) {
+        window.history.pushState({}, title, browserUrl);
+      }
+      return;
     }
 
-    const response = await fetch(url, { headers });
+    if (!apiUrl) {
+      throw new Error("No API URL or content provided");
+    }
+
+    showLoadingState();
+
+    // Get the current wallet address if not provided
+    const walletAddress = walletAddr || provider?.selectedAddress;
+
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+
+    // Add wallet address to headers if available
+    if (walletAddress) {
+      headers["x-wallet-address"] = walletAddress;
+    }
+
+    const response = await fetch(apiUrl, {
+      method: "GET",
+      headers,
+    });
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -132,28 +157,24 @@ async function loadContent(
 
     const html = await response.text();
 
-    // Update the content area
-    const contentArea = document.querySelector(".index-content");
-    if (contentArea) {
-      contentArea.innerHTML = html;
+    // Update content
+    const contentDiv = document.querySelector(".index-content");
+    if (contentDiv) {
+      contentDiv.innerHTML = html;
+    }
 
-      // Update page title and URL
-      document.title = `DEXMT - ${title}`;
-      window.history.pushState({}, title, userURL);
+    document.title = title;
 
-      showToast(`${title} loaded successfully`, "success");
-    } else {
-      throw new Error("Content area not found");
+    // Update browser URL if requested and browserUrl is provided
+    if (updateUrl && browserUrl) {
+      window.history.pushState({}, title, browserUrl);
     }
   } catch (error) {
-    console.error(`Error loading ${title}:`, error);
-    showToast(`Error loading ${title}. Please try again.`, "error");
-  } finally {
-    //hideLoadingState();
+    console.error("Error loading content:", error);
+    showNotification("Error loading content", "error");
   }
 }
 
-// Show loading state
 function showLoadingState(): void {
   const contentArea = document.querySelector(".index-content");
   if (contentArea) {
@@ -166,10 +187,7 @@ function showLoadingState(): void {
   }
 }
 
-function watchElementsOfClass(
-  className: string,
-  onElementLoad: (element: Element) => void
-) {
+function watchElementsOfClass(className: string, onElementLoad: (element: Element) => void) {
   // Handle existing elements on initial load
   const existingElements = document.querySelectorAll(`.${className}`);
   existingElements.forEach((el) => onElementLoad(el));
@@ -199,10 +217,7 @@ function watchElementsOfClass(
   });
 }
 
-function showNotification(
-  message: string,
-  type: "success" | "error" | "info"
-): void {
+function showNotification(message: string, type: "success" | "error" | "info"): void {
   // Simple notification implementation
   // You can replace this with your preferred notification library
   console.log(`${type.toUpperCase()}: ${message}`);

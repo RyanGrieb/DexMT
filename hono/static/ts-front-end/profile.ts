@@ -4,7 +4,11 @@ import utils from "./utils";
 function init() {
   utils.watchElementsOfClass("back-button", (button) => {
     button.addEventListener("click", () => {
-      utils.loadContent("/api/html/toptraders", "/toptraders", "Top Traders");
+      utils.loadContent({
+        apiUrl: "/api/html/toptraders",
+        browserUrl: "/toptraders",
+        title: "Top Traders",
+      });
     });
   });
 
