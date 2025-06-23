@@ -2,7 +2,7 @@ import { Kysely, PostgresDialect, sql } from "kysely";
 import { Pool } from "pg";
 import wallet from "./api/wallet";
 import { Database } from "./types/dbtypes";
-import { Trader } from "./types/trader";
+import { DEXPosition, Trader } from "./types/trader";
 
 // PostgreSQL connection
 const dialect = new PostgresDialect({
@@ -87,17 +87,78 @@ async function initializeDatabase() {
       .execute();
     console.log("Trades table created/verified");
 
-    // Create positions table (unchanged)
+    // Create positions table (now with all Position fields)
     await db.schema
       .createTable("positions")
       .ifNotExists()
       .addColumn("id", "serial", (col) => col.primaryKey())
-      .addColumn("trader_address", "varchar(42)", (col) => col.notNull())
-      .addColumn("token", "varchar(42)", (col) => col.notNull())
-      .addColumn("collateral", "numeric", (col) => col.notNull())
+      .addColumn("token_name", "varchar(50)", (col) => col.notNull())
+      .addColumn("collateral_amount_usd", "numeric", (col) => col.notNull())
       .addColumn("leverage", "numeric", (col) => col.notNull())
-      .addColumn("size", "numeric", (col) => col.notNull())
-      .addColumn("entry_price", "numeric", (col) => col.notNull())
+      .addColumn("size_usd", "numeric", (col) => col.notNull())
+      .addColumn("entry_price_usd", "numeric", (col) => col.notNull())
+      .addColumn("pnl_usd", "numeric", (col) => col.notNull())
+      .addColumn("mark_price_usd", "numeric", (col) => col.notNull())
+      .addColumn("liq_price_usd", "numeric", (col) => col.notNull())
+      .addColumn("key", "varchar(255)", (col) => col.unique().notNull())
+      .addColumn("contract_key", "varchar(255)", (col) => col.notNull())
+      .addColumn("trader_address", "varchar(42)", (col) => col.notNull())
+      .addColumn("market_address", "varchar(42)", (col) => col.notNull())
+      .addColumn("collateral_token_address", "varchar(42)", (col) => col.notNull())
+      .addColumn("size_in_usd", "numeric", (col) => col.notNull())
+      .addColumn("size_in_tokens", "numeric", (col) => col.notNull())
+      .addColumn("collateral_amount", "numeric", (col) => col.notNull())
+      .addColumn("pending_borrowing_fees_usd", "numeric", (col) => col.notNull())
+      .addColumn("increased_at_time", "bigint", (col) => col.notNull())
+      .addColumn("decreased_at_time", "bigint", (col) => col.defaultTo(null))
+      .addColumn("is_long", "boolean", (col) => col.notNull())
+      .addColumn("funding_fee_amount", "numeric", (col) => col.notNull())
+      .addColumn("claimable_long_token_amount", "numeric", (col) => col.defaultTo(0))
+      .addColumn("claimable_short_token_amount", "numeric", (col) => col.defaultTo(0))
+      .addColumn("is_opening", "boolean", (col) => col.defaultTo(false))
+      .addColumn("pnl", "numeric", (col) => col.defaultTo(0))
+      .addColumn("position_fee_amount", "numeric", (col) => col.defaultTo(0))
+      .addColumn("trader_discount_amount", "numeric", (col) => col.defaultTo(0))
+      .addColumn("ui_fee_amount", "numeric", (col) => col.defaultTo(0))
+      .addColumn("data", "text", (col) => col.defaultTo(null))
+      .addColumn("created_at", "timestamp", (col) => col.defaultTo(sql`CURRENT_TIMESTAMP`).notNull())
+      .addColumn("updated_at", "timestamp", (col) => col.defaultTo(sql`CURRENT_TIMESTAMP`).notNull())
+      .execute();
+
+    // Create positions table (now with all Position fields)
+    await db.schema
+      .createTable("closed_positions")
+      .ifNotExists()
+      .addColumn("id", "serial", (col) => col.primaryKey())
+      .addColumn("token_name", "varchar(50)", (col) => col.notNull())
+      .addColumn("collateral_amount_usd", "numeric", (col) => col.notNull())
+      .addColumn("leverage", "numeric", (col) => col.notNull())
+      .addColumn("size_usd", "numeric", (col) => col.notNull())
+      .addColumn("entry_price_usd", "numeric", (col) => col.notNull())
+      .addColumn("pnl_usd", "numeric", (col) => col.notNull())
+      .addColumn("mark_price_usd", "numeric", (col) => col.notNull())
+      .addColumn("liq_price_usd", "numeric", (col) => col.notNull())
+      .addColumn("key", "varchar(255)", (col) => col.unique().notNull())
+      .addColumn("contract_key", "varchar(255)", (col) => col.notNull())
+      .addColumn("trader_address", "varchar(42)", (col) => col.notNull())
+      .addColumn("market_address", "varchar(42)", (col) => col.notNull())
+      .addColumn("collateral_token_address", "varchar(42)", (col) => col.notNull())
+      .addColumn("size_in_usd", "numeric", (col) => col.notNull())
+      .addColumn("size_in_tokens", "numeric", (col) => col.notNull())
+      .addColumn("collateral_amount", "numeric", (col) => col.notNull())
+      .addColumn("pending_borrowing_fees_usd", "numeric", (col) => col.notNull())
+      .addColumn("increased_at_time", "bigint", (col) => col.notNull())
+      .addColumn("decreased_at_time", "bigint", (col) => col.defaultTo(null))
+      .addColumn("is_long", "boolean", (col) => col.notNull())
+      .addColumn("funding_fee_amount", "numeric", (col) => col.notNull())
+      .addColumn("claimable_long_token_amount", "numeric", (col) => col.defaultTo(0))
+      .addColumn("claimable_short_token_amount", "numeric", (col) => col.defaultTo(0))
+      .addColumn("is_opening", "boolean", (col) => col.defaultTo(false))
+      .addColumn("pnl", "numeric", (col) => col.defaultTo(0))
+      .addColumn("position_fee_amount", "numeric", (col) => col.defaultTo(0))
+      .addColumn("trader_discount_amount", "numeric", (col) => col.defaultTo(0))
+      .addColumn("ui_fee_amount", "numeric", (col) => col.defaultTo(0))
+      .addColumn("data", "text", (col) => col.defaultTo(null))
       .addColumn("created_at", "timestamp", (col) => col.defaultTo(sql`CURRENT_TIMESTAMP`).notNull())
       .addColumn("updated_at", "timestamp", (col) => col.defaultTo(sql`CURRENT_TIMESTAMP`).notNull())
       .execute();
@@ -387,23 +448,29 @@ async function getTraders(selection_args?: {
   }
 
   try {
-    let query = db
-      .selectFrom("traders")
-      .select([
-        "address",
-        "balance",
-        "chain_id",
-        "platform_ranking",
-        "dexmt_trader",
-        "mirroring_trades",
-        "dex_platform",
-        "pnl",
-        "pnl_percentage",
-        "avg_size",
-        "avg_leverage",
-        "win_ratio",
-        "updated_at",
-      ]);
+    let query = db.selectFrom("traders").select([
+      "address",
+      "balance",
+      "chain_id",
+      "platform_ranking",
+      "dexmt_trader",
+      "mirroring_trades",
+      "dex_platform",
+      "pnl",
+      "pnl_percentage",
+      "avg_size",
+      "avg_leverage",
+      "win_ratio",
+      "updated_at",
+      // FIXME: This is inefficient, create a new column in the traders table that tracks the amount of (favorited + selected) traders.
+      (eb) =>
+        eb
+          .selectFrom("favorited_traders")
+          .select((eb) => eb.fn.count("follower_address").distinct().as("count"))
+          .whereRef("favorited_traders.favorited_address", "=", "traders.address")
+          .where("favorited_traders.selected", "=", true)
+          .as("watching_amt"),
+    ]);
 
     // If favoriteOfAddress is specified, use EXISTS subquery approach
     if (selection_args?.favoriteOfAddress) {
@@ -453,6 +520,7 @@ async function getTraders(selection_args?: {
           avgSize: trader.avg_size,
           avgLeverage: trader.avg_leverage,
           winRatio: trader.win_ratio,
+          watchingAmt: Number(trader.watching_amt) || 0, // Use the subquery result
           updatedAt: trader.updated_at.toISOString(),
         })
     );
@@ -485,18 +553,13 @@ async function getSelectedTraders(followerAddress: string): Promise<string[]> {
   }
 }
 
-/*
 async function getPositions(address: string) {
   if (!db) {
     throw new Error("Database not initialized. Call initializeDatabase first.");
   }
 
   try {
-    const positions = await db
-      .selectFrom("positions")
-      .selectAll()
-      .where("trader_address", "=", address)
-      .execute();
+    const positions = await db.selectFrom("positions").selectAll().where("trader_address", "=", address).execute();
 
     return positions;
   } catch (error) {
@@ -505,7 +568,177 @@ async function getPositions(address: string) {
   }
 }
 
-*/
+async function closePositions(positions: DEXPosition[]) {
+  if (!db) {
+    throw new Error("Database not initialized. Call initializeDatabase first.");
+  }
+  if (positions.length === 0) {
+    return;
+  }
+
+  try {
+    await db.transaction().execute(async (trx) => {
+      for (const position of positions) {
+        // Move to closed_positions
+        await trx
+          .insertInto("closed_positions")
+          .values({
+            token_name: position.tokenName,
+            collateral_amount_usd: position.collateralAmountUsd,
+            leverage: position.leverage,
+            size_usd: position.sizeUsd,
+            entry_price_usd: position.entryPriceUsd,
+            pnl_usd: position.pnlUsd,
+            mark_price_usd: position.markPriceUsd,
+            liq_price_usd: position.liqPriceUsd,
+            key: position.key,
+            contract_key: position.contractKey,
+            trader_address: position.traderAddr,
+            market_address: position.marketAddress,
+            collateral_token_address: position.collateralTokenAddress,
+            size_in_usd: position.sizeInUsd,
+            size_in_tokens: position.sizeInTokens,
+            collateral_amount: position.collateralAmount,
+            pending_borrowing_fees_usd: position.pendingBorrowingFeesUsd,
+            increased_at_time: position.increasedAtTime,
+            decreased_at_time: position.decreasedAtTime,
+            is_long: position.isLong,
+            funding_fee_amount: position.fundingFeeAmount,
+            claimable_long_token_amount: position.claimableLongTokenAmount,
+            claimable_short_token_amount: position.claimableShortTokenAmount,
+            is_opening: position.isOpening ?? false,
+            pnl: position.pnl,
+            position_fee_amount: position.positionFeeAmount,
+            trader_discount_amount: position.traderDiscountAmount,
+            ui_fee_amount: position.uiFeeAmount,
+            data: position.data,
+          })
+          .execute();
+
+        // Remove from open positions
+        await trx.deleteFrom("positions").where("contract_key", "=", position.contractKey).execute();
+      }
+    });
+
+    console.log(`Closed and removed ${positions.length} positions`);
+  } catch (error) {
+    console.error("Error closing positions:", error);
+    throw error;
+  }
+}
+
+async function createPositions(positions: DEXPosition[]) {
+  if (!db) {
+    throw new Error("Database not initialized. Call initializeDatabase first.");
+  }
+  if (positions.length === 0) {
+    return;
+  }
+
+  try {
+    await db.transaction().execute(async (trx) => {
+      for (const position of positions) {
+        await trx
+          .insertInto("positions")
+          .values({
+            key: position.key,
+            contract_key: position.contractKey,
+            trader_address: position.traderAddr,
+            market_address: position.marketAddress,
+            collateral_token_address: position.collateralTokenAddress,
+            size_in_usd: position.sizeInUsd,
+            size_in_tokens: position.sizeInTokens,
+            collateral_amount: position.collateralAmount,
+            pending_borrowing_fees_usd: position.pendingBorrowingFeesUsd,
+            increased_at_time: position.increasedAtTime,
+            decreased_at_time: position.decreasedAtTime,
+            is_long: position.isLong,
+            funding_fee_amount: position.fundingFeeAmount,
+            claimable_long_token_amount: position.claimableLongTokenAmount,
+            claimable_short_token_amount: position.claimableShortTokenAmount,
+            is_opening: position.isOpening ?? false,
+            pnl: position.pnl,
+            position_fee_amount: position.positionFeeAmount,
+            trader_discount_amount: position.traderDiscountAmount,
+            ui_fee_amount: position.uiFeeAmount,
+            data: position.data,
+            // helper / legacy columns
+            token_name: position.tokenName,
+            collateral_amount_usd: position.collateralAmountUsd,
+            leverage: position.leverage,
+            size_usd: position.sizeUsd,
+            entry_price_usd: position.entryPriceUsd,
+            pnl_usd: position.pnlUsd,
+            mark_price_usd: position.markPriceUsd,
+            liq_price_usd: position.liqPriceUsd,
+            updated_at: sql`CURRENT_TIMESTAMP`,
+          })
+          .execute();
+      }
+    });
+
+    console.log(`Inserted ${positions.length} new positions`);
+  } catch (error) {
+    console.error("Error creating positions:", error);
+    throw error;
+  }
+}
+
+async function updatePositions(positions: DEXPosition[]) {
+  if (!db) {
+    throw new Error("Database not initialized. Call initializeDatabase first.");
+  }
+  if (positions.length === 0) {
+    return;
+  }
+
+  try {
+    await db.transaction().execute(async (trx) => {
+      for (const position of positions) {
+        await trx
+          .updateTable("positions")
+          .set({
+            token_name: position.tokenName,
+            collateral_amount_usd: position.collateralAmountUsd,
+            leverage: position.leverage,
+            size_usd: position.sizeUsd,
+            entry_price_usd: position.entryPriceUsd,
+            pnl_usd: position.pnlUsd,
+            mark_price_usd: position.markPriceUsd,
+            liq_price_usd: position.liqPriceUsd,
+            contract_key: position.contractKey,
+            trader_address: position.traderAddr,
+            market_address: position.marketAddress,
+            collateral_token_address: position.collateralTokenAddress,
+            size_in_usd: position.sizeInUsd,
+            size_in_tokens: position.sizeInTokens,
+            collateral_amount: position.collateralAmount,
+            pending_borrowing_fees_usd: position.pendingBorrowingFeesUsd,
+            increased_at_time: position.increasedAtTime,
+            decreased_at_time: position.decreasedAtTime,
+            is_long: position.isLong,
+            funding_fee_amount: position.fundingFeeAmount,
+            claimable_long_token_amount: position.claimableLongTokenAmount,
+            claimable_short_token_amount: position.claimableShortTokenAmount,
+            is_opening: position.isOpening ?? false,
+            pnl: position.pnl,
+            position_fee_amount: position.positionFeeAmount,
+            trader_discount_amount: position.traderDiscountAmount,
+            ui_fee_amount: position.uiFeeAmount,
+            data: position.data,
+            updated_at: sql`CURRENT_TIMESTAMP`,
+          })
+          .where("key", "=", position.key)
+          .execute();
+      }
+    });
+
+    console.log(`Updated ${positions.length} positions`);
+  } catch (error) {
+    console.error("Error updating positions:", error);
+    throw error;
+  }
+}
 
 const database = {
   initializeDatabase,
@@ -517,6 +750,10 @@ const database = {
   mirrorTrades,
   getTraders,
   getSelectedTraders,
+  getPositions,
+  closePositions,
+  createPositions,
+  updatePositions,
 };
 
 export default database;

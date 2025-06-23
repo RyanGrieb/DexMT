@@ -7,79 +7,13 @@ import database from "./database";
 import { renderLeaderboard } from "./frontend/leaderboard";
 import { renderTraderProfile } from "./frontend/profile";
 import { renderWatchlist } from "./frontend/watchlist";
-import gmxSdk from "./gmxsdk";
-import scraper from "./scraper";
-
-const UPDATE_USERS_ON_START = false;
+import scheduler from "./scheduler";
 
 const app = new Hono();
 const startTime = Date.now();
 const port = Number(process.env.PORT);
 
-async function updateTraderLeaderboard() {
-  try {
-    console.log("Starting trader leaderboard update...");
-
-    const traders = await scraper.getTopTraders({
-      platform: "gmx",
-      limit: 100,
-    });
-    console.log(`Fetched ${traders.length} top traders from GMX`);
-
-    if (traders.length === 0) {
-      console.log("No traders fetched, skipping balance updates");
-      return;
-    }
-
-    database.updateTraders(traders);
-
-    console.log("Finished updating users from GMX leaderboard");
-  } catch (error) {
-    console.error("Error in updateUsersAndTrades:", error);
-  }
-}
-
-async function mirrorTrades() {
-  // A list of traders who are mirroring trades
-  const traders = await database.getTraders({ isMirroring: true });
-
-  for (const trader of traders) {
-    for (const selectedTrader of await database.getTraders({
-      favoriteOfAddress: trader.address,
-      selected: true,
-    })) {
-      // Determine the differences in user positions vs selected trader positions
-      const positions = await gmxSdk.getTraderPositions(selectedTrader.address);
-      //const trades = await gmxSdk.getTradeHistory(selectedTrader.address);
-    }
-  }
-}
-
-// Separate function to start the interval
-function startUpdateUserDataTask() {
-  setInterval(updateTraderLeaderboard, 300000); // 5 minutes
-
-  if (UPDATE_USERS_ON_START) {
-    updateTraderLeaderboard().catch(console.error);
-  }
-}
-
-function startMirrorTradesTask() {
-  setInterval(mirrorTrades, 300000); // 5 minutes
-}
-
-async function renderPageWithContent(contentRenderer: () => Promise<string>) {
-  const htmlResponse = await app.request("/html/index.html");
-  let html = await htmlResponse.text();
-  const content = await contentRenderer();
-
-  return html.replace(
-    '<div class="index-content">\n        <!-- Content will be loaded by router -->\n      </div>',
-    `<div class="index-content">\n        ${content}\n      </div>`
-  );
-}
-
-async function renderPageWithoutContent() {
+async function renderIndexPage() {
   const htmlResponse = await app.request("/html/index.html");
   return htmlResponse.text();
 }
@@ -126,15 +60,15 @@ app.get("/api/html/mywatchlist", async (c) => {
 });
 
 app.get("/toptraders", async (c) => {
-  return c.html(await renderPageWithoutContent());
+  return c.html(await renderIndexPage());
 });
 
 app.get("/mywatchlist", async (c) => {
-  return c.html(await renderPageWithoutContent());
+  return c.html(await renderIndexPage());
 });
 
 app.get("/traderprofile", async (c) => {
-  return c.html(await renderPageWithoutContent());
+  return c.html(await renderIndexPage());
 });
 
 // Serve static files
@@ -213,9 +147,8 @@ app.get("/health", (c) => {
 // Modify the startup function to notify on restart
 async function startup() {
   await database.initializeDatabase();
-  dexmtAPI.init(app);
-  startUpdateUserDataTask();
-  startMirrorTradesTask();
+  await dexmtAPI.init(app);
+  scheduler.init();
 
   serve({
     fetch: app.fetch,

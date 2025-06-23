@@ -66,7 +66,7 @@ export async function renderWatchlist(userAddress?: string): Promise<string> {
         <div class="watchlist-tabs">
           <button class="tab-button active" data-tab="favorited">Favorited Traders (${favoritedTraders.length})</button>
           <button class="tab-button" data-tab="selected">Active Copying (${selectedTraders.length})</button>
-          <button class="tab-button" data-tab="positions">Open Positions</button>
+          <button class="tab-button" data-tab="positions">Open Positions<br>(Copying: 0 Total: 0)</button>
         </div>
 
         <div class="tab-content">
@@ -113,11 +113,18 @@ function renderFavoritedTraders(traders: any[], userAddress: string, selectedAdd
       ${traders
         .map((trader) => {
           const isSelected = selectedAddresses.has(trader.address);
+          // Generate trader icon color and text
+          const addressHash = trader.address.slice(2, 4).toUpperCase();
+          const iconColor = generateIconColor(trader.address);
+
           return `
         <div class="trader-card" data-address="${trader.address}">
           <div class="trader-info">
             <div class="trader-address">
-              <strong>${trader.address.slice(0, 6)}...${trader.address.slice(-4)}</strong>
+              <div class="trader-identity">
+                <div class="trader-icon" style="background: ${iconColor}">${addressHash}</div>
+                <strong>${trader.address.slice(0, 6)}...${trader.address.slice(-4)}</strong>
+              </div>
               <span class="rank">#${trader.platformRanking || "N/A"}</span>
             </div>
             <div class="trader-stats">
@@ -157,6 +164,15 @@ function renderFavoritedTraders(traders: any[], userAddress: string, selectedAdd
         .join("")}
     </div>
   `;
+}
+
+// Add the color generation function from leaderboard.tsx
+function generateIconColor(address: string): string {
+  const hash = address.slice(2, 8);
+  const r = parseInt(hash.slice(0, 2), 16);
+  const g = parseInt(hash.slice(2, 4), 16);
+  const b = parseInt(hash.slice(4, 6), 16);
+  return `rgb(${r}, ${g}, ${b})`;
 }
 
 function renderSelectedTraders(traders: any[]): string {

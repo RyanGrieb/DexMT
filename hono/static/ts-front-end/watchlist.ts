@@ -1,4 +1,5 @@
 import { provider } from "./metamask";
+import profile from "./profile";
 import utils from "./utils";
 
 function init() {
@@ -14,6 +15,10 @@ function init() {
     // UNSELECT
     else if (btn.classList.contains("selected")) {
       await handleUnselect(btn as HTMLButtonElement);
+    }
+    // REMOVE
+    else if (btn.classList.contains("remove-trader")) {
+      await handleRemove(btn as HTMLButtonElement);
     }
   });
 
@@ -84,6 +89,46 @@ async function handleMirrorToggle(toggle: HTMLInputElement) {
     }
   } finally {
     toggle.disabled = false;
+  }
+}
+
+async function handleRemove(button: HTMLButtonElement) {
+  const copyAddr = button.dataset.address;
+  if (!copyAddr) return console.error("No trader address");
+  if (!provider?.selectedAddress) {
+    return utils.showNotification("Please connect your wallet first", "error");
+  }
+
+  const wallet = provider.selectedAddress;
+  const origText = button.textContent;
+  button.textContent = "Processing...";
+  button.disabled = true;
+
+  try {
+    await profile.unfavoriteTrader(wallet, copyAddr);
+
+    utils.showNotification("Trader removed from favorites", "success");
+
+    // Find and remove the trader card/row from the UI
+    const traderCard: HTMLElement =
+      button.closest(".trader-card") || (button.closest(".watchlist-item") as HTMLElement);
+    if (traderCard) {
+      // Add fade-out animation
+      traderCard.style.transition = "opacity 0.3s ease-out";
+      traderCard.style.opacity = "0";
+
+      // Remove element after animation completes
+      setTimeout(() => {
+        traderCard.remove();
+      }, 300);
+    }
+  } catch (err: any) {
+    console.error(err);
+    utils.showNotification(err.message || "Failed to remove trader", "error");
+    button.textContent = origText;
+  } finally {
+    if (!button.isConnected) return; // Don't try to update if element was removed
+    button.disabled = false;
   }
 }
 

@@ -1,7 +1,9 @@
 import { Position } from "@gmx-io/sdk/types/positions";
+import database from "../database";
 import gmxSdk from "../gmxsdk";
 
 export interface DEXPosition extends Position {
+  traderAddr: string;
   tokenName: string;
   collateralAmountUsd: number;
   entryPriceUsd: number;
@@ -26,6 +28,7 @@ export class Trader {
   avgSize: number | undefined | null;
   avgLeverage: number | undefined | null;
   winRatio: number | undefined | null;
+  watchingAmt: number | undefined | null;
 
   constructor(args: {
     address: string;
@@ -41,6 +44,7 @@ export class Trader {
     avgSize?: number | undefined | null;
     avgLeverage?: number | undefined | null;
     winRatio?: number | undefined | null;
+    watchingAmt?: number | undefined | null;
   }) {
     const {
       address,
@@ -56,6 +60,7 @@ export class Trader {
       avgSize = undefined,
       avgLeverage = undefined,
       winRatio = undefined,
+      watchingAmt = undefined,
     } = args;
 
     this.address = address;
@@ -71,14 +76,55 @@ export class Trader {
     this.avgSize = avgSize;
     this.avgLeverage = avgLeverage;
     this.winRatio = winRatio;
+    this.watchingAmt = watchingAmt;
   }
 
-  async getPositions(): Promise<DEXPosition[]> {
+  async getPositions(options?: { fromDb: boolean }): Promise<DEXPosition[]> {
     // FIXME: Ensure this is a valid address
     const validAddress: `0x${string}` = this.address as `0x${string}`;
 
     if (!validAddress) {
       return [];
+    }
+
+    if (options?.fromDb) {
+      const dbPositions = await database.getPositions(this.address);
+      const dexPositions: DEXPosition[] = dbPositions.map((position) => ({
+        // Position fields
+        key: position.key,
+        contractKey: position.contract_key,
+        account: position.trader_address,
+        marketAddress: position.market_address,
+        collateralTokenAddress: position.collateral_token_address,
+        sizeInUsd: position.size_in_usd,
+        sizeInTokens: position.size_in_tokens,
+        collateralAmount: position.collateral_amount,
+        pendingBorrowingFeesUsd: position.pending_borrowing_fees_usd,
+        increasedAtTime: position.increased_at_time,
+        decreasedAtTime: position.decreased_at_time,
+        isLong: position.is_long,
+        fundingFeeAmount: position.funding_fee_amount,
+        claimableLongTokenAmount: position.claimable_long_token_amount,
+        claimableShortTokenAmount: position.claimable_short_token_amount,
+        isOpening: position.is_opening,
+        pnl: position.pnl,
+        positionFeeAmount: position.position_fee_amount,
+        traderDiscountAmount: position.trader_discount_amount,
+        uiFeeAmount: position.ui_fee_amount,
+        data: position.data,
+
+        // DEXPosition‐only fields
+        traderAddr: position.trader_address,
+        tokenName: position.token_name,
+        collateralAmountUsd: position.collateral_amount_usd,
+        liqPriceUsd: position.liq_price_usd,
+        entryPriceUsd: position.entry_price_usd,
+        markPriceUsd: position.mark_price_usd,
+        sizeUsd: position.size_usd,
+        pnlUsd: position.pnl_usd,
+        leverage: position.leverage,
+      }));
+      return dexPositions;
     }
 
     const positionsResponse = await gmxSdk.getTraderPositions(validAddress);
@@ -105,17 +151,16 @@ export class Trader {
     const dexPositions: DEXPosition[] = await Promise.all(
       positions.map(async (position) => {
         const positionValues = await gmxSdk.getPositionValuesInUsd(position);
-
         return {
           ...position,
+          traderAddr: this.address,
           collateralAmountUsd: positionValues.collateralUsd,
           liqPriceUsd: positionValues.liquidationPrice,
           entryPriceUsd: positionValues.entryPrice,
           markPriceUsd: positionValues.markPrice,
           sizeUsd: positionValues.sizeUsd,
           pnlUsd: positionValues.pnlUsd,
-          tokenName:
-            tokenNames[position.marketAddress]?.split(" ")[0] || "Unknown",
+          tokenName: tokenNames[position.marketAddress]?.split(" ")[0] || "Unknown",
           leverage: positionValues.leverage,
         };
       })
@@ -143,6 +188,7 @@ export class WatchedTrader extends Trader {
     avgSize: number | undefined;
     avgLeverage: number | undefined;
     winRatio: number | undefined;
+    watchingAmt: number | undefined;
   }) {
     super(args);
     this.watching = args.watching;

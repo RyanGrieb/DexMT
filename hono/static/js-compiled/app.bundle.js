@@ -1123,7 +1123,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
 /* harmony import */ var _metamask__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./metamask */ "./static/ts-front-end/metamask.ts");
-/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./utils */ "./static/ts-front-end/utils.ts");
+/* harmony import */ var _profile__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./profile */ "./static/ts-front-end/profile.ts");
+/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./utils */ "./static/ts-front-end/utils.ts");
 var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -1162,6 +1163,7 @@ var __generator = (undefined && undefined.__generator) || function (thisArg, bod
 };
 
 
+
 function init() {
     var _this = this;
     // Delegate all clicks on select/unselect buttons to one handler
@@ -1177,19 +1179,25 @@ function init() {
                     return [4 /*yield*/, handleSelect(btn)];
                 case 1:
                     _a.sent();
-                    return [3 /*break*/, 4];
+                    return [3 /*break*/, 6];
                 case 2:
                     if (!btn.classList.contains("selected")) return [3 /*break*/, 4];
                     return [4 /*yield*/, handleUnselect(btn)];
                 case 3:
                     _a.sent();
-                    _a.label = 4;
-                case 4: return [2 /*return*/];
+                    return [3 /*break*/, 6];
+                case 4:
+                    if (!btn.classList.contains("remove-trader")) return [3 /*break*/, 6];
+                    return [4 /*yield*/, handleRemove(btn)];
+                case 5:
+                    _a.sent();
+                    _a.label = 6;
+                case 6: return [2 /*return*/];
             }
         });
     }); });
     // Handle auto‐copy toggle switch
-    _utils__WEBPACK_IMPORTED_MODULE_1__["default"].watchElementsOfQuery("#mirrorToggle", function (mirrorToggle) {
+    _utils__WEBPACK_IMPORTED_MODULE_2__["default"].watchElementsOfQuery("#mirrorToggle", function (mirrorToggle) {
         // Set initial state based on user's current auto-copy setting
         mirrorToggle.addEventListener("change", function (e) { return __awaiter(_this, void 0, void 0, function () {
             return __generator(this, function (_a) {
@@ -1211,7 +1219,7 @@ function handleMirrorToggle(toggle) {
             switch (_b.label) {
                 case 0:
                     if (!(_metamask__WEBPACK_IMPORTED_MODULE_0__.provider === null || _metamask__WEBPACK_IMPORTED_MODULE_0__.provider === void 0 ? void 0 : _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.selectedAddress)) {
-                        _utils__WEBPACK_IMPORTED_MODULE_1__["default"].showNotification("Please connect your wallet first", "error");
+                        _utils__WEBPACK_IMPORTED_MODULE_2__["default"].showNotification("Please connect your wallet first", "error");
                         // revert UI toggle if no wallet
                         toggle.checked = !toggle.checked;
                         return [2 /*return*/];
@@ -1254,12 +1262,12 @@ function handleMirrorToggle(toggle) {
                     if (labelText) {
                         labelText.textContent = targetEnable ? "Disable Auto-Copy" : "Enable Auto-Copy";
                     }
-                    _utils__WEBPACK_IMPORTED_MODULE_1__["default"].showNotification("Auto-copy trading ".concat(targetEnable ? "enabled" : "disabled"), "success");
+                    _utils__WEBPACK_IMPORTED_MODULE_2__["default"].showNotification("Auto-copy trading ".concat(targetEnable ? "enabled" : "disabled"), "success");
                     return [3 /*break*/, 7];
                 case 5:
                     err_1 = _b.sent();
                     console.error(err_1);
-                    _utils__WEBPACK_IMPORTED_MODULE_1__["default"].showNotification(err_1.message, "error");
+                    _utils__WEBPACK_IMPORTED_MODULE_2__["default"].showNotification(err_1.message, "error");
                     // on error, keep it reverted and restore correct label
                     if (labelText) {
                         labelText.textContent = targetEnable ? "Enable Auto-Copy" : "Disable Auto-Copy";
@@ -1273,9 +1281,9 @@ function handleMirrorToggle(toggle) {
         });
     });
 }
-function handleSelect(button) {
+function handleRemove(button) {
     return __awaiter(this, void 0, void 0, function () {
-        var copyAddr, wallet, origText, ts, msg, sig, res, json, err_2;
+        var copyAddr, wallet, origText, traderCard_1, err_2;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -1283,7 +1291,57 @@ function handleSelect(button) {
                     if (!copyAddr)
                         return [2 /*return*/, console.error("No trader address")];
                     if (!(_metamask__WEBPACK_IMPORTED_MODULE_0__.provider === null || _metamask__WEBPACK_IMPORTED_MODULE_0__.provider === void 0 ? void 0 : _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.selectedAddress)) {
-                        return [2 /*return*/, _utils__WEBPACK_IMPORTED_MODULE_1__["default"].showNotification("Please connect your wallet first", "error")];
+                        return [2 /*return*/, _utils__WEBPACK_IMPORTED_MODULE_2__["default"].showNotification("Please connect your wallet first", "error")];
+                    }
+                    wallet = _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.selectedAddress;
+                    origText = button.textContent;
+                    button.textContent = "Processing...";
+                    button.disabled = true;
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 3, 4, 5]);
+                    return [4 /*yield*/, _profile__WEBPACK_IMPORTED_MODULE_1__["default"].unfavoriteTrader(wallet, copyAddr)];
+                case 2:
+                    _a.sent();
+                    _utils__WEBPACK_IMPORTED_MODULE_2__["default"].showNotification("Trader removed from favorites", "success");
+                    traderCard_1 = button.closest(".trader-card") || button.closest(".watchlist-item");
+                    if (traderCard_1) {
+                        // Add fade-out animation
+                        traderCard_1.style.transition = "opacity 0.3s ease-out";
+                        traderCard_1.style.opacity = "0";
+                        // Remove element after animation completes
+                        setTimeout(function () {
+                            traderCard_1.remove();
+                        }, 300);
+                    }
+                    return [3 /*break*/, 5];
+                case 3:
+                    err_2 = _a.sent();
+                    console.error(err_2);
+                    _utils__WEBPACK_IMPORTED_MODULE_2__["default"].showNotification(err_2.message || "Failed to remove trader", "error");
+                    button.textContent = origText;
+                    return [3 /*break*/, 5];
+                case 4:
+                    if (!button.isConnected)
+                        return [2 /*return*/]; // Don't try to update if element was removed
+                    button.disabled = false;
+                    return [7 /*endfinally*/];
+                case 5: return [2 /*return*/];
+            }
+        });
+    });
+}
+function handleSelect(button) {
+    return __awaiter(this, void 0, void 0, function () {
+        var copyAddr, wallet, origText, ts, msg, sig, res, json, err_3;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    copyAddr = button.dataset.address;
+                    if (!copyAddr)
+                        return [2 /*return*/, console.error("No trader address")];
+                    if (!(_metamask__WEBPACK_IMPORTED_MODULE_0__.provider === null || _metamask__WEBPACK_IMPORTED_MODULE_0__.provider === void 0 ? void 0 : _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.selectedAddress)) {
+                        return [2 /*return*/, _utils__WEBPACK_IMPORTED_MODULE_2__["default"].showNotification("Please connect your wallet first", "error")];
                     }
                     wallet = _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.selectedAddress;
                     origText = button.textContent;
@@ -1318,16 +1376,16 @@ function handleSelect(button) {
                     if (!res.ok || !json.success) {
                         throw new Error(json.error || "Failed to select trader");
                     }
-                    _utils__WEBPACK_IMPORTED_MODULE_1__["default"].showNotification("Trader selected", "success");
+                    _utils__WEBPACK_IMPORTED_MODULE_2__["default"].showNotification("Trader selected", "success");
                     button.textContent = "✓ Selected for Copying";
                     button.classList.replace("select-trader", "unselect-trader");
                     button.classList.replace("btn-primary", "btn-success");
                     button.classList.add("selected");
                     return [3 /*break*/, 7];
                 case 5:
-                    err_2 = _a.sent();
-                    console.error(err_2);
-                    _utils__WEBPACK_IMPORTED_MODULE_1__["default"].showNotification(err_2.message, "error");
+                    err_3 = _a.sent();
+                    console.error(err_3);
+                    _utils__WEBPACK_IMPORTED_MODULE_2__["default"].showNotification(err_3.message, "error");
                     button.textContent = origText;
                     return [3 /*break*/, 7];
                 case 6:
@@ -1340,7 +1398,7 @@ function handleSelect(button) {
 }
 function handleUnselect(button) {
     return __awaiter(this, void 0, void 0, function () {
-        var copyAddr, wallet, origText, ts, msg, sig, res, json, err_3;
+        var copyAddr, wallet, origText, ts, msg, sig, res, json, err_4;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -1348,7 +1406,7 @@ function handleUnselect(button) {
                     if (!copyAddr)
                         return [2 /*return*/, console.error("No trader address")];
                     if (!(_metamask__WEBPACK_IMPORTED_MODULE_0__.provider === null || _metamask__WEBPACK_IMPORTED_MODULE_0__.provider === void 0 ? void 0 : _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.selectedAddress)) {
-                        return [2 /*return*/, _utils__WEBPACK_IMPORTED_MODULE_1__["default"].showNotification("Please connect your wallet first", "error")];
+                        return [2 /*return*/, _utils__WEBPACK_IMPORTED_MODULE_2__["default"].showNotification("Please connect your wallet first", "error")];
                     }
                     wallet = _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.selectedAddress;
                     origText = button.textContent;
@@ -1383,16 +1441,16 @@ function handleUnselect(button) {
                     if (!res.ok || !json.success) {
                         throw new Error(json.error || "Failed to unselect trader");
                     }
-                    _utils__WEBPACK_IMPORTED_MODULE_1__["default"].showNotification("Trader unselected", "success");
+                    _utils__WEBPACK_IMPORTED_MODULE_2__["default"].showNotification("Trader unselected", "success");
                     button.textContent = "Select for Copying";
                     button.classList.replace("unselect-trader", "select-trader");
                     button.classList.replace("btn-success", "btn-primary");
                     button.classList.remove("selected");
                     return [3 /*break*/, 7];
                 case 5:
-                    err_3 = _a.sent();
-                    console.error(err_3);
-                    _utils__WEBPACK_IMPORTED_MODULE_1__["default"].showNotification(err_3.message, "error");
+                    err_4 = _a.sent();
+                    console.error(err_4);
+                    _utils__WEBPACK_IMPORTED_MODULE_2__["default"].showNotification(err_4.message, "error");
                     button.textContent = origText;
                     return [3 /*break*/, 7];
                 case 6:

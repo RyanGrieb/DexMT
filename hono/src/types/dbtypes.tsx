@@ -1,15 +1,10 @@
-import {
-  ColumnType,
-  Generated,
-  Insertable,
-  Selectable,
-  Updateable,
-} from "kysely";
+import { ColumnType, Generated } from "kysely";
 
 export interface Database {
   traders: TradersTable;
   trades: TradesTable;
   positions: OpenPositionsTable;
+  closed_positions: ClosedPositionsTable;
   favorited_traders: FavoritedTradersTable;
 }
 
@@ -47,14 +42,76 @@ export interface TradesTable {
   updated_at: ColumnType<Date, string | undefined, string | undefined>;
 }
 
+export interface ClosedPositionsTable {
+  id: Generated<number>;
+  token_name: string; // DEXPosition.tokenName
+  collateral_amount_usd: number; // DEXPosition.collateralAmountUsd
+  leverage: number; // DEXPosition.leverage
+  size_usd: number; // DEXPosition.sizeUsd
+  entry_price_usd: number; // DEXPosition.entryPriceUsd
+  pnl_usd: number; // DEXPosition.pnlUsd
+  mark_price_usd: number; // DEXPosition.markPriceUsd
+  liq_price_usd: number; // DEXPosition.liqPriceUsd
+  key: string; // Position.key
+  contract_key: string; // Position.contractKey
+  trader_address: string; // Position.account
+  market_address: string; // Position.marketAddress
+  collateral_token_address: string; // Position.collateralTokenAddress
+  size_in_usd: bigint; // Position.sizeInUsd
+  size_in_tokens: bigint; // Position.sizeInTokens
+  collateral_amount: bigint; // Position.collateralAmount
+  pending_borrowing_fees_usd: bigint; // Position.pendingBorrowingFeesUsd
+  increased_at_time: bigint; // Position.increasedAtTime
+  decreased_at_time: bigint; // Position.decreasedAtTime
+  is_long: boolean; // Position.isLong
+  funding_fee_amount: bigint; // Position.fundingFeeAmount
+  claimable_long_token_amount: bigint; // Position.claimableLongTokenAmount
+  claimable_short_token_amount: bigint; // Position.claimableShortTokenAmount
+  is_opening: boolean; // Position.isOpening
+  pnl: bigint; // Position.pnl
+  position_fee_amount: bigint; // Position.positionFeeAmount
+  trader_discount_amount: bigint; // Position.traderDiscountAmount
+  ui_fee_amount: bigint; // Position.uiFeeAmount
+  data: string; // Position.data
+
+  // timestamps
+  created_at: ColumnType<Date, string | undefined, never>;
+  updated_at: ColumnType<Date, string | undefined, string | undefined>;
+}
+
 export interface OpenPositionsTable {
   id: Generated<number>;
-  trader_address: string;
-  token: string;
-  collateral: number;
-  leverage: number;
-  size: number;
-  entry_price: number;
+  token_name: string; // DEXPosition.tokenName
+  collateral_amount_usd: number; // DEXPosition.collateralAmountUsd
+  leverage: number; // DEXPosition.leverage
+  size_usd: number; // DEXPosition.sizeUsd
+  entry_price_usd: number; // DEXPosition.entryPriceUsd
+  pnl_usd: number; // DEXPosition.pnlUsd
+  mark_price_usd: number; // DEXPosition.markPriceUsd
+  liq_price_usd: number; // DEXPosition.liqPriceUsd
+  key: string; // Position.key
+  contract_key: string; // Position.contractKey
+  trader_address: string; // Position.account
+  market_address: string; // Position.marketAddress
+  collateral_token_address: string; // Position.collateralTokenAddress
+  size_in_usd: bigint; // Position.sizeInUsd
+  size_in_tokens: bigint; // Position.sizeInTokens
+  collateral_amount: bigint; // Position.collateralAmount
+  pending_borrowing_fees_usd: bigint; // Position.pendingBorrowingFeesUsd
+  increased_at_time: bigint; // Position.increasedAtTime
+  decreased_at_time: bigint; // Position.decreasedAtTime
+  is_long: boolean; // Position.isLong
+  funding_fee_amount: bigint; // Position.fundingFeeAmount
+  claimable_long_token_amount: bigint; // Position.claimableLongTokenAmount
+  claimable_short_token_amount: bigint; // Position.claimableShortTokenAmount
+  is_opening: boolean; // Position.isOpening
+  pnl: bigint; // Position.pnl
+  position_fee_amount: bigint; // Position.positionFeeAmount
+  trader_discount_amount: bigint; // Position.traderDiscountAmount
+  ui_fee_amount: bigint; // Position.uiFeeAmount
+  data: string; // Position.data
+
+  // timestamps
   created_at: ColumnType<Date, string | undefined, never>;
   updated_at: ColumnType<Date, string | undefined, string | undefined>;
 }
@@ -70,20 +127,3 @@ export interface FavoritedTradersTable {
   created_at: ColumnType<Date, string | undefined, never>;
   updated_at: ColumnType<Date, string | undefined, string | undefined>;
 }
-
-// Type helpers for Traders
-//export type Trader = Selectable<TradersTable>;
-export type NewTrader = Insertable<TradersTable>;
-export type TraderUpdate = Updateable<TradersTable>;
-
-export type Trade = Selectable<TradesTable>;
-export type NewTrade = Insertable<TradesTable>;
-export type TradeUpdate = Updateable<TradesTable>;
-
-export type Position = Selectable<OpenPositionsTable>;
-export type NewPosition = Insertable<OpenPositionsTable>;
-export type PositionUpdate = Updateable<OpenPositionsTable>;
-
-export type CopyTrading = Selectable<FavoritedTradersTable>;
-export type NewCopyTrading = Insertable<FavoritedTradersTable>;
-export type CopyTradingUpdate = Updateable<FavoritedTradersTable>;

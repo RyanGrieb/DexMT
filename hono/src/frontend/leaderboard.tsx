@@ -79,7 +79,7 @@ export async function renderLeaderboard(): Promise<string> {
         const winRatioValue = Number(trader.winRatio) || 0;
         const winRatioText = winRatioValue.toFixed(2);
 
-        const watchingCount = 0;
+        const watchingCount = trader.watchingAmt || 0;
         const platformIcon = getPlatformIcon(trader.dexPlatform ?? null);
         const addressHash = trader.address.slice(2, 4).toUpperCase();
         const iconColor = generateIconColor(trader.address);
@@ -107,7 +107,8 @@ export async function renderLeaderboard(): Promise<string> {
         <div class="view-header">
           <h2 class="view-title">Top Traders</h2>
           <p class="view-subtitle">
-            Track and mirror best performing traders across DEX platforms
+            <!-- Mirror trades from top performers across DEX platforms -->
+            The top traders ranked by their performance across multiple DEX platforms.
           </p>
         </div>
 
