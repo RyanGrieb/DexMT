@@ -1042,7 +1042,7 @@ function loadContent(_a) {
 function showLoadingState() {
     var contentArea = document.querySelector(".index-content");
     if (contentArea) {
-        contentArea.innerHTML = "\n      <div class=\"loading-container\">\n        <div class=\"loading-spinner\"></div>\n        <p>Loading...</p>\n      </div>\n    ";
+        contentArea.innerHTML = "\n      <div class=\"loading-container\">\n        <div class=\"loading-spinner\"></div>\n        <p class=\"loading-text\">Loading content, please wait...</p>\n      </div>\n    ";
     }
 }
 function watchElementsOfQuery(query, onElementLoad) {

@@ -51,7 +51,6 @@ export async function renderWatchlist(userAddress?: string): Promise<string> {
         <div class="watchlist-header">
           <h2>My Watch List</h2>
           <div class="watchlist-controls">
-            <button id="addTraderBtn" class="btn btn-primary">Add Trader</button>
             <button id="copySettingsBtn" class="btn btn-secondary">Copy Settings</button>
             <div class="mirror-toggle">
               <label class="switch">

@@ -181,7 +181,7 @@ function showLoadingState(): void {
     contentArea.innerHTML = `
       <div class="loading-container">
         <div class="loading-spinner"></div>
-        <p>Loading...</p>
+        <p class="loading-text">Loading content, please wait...</p>
       </div>
     `;
   }

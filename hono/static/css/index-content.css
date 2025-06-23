@@ -33,3 +33,42 @@
   color: #e0e0e0;
   margin: 0 0 16px 0;
 }
+
+/* Loading State Styles */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px; /* ensure some vertical space */
+  padding: 24px;
+  color: #ddd;
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #444; /* subtle track */
+  border-top-color: #4f46e5; /* accent color */
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+.loading-text {
+  font-weight: bold;
+  font-size: 1.25rem;
+  font-size: 1rem;
+  text-align: center;
+  margin: 0;
+}
+
+/* Keyframes for spinner */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
