@@ -132,6 +132,13 @@ async function loadContent({
       throw new Error("No API URL or content provided");
     }
 
+    document.title = title;
+
+    // Update browser URL if requested and browserUrl is provided
+    if (updateUrl && browserUrl) {
+      window.history.pushState({}, title, browserUrl);
+    }
+
     showLoadingState();
 
     // Get the current wallet address if not provided
@@ -161,13 +168,6 @@ async function loadContent({
     const contentDiv = document.querySelector(".index-content");
     if (contentDiv) {
       contentDiv.innerHTML = html;
-    }
-
-    document.title = title;
-
-    // Update browser URL if requested and browserUrl is provided
-    if (updateUrl && browserUrl) {
-      window.history.pushState({}, title, browserUrl);
     }
   } catch (error) {
     console.error("Error loading content:", error);
@@ -246,6 +246,69 @@ function showNotification(message: string, type: "success" | "error" | "info"): 
   }, 3000);
 }
 
+async function loadProfile(address: string | null, walletAddress: string | null | undefined): Promise<void> {
+  if (address) {
+    let apiUrl = `/api/html/traderprofile?address=${encodeURIComponent(address)}`;
+    let browserUrl = `/traderprofile?address=${encodeURIComponent(address)}`;
+    if (walletAddress) {
+      apiUrl += `&userAddress=${encodeURIComponent(walletAddress)}`;
+    }
+
+    await loadContent({
+      apiUrl,
+      browserUrl,
+      title: "Trader Profile",
+      walletAddr: walletAddress || undefined,
+      updateUrl: true, // ← now pushState into history
+    });
+  } else {
+    await loadContent({
+      title: "Trader Profile",
+      content: '<div class="error-message">Trader address is required</div>',
+      updateUrl: false,
+    });
+  }
+}
+
+// Function to load content based on current URL
+async function loadContentForCurrentPage(): Promise<void> {
+  const currentPath = window.location.pathname;
+  const searchParams = new URLSearchParams(window.location.search);
+  const walletAddress = provider?.selectedAddress;
+
+  try {
+    switch (currentPath) {
+      case "/toptraders":
+        await loadContent({
+          apiUrl: "/api/html/toptraders",
+          title: "Top Traders",
+          updateUrl: false, // Don't update URL on initial page load
+        });
+        break;
+
+      case "/mywatchlist":
+        await loadContent({
+          apiUrl: "/api/html/mywatchlist",
+          title: "My Watchlist",
+          walletAddr: walletAddress || undefined,
+          updateUrl: false, // Don't update URL on initial page load
+        });
+        break;
+
+      case "/traderprofile":
+        const address = searchParams.get("address");
+        loadProfile(address, walletAddress);
+        break;
+
+      default:
+        // For root or unknown paths, don't load anything (let redirect handle it)
+        break;
+    }
+  } catch (error) {
+    console.error("Error loading initial content:", error);
+  }
+}
+
 const utils = {
   formatNumber,
   formatCurrency,
@@ -261,6 +324,8 @@ const utils = {
   loadContent,
   watchElementsOfQuery,
   showNotification,
+  loadProfile,
+  loadContentForCurrentPage,
 };
 
 export default utils;

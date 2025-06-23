@@ -13,6 +13,11 @@ import watchlist from "./watchlist";
 
 console.log("DEXMT JS file loaded");
 
+window.addEventListener("popstate", async () => {
+  console.log("Popstate event detected, loading content for current page...");
+  await utils.loadContentForCurrentPage();
+});
+
 // Main application initialization
 document.addEventListener("DOMContentLoaded", async () => {
   console.log("DOM loaded, setting up DEXMT...");
@@ -31,7 +36,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // Load content based on current URL
-  await loadContentForCurrentPage();
+  await utils.loadContentForCurrentPage();
 
   const topTradersBtn = document.getElementById("topTradersBtn");
   const myWatchListBtn = document.getElementById("myWatchListBtn");
@@ -72,18 +77,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Get current wallet address for the header (if available)
     const walletAddress = provider?.selectedAddress;
 
-    // Build API URL with userAddress parameter if wallet is connected
-    let apiUrl = `/api/html/traderprofile?address=${encodeURIComponent(address)}`;
-    if (walletAddress) {
-      apiUrl += `&userAddress=${encodeURIComponent(walletAddress)}`;
-    }
-
-    await utils.loadContent({
-      apiUrl,
-      browserUrl: "/traderprofile?address=" + encodeURIComponent(address),
-      title: "Trader Profile",
-      walletAddr: walletAddress || undefined,
-    });
+    utils.loadProfile(address, walletAddress);
   });
 
   // Setup wallet connection button
@@ -101,63 +95,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   console.log("DEXMT setup complete");
 });
-
-// Function to load content based on current URL
-async function loadContentForCurrentPage(): Promise<void> {
-  const currentPath = window.location.pathname;
-  const searchParams = new URLSearchParams(window.location.search);
-  const walletAddress = provider?.selectedAddress;
-
-  try {
-    switch (currentPath) {
-      case "/toptraders":
-        await utils.loadContent({
-          apiUrl: "/api/html/toptraders",
-          title: "Top Traders",
-          updateUrl: false, // Don't update URL on initial page load
-        });
-        break;
-
-      case "/mywatchlist":
-        await utils.loadContent({
-          apiUrl: "/api/html/mywatchlist",
-          title: "My Watchlist",
-          walletAddr: walletAddress || undefined,
-          updateUrl: false, // Don't update URL on initial page load
-        });
-        break;
-
-      case "/traderprofile":
-        const address = searchParams.get("address");
-        if (address) {
-          let apiUrl = `/api/html/traderprofile?address=${encodeURIComponent(address)}`;
-          if (walletAddress) {
-            apiUrl += `&userAddress=${encodeURIComponent(walletAddress)}`;
-          }
-
-          await utils.loadContent({
-            apiUrl,
-            title: "Trader Profile",
-            walletAddr: walletAddress || undefined,
-            updateUrl: false, // Don't update URL on initial page load
-          });
-        } else {
-          await utils.loadContent({
-            title: "Trader Profile",
-            content: '<div class="error-message">Trader address is required</div>',
-            updateUrl: false,
-          });
-        }
-        break;
-
-      default:
-        // For root or unknown paths, don't load anything (let redirect handle it)
-        break;
-    }
-  } catch (error) {
-    console.error("Error loading initial content:", error);
-  }
-}
 
 // Global error handler
 window.addEventListener("error", (event: ErrorEvent) => {

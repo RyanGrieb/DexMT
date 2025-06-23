@@ -2,23 +2,35 @@ import { provider } from "./metamask";
 import profile from "./profile";
 import utils from "./utils";
 
-function init() {
-  // Delegate all clicks on select/unselect buttons to one handler
+async function init() {
   document.body.addEventListener("click", async (e) => {
-    const btn = (e.target as HTMLElement).closest("button");
-    if (!btn) return;
+    const traderIdentity = (e.target as HTMLElement).closest(".trader-identity");
 
-    // SELECT
-    if (btn.classList.contains("select-trader")) {
-      await handleSelect(btn as HTMLButtonElement);
+    if (traderIdentity) {
+      e.preventDefault();
+
+      const walletAddress = provider?.selectedAddress;
+      const traderCard = traderIdentity.closest(".trader-card") as HTMLElement;
+      const address = traderCard?.getAttribute("data-address");
+      if (address) {
+        utils.loadProfile(address, walletAddress);
+      }
     }
-    // UNSELECT
-    else if (btn.classList.contains("selected")) {
-      await handleUnselect(btn as HTMLButtonElement);
-    }
-    // REMOVE
-    else if (btn.classList.contains("remove-trader")) {
-      await handleRemove(btn as HTMLButtonElement);
+
+    const btn = (e.target as HTMLElement).closest("button");
+    if (btn) {
+      // SELECT
+      if (btn.classList.contains("select-trader")) {
+        await handleSelect(btn as HTMLButtonElement);
+      }
+      // UNSELECT
+      else if (btn.classList.contains("selected")) {
+        await handleUnselect(btn as HTMLButtonElement);
+      }
+      // REMOVE
+      else if (btn.classList.contains("remove-trader")) {
+        await handleRemove(btn as HTMLButtonElement);
+      }
     }
   });
 

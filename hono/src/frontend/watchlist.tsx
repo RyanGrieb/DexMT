@@ -113,18 +113,18 @@ function renderFavoritedTraders(traders: any[], userAddress: string, selectedAdd
       ${traders
         .map((trader) => {
           const isSelected = selectedAddresses.has(trader.address);
-          // Generate trader icon color and text
           const addressHash = trader.address.slice(2, 4).toUpperCase();
           const iconColor = generateIconColor(trader.address);
+          //const profileUrl = `/traderprofile?address=${trader.address}`;
 
           return `
         <div class="trader-card" data-address="${trader.address}">
           <div class="trader-info">
             <div class="trader-address">
-              <div class="trader-identity">
+              <a href="" class="trader-identity">
                 <div class="trader-icon" style="background: ${iconColor}">${addressHash}</div>
                 <strong>${trader.address.slice(0, 6)}...${trader.address.slice(-4)}</strong>
-              </div>
+              </a>
               <span class="rank">#${trader.platformRanking || "N/A"}</span>
             </div>
             <div class="trader-stats">

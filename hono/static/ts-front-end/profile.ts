@@ -3,12 +3,8 @@ import utils from "./utils";
 
 function init() {
   utils.watchElementsOfQuery(".back-button", (button) => {
-    button.addEventListener("click", () => {
-      utils.loadContent({
-        apiUrl: "/api/html/toptraders",
-        browserUrl: "/toptraders",
-        title: "Top Traders",
-      });
+    button.addEventListener("click", (event) => {
+      window.history.back();
     });
   });
 
