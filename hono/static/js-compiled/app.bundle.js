@@ -977,7 +977,7 @@ function generateIconColor(address) {
 // Helper function to update content with optional URL change
 function loadContent(_a) {
     return __awaiter(this, arguments, void 0, function (_b) {
-        var contentDiv_1, walletAddress, headers, response, html, contentDiv, error_1;
+        var contentDiv_1, walletAddress, tz, headers, response, html, contentDiv, error_1;
         var apiUrl = _b.apiUrl, browserUrl = _b.browserUrl, title = _b.title, walletAddr = _b.walletAddr, content = _b.content, _c = _b.updateUrl, updateUrl = _c === void 0 ? true : _c;
         return __generator(this, function (_d) {
             switch (_d.label) {
@@ -1005,8 +1005,10 @@ function loadContent(_a) {
                     }
                     showLoadingState();
                     walletAddress = walletAddr || (_metamask__WEBPACK_IMPORTED_MODULE_0__.provider === null || _metamask__WEBPACK_IMPORTED_MODULE_0__.provider === void 0 ? void 0 : _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.selectedAddress);
+                    tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
                     headers = {
                         "Content-Type": "application/json",
+                        "x-timezone": tz,
                     };
                     // Add wallet address to headers if available
                     if (walletAddress) {
@@ -1306,6 +1308,23 @@ function init() {
                         }
                     });
                 }); });
+            });
+            // Tab‐switching logic
+            _utils__WEBPACK_IMPORTED_MODULE_2__["default"].watchElementsOfQuery(".tab-button", function (element) {
+                var tabBtn = element;
+                tabBtn.addEventListener("click", function () {
+                    var tab = tabBtn.getAttribute("data-tab");
+                    if (!tab)
+                        return;
+                    // deactivate all tab buttons and panes
+                    document.querySelectorAll(".tab-button").forEach(function (btn) { return btn.classList.remove("active"); });
+                    document.querySelectorAll(".tab-pane").forEach(function (p) { return p.classList.remove("active"); });
+                    // activate clicked button & its pane
+                    tabBtn.classList.add("active");
+                    var pane = document.getElementById("".concat(tab, "-tab"));
+                    if (pane)
+                        pane.classList.add("active");
+                });
             });
             return [2 /*return*/];
         });

@@ -553,6 +553,21 @@ async function getSelectedTraders(followerAddress: string): Promise<string[]> {
   }
 }
 
+async function getTrades(address: string) {
+  if (!db) {
+    throw new Error("Database not initialized. Call initializeDatabase first.");
+  }
+
+  try {
+    const positions = await db.selectFrom("trades").selectAll().where("trader_address", "=", address).execute();
+
+    return positions;
+  } catch (error) {
+    console.error("Error fetching trades:", error);
+    throw error;
+  }
+}
+
 async function getPositions(address: string) {
   if (!db) {
     throw new Error("Database not initialized. Call initializeDatabase first.");
@@ -677,7 +692,7 @@ async function createPositions(positions: DEXPosition[]) {
       }
     });
 
-    console.log(`Inserted ${positions.length} new positions`);
+    //console.log(`Inserted ${positions.length} new positions`);
   } catch (error) {
     console.error("Error creating positions:", error);
     throw error;
@@ -733,7 +748,7 @@ async function updatePositions(positions: DEXPosition[]) {
       }
     });
 
-    console.log(`Updated ${positions.length} positions`);
+    //console.log(`Updated ${positions.length} positions`);
   } catch (error) {
     console.error("Error updating positions:", error);
     throw error;

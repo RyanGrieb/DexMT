@@ -2,6 +2,30 @@ import { Position } from "@gmx-io/sdk/types/positions";
 import database from "../database";
 import gmxSdk from "../gmxsdk";
 
+export enum DEXOrderType {
+  MarketSwap = 0,
+  LimitSwap = 1,
+  MarketIncrease = 2,
+  LimitIncrease = 3,
+  MarketDecrease = 4,
+  LimitDecrease = 5,
+  StopLossDecrease = 6,
+  Liquidation = 7,
+  StopIncrease = 8,
+  Deposit = 9,
+}
+
+export type DEXTradeAction = {
+  orderType: DEXOrderType;
+  traderAddr: string;
+  isLong: boolean;
+  market: string;
+  size: number;
+  price: number;
+  rpnl: number;
+  timestamp: number;
+};
+
 export interface DEXPosition extends Position {
   traderAddr: string;
   tokenName: string;
@@ -77,6 +101,73 @@ export class Trader {
     this.avgLeverage = avgLeverage;
     this.winRatio = winRatio;
     this.watchingAmt = watchingAmt;
+  }
+
+  async getTrades(options?: { fromDb?: boolean; amount?: number }): Promise<DEXTradeAction[]> {
+    const validAddress: `0x${string}` = this.address as `0x${string}`;
+
+    if (!validAddress) {
+      return [];
+    }
+
+    if (options?.fromDb) {
+      //const dbTrades = await database.getTrades(this.address);
+      // …map dbTrades to DEXTradeAction…
+    }
+
+    const rawTrades = await gmxSdk.getTradeHistory({
+      address: validAddress,
+      amount: (options?.amount ?? 5) * 2,
+    });
+
+    if (!rawTrades) {
+      return [];
+    }
+
+    // only keep trades that have an executionPrice
+    const requestedAmount = options?.amount || 10;
+    const tradesWithPrice = rawTrades.filter((trade: any) => trade.executionPrice !== undefined);
+
+    console.log(`Fetched ${rawTrades.length} trades, ` + `${tradesWithPrice.length} have executionPrice`);
+
+    // take up to the requested amount
+    const tradeActions = tradesWithPrice.slice(0, requestedAmount);
+
+    if (tradeActions.length === 0) {
+      return [];
+    }
+
+    console.log(`Returning ${tradeActions.length} valid trades for ${validAddress}`);
+
+    //console.log(tradeActions[4]);
+    //const filePath = path.resolve(__dirname, "tradeActions.json");
+    //fs.writeFileSync(
+    //  filePath,
+    //  JSON.stringify(tradeActions[4], (_, value) => (typeof value === "bigint" ? value.toString() : value), 2)
+    // );
+
+    return tradeActions.map((trade: { [key: string]: any }) => {
+      const market = "marketInfo" in trade ? trade.marketInfo.name.split(" ")[0] : "Unknown Market";
+
+      const initialCollateralUsd =
+        "initialCollateralDeltaAmount" in trade ? Number(trade.initialCollateralDeltaAmount) / 1e6 : 0;
+      const sizeDeltaUsd = "sizeDeltaUsd" in trade ? Number(trade.sizeDeltaUsd) / 1e30 : 0;
+      const size = sizeDeltaUsd > 0 ? sizeDeltaUsd : initialCollateralUsd;
+      const price = Number(trade.executionPrice) / 1e30;
+      const rpnl = "pnlUsd" in trade && trade.pnlUsd ? Number(trade.pnlUsd) / 1e30 : 0;
+      const orderType = sizeDeltaUsd <= 0 && trade.orderType == 2 ? DEXOrderType.Deposit : trade.orderType;
+
+      return {
+        orderType: orderType,
+        traderAddress: validAddress,
+        isLong: trade.isLong,
+        market: market,
+        size: size,
+        price: price,
+        rpnl: rpnl,
+        timestamp: "timestamp" in trade ? Number(trade.timestamp) : -1,
+      };
+    });
   }
 
   async getPositions(options?: { fromDb: boolean }): Promise<DEXPosition[]> {

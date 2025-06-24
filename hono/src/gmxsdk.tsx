@@ -2,23 +2,40 @@ import { GmxSdk } from "@gmx-io/sdk";
 import { MarketsInfoData } from "@gmx-io/sdk/types/markets";
 import { Position, PositionsData } from "@gmx-io/sdk/types/positions";
 import { TokensData } from "@gmx-io/sdk/types/tokens";
-import { TradeAction } from "@gmx-io/sdk/types/tradeHistory";
+
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
+const USE_GMX_TESTNET = false; // Set to true to use Arbitrum Goerli testnet
 
 let gmxSdkInstance: GmxSdk | undefined;
 let marketsInfoCache: MarketsInfoData | undefined;
 let tokensDataCache: TokensData | undefined;
 let cacheTimestamp: number = 0;
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
+
+function createGMXSDK(): GmxSdk {
+  return new GmxSdk({
+    chainId: 42161,
+    rpcUrl: "https://arb1.arbitrum.io/rpc",
+    oracleUrl: "https://arbitrum-api.gmxinfra.io",
+    subsquidUrl: "https://gmx.squids.live/gmx-synthetics-arbitrum:prod/api/graphql",
+  });
+}
+
+function createGMXSDKTestNet(): GmxSdk {
+  return new GmxSdk({
+    chainId: 421613, // Arbitrum Goerli testnet
+    rpcUrl: "https://sepolia-rollup.arbitrum.io/rpc",
+    oracleUrl: "https://arbitrum-api.gmxinfra.io",
+    subsquidUrl: "https://gmx.squids.live/gmx-synthetics-arbitrum:prod/api/graphql",
+  });
+}
 
 function getGmxSdk(): GmxSdk {
   if (!gmxSdkInstance) {
-    gmxSdkInstance = new GmxSdk({
-      chainId: 42161,
-      rpcUrl: "https://arb1.arbitrum.io/rpc",
-      oracleUrl: "https://arbitrum-api.gmxinfra.io",
-      subsquidUrl:
-        "https://gmx.squids.live/gmx-synthetics-arbitrum:prod/api/graphql",
-    });
+    if (USE_GMX_TESTNET) {
+      gmxSdkInstance = createGMXSDKTestNet();
+    } else {
+      gmxSdkInstance = createGMXSDK();
+    }
   }
   return gmxSdkInstance;
 }
@@ -30,11 +47,7 @@ async function getMarketsInfoCached(): Promise<{
   const now = Date.now();
 
   // Check if cache is still valid
-  if (
-    marketsInfoCache &&
-    tokensDataCache &&
-    now - cacheTimestamp < CACHE_DURATION
-  ) {
+  if (marketsInfoCache && tokensDataCache && now - cacheTimestamp < CACHE_DURATION) {
     return {
       marketsInfoData: marketsInfoCache,
       tokensData: tokensDataCache,
@@ -53,9 +66,7 @@ async function getMarketsInfoCached(): Promise<{
   return { marketsInfoData, tokensData };
 }
 
-async function getTokenName(
-  marketAddress: string
-): Promise<string | undefined> {
+async function getTokenName(marketAddress: string): Promise<string | undefined> {
   const { marketsInfoData } = await getMarketsInfoCached();
 
   if (!marketsInfoData) {
@@ -72,9 +83,7 @@ async function getTokenName(
 }
 
 // Batch function to get multiple token names efficiently
-async function getTokenNames(
-  marketAddresses: string[]
-): Promise<{ [marketAddress: string]: string | undefined }> {
+async function getTokenNames(marketAddresses: string[]): Promise<{ [marketAddress: string]: string | undefined }> {
   const { marketsInfoData } = await getMarketsInfoCached();
 
   if (!marketsInfoData) {
@@ -181,8 +190,7 @@ async function getPositionValuesInUsd(position: Position): Promise<{
   const minCollPrice = Number(collateralToken.prices.minPrice) / 1e30;
   const maxCollPrice = Number(collateralToken.prices.maxPrice) / 1e30;
   const collPrice = (minCollPrice + maxCollPrice) / 2;
-  const collAmount =
-    Number(position.collateralAmount) / 10 ** collateralToken.decimals;
+  const collAmount = Number(position.collateralAmount) / 10 ** collateralToken.decimals;
   const collateralUsd = collAmount * collPrice;
 
   // ——————————————————————————————————
@@ -224,16 +232,18 @@ async function getPositionValuesInUsd(position: Position): Promise<{
   };
 }
 
-async function getTradeHistory(
-  address: string
-): Promise<TradeAction[] | undefined> {
+async function getTradeHistory(options: {
+  address: string;
+  amount?: number;
+}): Promise<{ [key: string]: any } | undefined> {
+  const { address, amount = 10 } = options;
   const sdk = getGmxSdk();
   sdk.setAccount(address as `0x${string}`);
 
   try {
     const { marketsInfoData, tokensData } = await getMarketsInfoCached();
     const tradeActions = await sdk.trades.getTradeHistory({
-      pageSize: 10,
+      pageSize: amount,
       pageIndex: 0,
       marketsInfoData,
       tokensData,
@@ -244,7 +254,6 @@ async function getTradeHistory(
       return;
     }
 
-    console.log("Trade History:", tradeActions);
     return tradeActions;
   } catch (error) {
     console.error("Error fetching trade history:", error);

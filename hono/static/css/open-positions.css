@@ -1,0 +1,358 @@
+/* Open Positions Container */
+.positions-container {
+  min-height: 400px;
+}
+
+.positions-section {
+  margin-bottom: 32px;
+}
+
+.positions-section:last-child {
+  margin-bottom: 0;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #374151;
+}
+
+.section-title {
+  color: #ffffff;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.section-subtitle {
+  color: #9ca3af;
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.trader-positions-group {
+  background-color: #1f2937;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+.trader-group-header {
+  background-color: #111827;
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #374151;
+}
+
+.trader-group-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.trader-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.75rem;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.trader-name {
+  color: #ffffff;
+  font-family: "Roboto Mono", monospace;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.trader-stats {
+  display: flex;
+  gap: 16px;
+  color: #9ca3af;
+  font-size: 0.75rem;
+}
+
+.trader-stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.trader-stat-label {
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.trader-stat-value {
+  color: #e5e7eb;
+  font-weight: 500;
+}
+
+/* Positions Table */
+.positions-table-container {
+  overflow-x: auto;
+}
+
+.positions-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #1f2937;
+}
+
+.positions-table th,
+.positions-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #374151;
+}
+
+.positions-table th {
+  background-color: #111827;
+  color: #9ca3af;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.positions-table td {
+  color: #e5e7eb;
+  font-size: 0.875rem;
+}
+
+.position-cell {
+  min-width: 120px;
+}
+
+.market-name {
+  color: #ffffff;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.position-side {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.position-side.long {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.position-side.short {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.leverage-cell {
+  color: #a78bfa;
+  font-weight: 500;
+}
+
+.net-value-cell.positive {
+  color: #10b981;
+  font-weight: 500;
+}
+
+.net-value-cell.negative {
+  color: #ef4444;
+  font-weight: 500;
+}
+
+.size-cell,
+.collateral-cell {
+  font-family: "Roboto Mono", monospace;
+  font-size: 0.8rem;
+}
+
+.entry-price-cell,
+.mark-price-cell,
+.liq-price-cell {
+  font-family: "Roboto Mono", monospace;
+  font-size: 0.8rem;
+  color: #d1d5db;
+}
+
+/* Empty States */
+.empty-positions {
+  text-align: center;
+  padding: 48px 24px;
+  color: #9ca3af;
+}
+
+.empty-positions h4 {
+  margin: 0 0 8px 0;
+  color: #e5e7eb;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.empty-positions p {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.no-copying-positions {
+  background-color: #1f2937;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  padding: 32px 24px;
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.no-copying-positions h4 {
+  color: #e5e7eb;
+  margin: 0 0 8px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.no-copying-positions p {
+  color: #9ca3af;
+  margin: 0 0 16px 0;
+  font-size: 0.875rem;
+}
+
+/* Summary Stats */
+.positions-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.summary-card {
+  background-color: #1f2937;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.summary-label {
+  color: #9ca3af;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.summary-value {
+  color: #ffffff;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.summary-value.positive {
+  color: #10b981;
+}
+
+.summary-value.negative {
+  color: #ef4444;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .positions-table-container {
+    border-radius: 0;
+  }
+
+  .positions-table th,
+  .positions-table td {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+  }
+
+  .trader-group-header {
+    padding: 12px 16px;
+  }
+
+  .trader-stats {
+    gap: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .trader-group-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .trader-stats {
+    align-self: stretch;
+    justify-content: space-between;
+  }
+
+  .positions-summary {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .positions-table {
+    font-size: 0.75rem;
+  }
+
+  .positions-table th,
+  .positions-table td {
+    padding: 6px 8px;
+  }
+
+  .market-name {
+    font-size: 0.8rem;
+  }
+
+  .position-side {
+    font-size: 0.65rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .positions-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .trader-group-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .trader-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .positions-table th,
+  .positions-table td {
+    padding: 4px 6px;
+  }
+
+  /* Hide less important columns on very small screens */
+  .positions-table .collateral-cell,
+  .positions-table .liq-price-cell {
+    display: none;
+  }
+}

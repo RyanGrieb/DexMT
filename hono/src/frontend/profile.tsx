@@ -1,7 +1,17 @@
+import { html } from "hono/html";
 import database from "../database";
-import { DEXPosition, Trader } from "../types/trader";
+import { DEXOrderType, DEXPosition, DEXTradeAction, Trader } from "../types/trader";
+import utils from "../utils";
 
-export async function renderTraderProfile(traderAddress: string, userAddress?: string): Promise<string> {
+export async function renderTraderProfile({
+  traderAddress,
+  timeZone,
+  userAddress,
+}: {
+  traderAddress: string;
+  timeZone?: string;
+  userAddress?: string;
+}): Promise<string> {
   try {
     // Fetch trader data from database
     const traders = await database.getTraders();
@@ -34,17 +44,27 @@ export async function renderTraderProfile(traderAddress: string, userAddress?: s
 
     //console.log(`User address: ${userAddress} favorited trader ${traderAddress}: ${isFavorited}`);
 
-    return renderProfileHTML(trader, positions, isFavorited);
+    return await renderProfileHTML({ trader, positions, isFavorited, timeZone });
   } catch (error) {
     console.error("Error rendering trader profile:", error);
     return renderErrorPage();
   }
 }
 
-function renderProfileHTML(trader: Trader, positions: DEXPosition[], isFavorited: boolean): string {
+async function renderProfileHTML({
+  trader,
+  positions,
+  isFavorited,
+  timeZone,
+}: {
+  trader: Trader;
+  positions: DEXPosition[];
+  isFavorited: boolean;
+  timeZone?: string;
+}): Promise<string> {
   const addressHash = trader.address.slice(2, 4).toUpperCase();
-  const iconColor = generateIconColor(trader.address);
-  const platformIcon = getPlatformIcon(trader.dexPlatform);
+  const iconColor = utils.generateIconColor(trader.address);
+  const platformIcon = utils.getPlatformIcon(trader.dexPlatform);
 
   // Format metrics using the Trader class properties
   const pnlValue = Number(trader.pnl) || 0;
@@ -55,11 +75,13 @@ function renderProfileHTML(trader: Trader, positions: DEXPosition[], isFavorited
 
   // Note: volume and totalTrades are not in the Trader class, so we'll use placeholder values
   // You might need to add these to your Trader class or fetch them separately
-  const volumeFormatted = abbreviateNumber("0"); // Placeholder - add volume to Trader class if needed
-  const avgSizeFormatted = abbreviateNumber(trader.avgSize || 0);
+  const volumeFormatted = utils.abbreviateNumber("0"); // Placeholder - add volume to Trader class if needed
+  const avgSizeFormatted = utils.abbreviateNumber(trader.avgSize || 0);
   const winRateFormatted = ((Number(trader.winRatio) || 0) * 100).toFixed(1);
   const avgLeverageFormatted = Number(trader.avgLeverage || 0).toFixed(1);
-  const totalTrades = 0; // Placeholder - add totalTrades to Trader class if needed
+
+  const trades = await trader.getTrades({ amount: 25 });
+  const totalTrades = trades.length;
 
   // Set up favorite button state
   const favoriteClass = isFavorited ? "favorite-button favorited" : "favorite-button";
@@ -67,21 +89,14 @@ function renderProfileHTML(trader: Trader, positions: DEXPosition[], isFavorited
     ? "M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
     : "M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3zM12.1 18.55l-.1.1-.1-.1C7.14 14.24 4 11.39 4 8.5 4 6.5 5.5 5 7.5 5c1.54 0 3.04.99 3.57 2.36h1.87C13.46 5.99 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5 0 2.89-3.14 5.74-7.9 10.05z";
 
-  return `
+  return html`
     <div class="user-info-container">
       <!-- Back button and user header -->
       <div class="user-info-header">
         <button id="backToUsers" class="back-button">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            height="24"
-            viewBox="0 0 24 24"
-            width="24"
-          >
+          <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">
             <path d="M0 0h24v24H0z" fill="none" />
-            <path
-              d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"
-            />
+            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
           </svg>
           Back
         </button>
@@ -99,16 +114,9 @@ function renderProfileHTML(trader: Trader, positions: DEXPosition[], isFavorited
           </div>
           <div class="user-actions">
             <button id="favoriteButton" class="${favoriteClass}" data-address="${trader.address}">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                height="20"
-                viewBox="0 0 24 24"
-                width="20"
-              >
+              <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 0 24 24" width="20">
                 <path d="M0 0h24v24H0z" fill="none" />
-                <path
-                  d="${heartPath}"
-                />
+                <path d="${heartPath}" />
               </svg>
               ${isFavorited ? "Unfavorite" : "Favorite"}
             </button>
@@ -137,7 +145,9 @@ function renderProfileHTML(trader: Trader, positions: DEXPosition[], isFavorited
             </div>
             <div class="metric-item">
               <span class="metric-label">PNL %</span>
-              <span class="metric-value pnl ${pnlClass}">${pnlPercentageSign}${Math.abs(pnlPercentageValue).toFixed(2)}%</span>
+              <span class="metric-value pnl ${pnlClass}"
+                >${pnlPercentageSign}${Math.abs(pnlPercentageValue).toFixed(2)}%</span
+              >
             </div>
             <div class="metric-item">
               <span class="metric-label">Volume</span>
@@ -163,29 +173,64 @@ function renderProfileHTML(trader: Trader, positions: DEXPosition[], isFavorited
         </div>
       </div>
 
-      <!-- Open positions -->
-      <div class="positions-card card">
-        <div class="card-content">
-          <h3 class="card-title">Open Positions</h3>
+      <!-- Profile tabs -->
+      <div class="profile-tabs">
+        <button class="tab-button active" data-tab="open-positions">Open Positions (${positions.length})</button>
+        <button class="tab-button" data-tab="trade-history">Trade History</button>
+      </div>
 
-          <div class="table-container">
-            <table class="positions-table">
-              <thead>
-                <tr class="positions-header">
-                  <th class="header-cell position">Position</th>
-                  <th class="header-cell leverage">Leverage</th>
-                  <th class="header-cell size">Size</th>
-                  <th class="header-cell net-value">Net Value</th>
-                  <th class="header-cell collateral">Collateral</th>
-                  <th class="header-cell entry-price">Entry Price</th>
-                  <th class="header-cell mark-price">Mark Price</th>
-                  <th class="header-cell liq-price">Liq Price</th>
-                </tr>
-              </thead>
-              <tbody class="positions-list">
-                ${renderPositions(positions)}
-              </tbody>
-            </table>
+      <div class="tab-content">
+        <div id="open-positions-tab" class="tab-pane active">
+          <!-- Open positions -->
+          <div class="positions-card card">
+            <div class="card-content">
+              <h3 class="card-title">Open Positions (${positions.length})</h3>
+              <div class="table-container">
+                <table class="positions-table">
+                  <thead>
+                    <tr class="positions-header">
+                      <th class="header-cell position">Position</th>
+                      <th class="header-cell leverage">Leverage</th>
+                      <th class="header-cell size">Size</th>
+                      <th class="header-cell net-value">Net Value</th>
+                      <th class="header-cell collateral">Collateral</th>
+                      <th class="header-cell entry-price">Entry Price</th>
+                      <th class="header-cell mark-price">Mark Price</th>
+                      <th class="header-cell liq-price">Liq Price</th>
+                    </tr>
+                  </thead>
+                  <tbody class="positions-list">
+                    ${renderPositions(positions)}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="trade-history-tab" class="tab-pane">
+          <!-- Trade history -->
+          <div class="trade-history-card card">
+            <div class="card-content">
+              <h3 class="card-title">Trade History</h3>
+
+              <div class="table-container">
+                <table class="trade-history-table">
+                  <thead>
+                    <tr class="trade-history-header">
+                      <th class="header-cell trade-action">Action</th>
+                      <th class="header-cell trade-date">Date</th>
+                      <th class="header-cell trade-market">Market</th>
+                      <th class="header-cell trade-size">Size</th>
+                      <th class="header-cell trade-price">Price</th>
+                      <th class="header-cell trade-pnl">PNL</th>
+                    </tr>
+                  </thead>
+                  <tbody class="trade-history-list">
+                    ${renderTrades(trades, timeZone)}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -193,9 +238,9 @@ function renderProfileHTML(trader: Trader, positions: DEXPosition[], isFavorited
   `;
 }
 
-function renderPositions(positions: DEXPosition[]): string {
+function renderPositions(positions: DEXPosition[]) {
   if (!positions || positions.length === 0) {
-    return `
+    return html`
       <tr>
         <td colspan="8" class="no-positions">
           <div class="empty-state">
@@ -207,16 +252,15 @@ function renderPositions(positions: DEXPosition[]): string {
     `;
   }
 
-  return positions
-    .map((position) => {
-      // Use the properly calculated USD values from DEXPosition
-      const pnlClass = position.pnlUsd >= 0 ? "positive" : "negative";
+  return positions.map((position) => {
+    // Use the properly calculated USD values from DEXPosition
+    const pnlClass = position.pnlUsd >= 0 ? "positive" : "negative";
 
-      // Determine side based on isLong
-      const side = position.isLong ? "LONG" : "SHORT";
-      const sideClass = position.isLong ? "long" : "short";
+    // Determine side based on isLong
+    const side = position.isLong ? "LONG" : "SHORT";
+    const sideClass = position.isLong ? "long" : "short";
 
-      return `
+    return html`
       <tr class="position-row">
         <td class="position-cell">
           <div class="position-info">
@@ -225,32 +269,76 @@ function renderPositions(positions: DEXPosition[]): string {
           </div>
         </td>
         <td class="leverage-cell">${position.leverage.toFixed(2)}x</td>
-        <td class="size-cell">$${abbreviateNumber(Math.abs(position.sizeUsd))}</td>
-        <td class="net-value-cell ${pnlClass}">$${abbreviateNumber(position.pnlUsd)}</td>
-        <td class="collateral-cell">$${abbreviateNumber(position.collateralAmountUsd)}</td>
+        <td class="size-cell">$${utils.abbreviateNumber(Math.abs(position.sizeUsd))}</td>
+        <td class="net-value-cell ${pnlClass}">$${utils.abbreviateNumber(position.pnlUsd)}</td>
+        <td class="collateral-cell">$${utils.abbreviateNumber(position.collateralAmountUsd)}</td>
         <td class="entry-price-cell">$${position.entryPriceUsd > 0 ? position.entryPriceUsd.toFixed(2) : "N/A"}</td>
         <td class="mark-price-cell">$${position.markPriceUsd > 0 ? position.markPriceUsd.toFixed(2) : "N/A"}</td>
         <td class="liq-price-cell">$${position.liqPriceUsd > 0 ? position.liqPriceUsd.toFixed(4) : "N/A"}</td>
       </tr>
     `;
-    })
-    .join("");
+  });
 }
 
-function renderTraderNotFound(address: string): string {
-  return `
+function renderTrades(trades: DEXTradeAction[], timeZone: string | undefined) {
+  if (!trades || trades.length === 0) {
+    return html`
+      <tr>
+        <td colspan="6" class="no-trades">
+          <div class="empty-state">
+            <h4>No Trade History</h4>
+            <p>This trader has no trade history</p>
+          </div>
+        </td>
+      </tr>
+    `;
+  }
+
+  return trades.map((trade) => {
+    const pnlClass = trade.rpnl >= 0 ? "positive" : "negative";
+    const rawType = DEXOrderType[trade.orderType];
+    const orderType = rawType.replace(/([a-z])([A-Z])/g, "$1 $2");
+
+    // trade.timestamp comes in seconds ─ multiply by 1000 for JS Date
+    const date = new Date(trade.timestamp * 1000);
+    const tz = timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const formattedDate = date.toLocaleString(undefined, {
+      timeZone: tz,
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+
+    return html`
+      <tr class="trade-row">
+        <td class="trade-action-cell">${orderType}</td>
+        <td class="trade-date-cell">${formattedDate}</td>
+        <td class="trade-market-cell">${trade.isLong ? "LONG" : "SHORT"} - ${trade.market}</td>
+        <td class="trade-size-cell">${trade.size.toFixed(2)}</td>
+        <td class="trade-price-cell">${trade.price.toFixed(2)}</td>
+        <td class="trade-pnl-cell ${pnlClass}">${trade.rpnl.toFixed(2)}</td>
+      </tr>
+    `;
+  });
+}
+
+function renderTraderNotFound(address: string) {
+  return html`
     <div class="user-info-container">
       <div class="error-state">
         <h2>Trader Not Found</h2>
         <p>No trader found with address: ${address}</p>
-        <button onclick="window.history.back()" class="btn btn-primary">Go Back</button>
+        <button onclick="window.location.href='/toptraders'" class="btn btn-primary">Go Back</button>
       </div>
     </div>
   `;
 }
 
-function renderErrorPage(): string {
-  return `
+function renderErrorPage() {
+  return html`
     <div class="user-info-container">
       <div class="error-state">
         <h2>Error Loading Profile</h2>
@@ -259,43 +347,4 @@ function renderErrorPage(): string {
       </div>
     </div>
   `;
-}
-
-// Helper functions (reuse from leaderboard.tsx)
-function abbreviateNumber(value: number | string): string {
-  const num = Number(value) || 0;
-  if (Math.abs(num) >= 1e6) {
-    return (num / 1e6).toFixed(1).replace(/\.0$/, "") + "M";
-  }
-  if (Math.abs(num) >= 1e3) {
-    return (num / 1e3).toFixed(1).replace(/\.0$/, "") + "K";
-  }
-  return num.toLocaleString();
-}
-
-function getPlatformIcon(platform: string | null | undefined): string {
-  if (!platform) {
-    return '<span style="color:#666;">-</span>';
-  }
-
-  const platformLower = platform.toLowerCase();
-
-  switch (platformLower) {
-    case "gmx":
-      return '<span style="color:#4f46e5; font-weight: bold;">GMX</span>';
-    case "dydx":
-      return '<span style="color:#6366f1; font-weight: bold;">dYdX</span>';
-    case "hyperliquid":
-      return '<span style="color:#8b5cf6; font-weight: bold;">HL</span>';
-    default:
-      return `<span style="font-size:0.75rem;color:#888;">${platform.toUpperCase()}</span>`;
-  }
-}
-
-function generateIconColor(address: string): string {
-  const hash = address.slice(2, 8);
-  const r = parseInt(hash.slice(0, 2), 16);
-  const g = parseInt(hash.slice(2, 4), 16);
-  const b = parseInt(hash.slice(4, 6), 16);
-  return `rgb(${r}, ${g}, ${b})`;
 }

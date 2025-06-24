@@ -143,9 +143,11 @@ async function loadContent({
 
     // Get the current wallet address if not provided
     const walletAddress = walletAddr || provider?.selectedAddress;
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
+      "x-timezone": tz,
     };
 
     // Add wallet address to headers if available

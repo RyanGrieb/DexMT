@@ -26,7 +26,7 @@ async function updateTraderLeaderboard() {
   }
 }
 
-async function mirrorTrades() {
+async function updateOpenPositions() {
   // A list of traders who are mirroring trades
   const traders = await database.getTraders({ isMirroring: true });
 
@@ -79,9 +79,9 @@ function startUpdateLeaderboardTask() {
 }
 
 function startMirrorTradesTask() {
-  setInterval(mirrorTrades, 60000); // 1 minute
+  setInterval(updateOpenPositions, 60000); // 1 minute
 
-  mirrorTrades();
+  //updateOpenPositions();
 }
 
 function init() {
@@ -91,6 +91,7 @@ function init() {
 
 const scheduler = {
   init,
+  updateOpenPositions,
 };
 
 export default scheduler;

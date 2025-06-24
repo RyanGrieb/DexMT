@@ -1,6 +1,7 @@
 import { serve } from "@hono/node-server";
 import fs from "fs/promises";
 import { Hono } from "hono";
+import { html } from "hono/html";
 import path from "path";
 import dexmtAPI from "./api/dexmt-api";
 import database from "./database";
@@ -24,13 +25,14 @@ app.get("/", (c) => {
 
 app.get("/api/html/traderprofile", async (c) => {
   try {
-    const address = c.req.query("address");
+    const traderAddress = c.req.query("address");
     const userAddress = c.req.query("userAddress") || c.req.header("x-wallet-address");
+    const timeZone = c.req.header("x-timezone");
 
-    if (!address) {
+    if (!traderAddress) {
       return c.html('<div class="error-message">Trader address is required</div>', 400);
     }
-    const traderProfileHTML = await renderTraderProfile(address, userAddress);
+    const traderProfileHTML = await renderTraderProfile({ traderAddress, timeZone, userAddress });
     return c.html(traderProfileHTML);
   } catch (error) {
     console.error("Error rendering trader profile:", error);
@@ -38,8 +40,47 @@ app.get("/api/html/traderprofile", async (c) => {
   }
 });
 
+interface SiteData {
+  title: string;
+  description: string;
+  image: string;
+  children?: any;
+}
+const Layout = (props: SiteData) => html`
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>${props.title}</title>
+  <meta name="description" content="${props.description}">
+  <head prefix="og: http://ogp.me/ns#">
+  <meta property="og:type" content="article">
+  <!-- More elements slow down JSX, but not template literals. -->
+  <meta property="og:title" content="${props.title}">
+  <meta property="og:image" content="${props.image}">
+</head>
+<body>
+  ${props.children}
+</body>
+</html>
+`;
+
+const Content = (props: { siteData: SiteData; name: string }) => (
+  <Layout {...props.siteData}>
+    <h1>Hello {props.name}</h1>
+  </Layout>
+);
+
 app.get("/api/html/toptraders", async (c) => {
   try {
+    const props = {
+      name: "World",
+      siteData: {
+        title: "Hello <> World",
+        description: "This is a description",
+        image: "https://example.com/image.png",
+      },
+    };
+
     const leaderboardHTML = await renderLeaderboard();
     return c.html(leaderboardHTML);
   } catch (error) {

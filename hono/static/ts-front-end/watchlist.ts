@@ -42,6 +42,24 @@ async function init() {
       await handleMirrorToggle(mirrorToggle as HTMLInputElement);
     });
   });
+
+  // Tab‐switching logic
+  utils.watchElementsOfQuery(".tab-button", (element) => {
+    const tabBtn = element as HTMLElement;
+    tabBtn.addEventListener("click", () => {
+      const tab = tabBtn.getAttribute("data-tab");
+      if (!tab) return;
+
+      // deactivate all tab buttons and panes
+      document.querySelectorAll(".tab-button").forEach((btn) => btn.classList.remove("active"));
+      document.querySelectorAll(".tab-pane").forEach((p) => p.classList.remove("active"));
+
+      // activate clicked button & its pane
+      tabBtn.classList.add("active");
+      const pane = document.getElementById(`${tab}-tab`);
+      if (pane) pane.classList.add("active");
+    });
+  });
 }
 
 async function handleMirrorToggle(toggle: HTMLInputElement) {

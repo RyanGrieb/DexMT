@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import database from "../database";
+import scheduler from "../scheduler";
 import wallet from "./wallet";
 
 async function init(app: Hono) {
@@ -179,6 +180,9 @@ async function handleTraderSelection(c: any, selected: boolean) {
       timestamp: timestampMs,
       selected: selected,
     });
+
+    // FIXME: This updates the entire open positions table (Just update the positions associated with the selected traders)
+    await scheduler.updateOpenPositions();
 
     return c.json(
       {
