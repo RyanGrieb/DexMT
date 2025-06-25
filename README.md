@@ -1,4 +1,4 @@
-# DEXMT
+# DEXMT (In Development)
 
 [![TypeScript](https://img.shields.io/badge/Built%20with-TypeScript-3178C6.svg?logo=typescript)](https://www.typescriptlang.org/) [![Docker Ready](https://img.shields.io/badge/Docker-Ready-2496ED.svg?logo=docker)](https://hub.docker.com/)
 
@@ -9,6 +9,8 @@ Decentralized Exchange Mirror Trading Platform
 ### ❓ About
 
 DEXMT is a platform that enables users to copy trades of top DeFi performers automatically.
+
+(Currently we rely on the GMX SDK, we need to reference smart contracts on-chain in the future)
 
 ---
 
