@@ -2,7 +2,8 @@ import { Kysely, PostgresDialect, sql } from "kysely";
 import { Pool } from "pg";
 import wallet from "./api/wallet";
 import { Database } from "./types/dbtypes";
-import { DEXPosition, Trader } from "./types/trader";
+import { DEXPosition, DEXTradeAction, Trader } from "./types/trader";
+import utils from "./utils";
 
 // PostgreSQL connection
 const dialect = new PostgresDialect({
@@ -67,21 +68,26 @@ async function initializeDatabase() {
 
     console.log("traders table created/verified");
 
-    // Create trades table (unchanged)
+    // Create trades table
     await db.schema
       .createTable("trades")
       .ifNotExists()
       .addColumn("id", "serial", (col) => col.primaryKey())
+      .addColumn("trade_id", "varchar(255)", (col) => col.notNull().unique())
+      .addColumn("order_type", "integer", (col) => col.notNull())
       .addColumn("trader_address", "varchar(42)", (col) => col.notNull())
-      .addColumn("token_in", "varchar(42)", (col) => col.notNull())
-      .addColumn("token_out", "varchar(42)", (col) => col.notNull())
-      .addColumn("amount_in", "varchar(50)", (col) => col.notNull())
-      .addColumn("amount_out", "varchar(50)", (col) => col.notNull())
-      .addColumn("price", "varchar(50)", (col) => col.notNull())
-      .addColumn("transaction_hash", "varchar(66)", (col) => col.unique().notNull())
-      .addColumn("block_number", "bigint", (col) => col.notNull())
-      .addColumn("chain_id", "varchar(10)", (col) => col.notNull())
-      .addColumn("status", "varchar(20)", (col) => col.defaultTo("pending"))
+      .addColumn("market_address", "varchar(42)", (col) => col.notNull())
+      .addColumn("long_token_address", "varchar(42)", (col) => col.notNull())
+      .addColumn("short_token_address", "varchar(42)", (col) => col.notNull())
+      .addColumn("is_long", "boolean", (col) => col.notNull())
+      .addColumn("market_name", "varchar(50)", (col) => col.notNull())
+      .addColumn("token_name", "varchar(50)", (col) => col.notNull())
+      .addColumn("size_usd", "numeric", (col) => col.notNull())
+      .addColumn("price_usd", "numeric", (col) => col.notNull())
+      .addColumn("initial_collateral_usd", "numeric", (col) => col.notNull())
+      .addColumn("size_delta_usd", "numeric", (col) => col.notNull())
+      .addColumn("rpnl", "numeric", (col) => col.notNull())
+      .addColumn("timestamp", "bigint", (col) => col.notNull())
       .addColumn("created_at", "timestamp", (col) => col.defaultTo(sql`CURRENT_TIMESTAMP`).notNull())
       .addColumn("updated_at", "timestamp", (col) => col.defaultTo(sql`CURRENT_TIMESTAMP`).notNull())
       .execute();
@@ -138,8 +144,8 @@ async function initializeDatabase() {
       .addColumn("pnl_usd", "numeric", (col) => col.notNull())
       .addColumn("mark_price_usd", "numeric", (col) => col.notNull())
       .addColumn("liq_price_usd", "numeric", (col) => col.notNull())
-      .addColumn("key", "varchar(255)", (col) => col.unique().notNull())
-      .addColumn("contract_key", "varchar(255)", (col) => col.notNull())
+      .addColumn("key", "varchar(255)", (col) => col.notNull())
+      .addColumn("contract_key", "varchar(255)", (col) => col.unique().notNull())
       .addColumn("trader_address", "varchar(42)", (col) => col.notNull())
       .addColumn("market_address", "varchar(42)", (col) => col.notNull())
       .addColumn("collateral_token_address", "varchar(42)", (col) => col.notNull())
@@ -184,20 +190,13 @@ async function initializeDatabase() {
       console.log("Foreign key constraint for positions table already exists or failed to create");
     }
 
-    // Add indexes for better performance
+    // Add indexes for better performance (FIXME: Are we are missing some indexes? (trade_id))
     try {
       await db.schema
         .createIndex("idx_trades_trader_address")
         .ifNotExists()
         .on("trades")
         .column("trader_address")
-        .execute();
-
-      await db.schema
-        .createIndex("idx_trades_transaction_hash")
-        .ifNotExists()
-        .on("trades")
-        .column("transaction_hash")
         .execute();
 
       await db.schema
@@ -582,18 +581,25 @@ async function getPositions(address: string) {
     throw error;
   }
 }
-
-async function closePositions(positions: DEXPosition[]) {
+async function closePositions(positions: DEXPosition | DEXPosition[]) {
   if (!db) {
     throw new Error("Database not initialized. Call initializeDatabase first.");
   }
-  if (positions.length === 0) {
+
+  const positionsArr = Array.isArray(positions) ? positions : [positions];
+  if (positionsArr.length === 0) {
     return;
   }
 
+  utils.logOutput(
+    `Closing positions: ${positionsArr
+      .map((p) => `${p.contractKey}(${p.tokenName} ${p.isLong ? "LONG" : "SHORT"})`)
+      .join(", ")}`
+  );
+
   try {
     await db.transaction().execute(async (trx) => {
-      for (const position of positions) {
+      for (const position of positionsArr) {
         // Move to closed_positions
         await trx
           .insertInto("closed_positions")
@@ -635,24 +641,28 @@ async function closePositions(positions: DEXPosition[]) {
       }
     });
 
-    console.log(`Closed and removed ${positions.length} positions`);
+    utils.logOutput(`Closed and removed ${positionsArr.length} positions`);
   } catch (error) {
     console.error("Error closing positions:", error);
+    utils.logOutput(`Error closing positions: ${error}`, "error");
     throw error;
   }
 }
 
-async function createPositions(positions: DEXPosition[]) {
+async function createPositions(positions: DEXPosition | DEXPosition[]) {
   if (!db) {
     throw new Error("Database not initialized. Call initializeDatabase first.");
   }
-  if (positions.length === 0) {
+
+  const positionsArr = Array.isArray(positions) ? positions : [positions];
+
+  if (positionsArr.length === 0) {
     return;
   }
 
   try {
     await db.transaction().execute(async (trx) => {
-      for (const position of positions) {
+      for (const position of positionsArr) {
         await trx
           .insertInto("positions")
           .values({
@@ -692,7 +702,7 @@ async function createPositions(positions: DEXPosition[]) {
       }
     });
 
-    //console.log(`Inserted ${positions.length} new positions`);
+    utils.logOutput(`Created ${positionsArr.length} positions`);
   } catch (error) {
     console.error("Error creating positions:", error);
     throw error;
@@ -755,6 +765,49 @@ async function updatePositions(positions: DEXPosition[]) {
   }
 }
 
+async function insertTrades(trades: DEXTradeAction[]) {
+  if (!db) {
+    throw new Error("Database not initialized. Call initializeDatabase first.");
+  }
+  if (trades.length === 0) {
+    return;
+  }
+
+  try {
+    await db.transaction().execute(async (trx) => {
+      for (const trade of trades) {
+        await trx
+          .insertInto("trades")
+          .values({
+            trade_id: trade.id,
+            order_type: trade.orderType,
+            trader_address: trade.traderAddr,
+            market_address: trade.marketAddr,
+            long_token_address: trade.longTokenAddress,
+            short_token_address: trade.shortTokenAddress,
+            is_long: trade.isLong,
+            market_name: trade.marketName,
+            token_name: trade.tokenName,
+            size_usd: trade.sizeUsd,
+            price_usd: trade.priceUsd,
+            initial_collateral_usd: trade.initialCollateralUsd,
+            size_delta_usd: trade.sizeDeltaUsd,
+            rpnl: trade.rpnl,
+            timestamp: trade.timestamp,
+            updated_at: sql`CURRENT_TIMESTAMP`,
+          })
+          .onConflict((oc) => oc.column("trade_id").doNothing())
+          .execute();
+      }
+    });
+
+    //console.log(`Inserted ${trades.length} trades`);
+  } catch (error) {
+    console.error("Error inserting trades:", error);
+    throw error;
+  }
+}
+
 const database = {
   initializeDatabase,
   updateTraders,
@@ -765,10 +818,12 @@ const database = {
   mirrorTrades,
   getTraders,
   getSelectedTraders,
+  getTrades,
   getPositions,
   closePositions,
   createPositions,
   updatePositions,
+  insertTrades,
 };
 
 export default database;

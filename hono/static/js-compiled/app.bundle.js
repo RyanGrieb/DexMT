@@ -1201,19 +1201,19 @@ var utils = {
 
 /***/ }),
 
-/***/ "./static/ts-front-end/watchlist.ts":
-/*!******************************************!*\
-  !*** ./static/ts-front-end/watchlist.ts ***!
-  \******************************************/
+/***/ "./static/ts-front-end/watchlist/favorites.ts":
+/*!****************************************************!*\
+  !*** ./static/ts-front-end/watchlist/favorites.ts ***!
+  \****************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _metamask__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./metamask */ "./static/ts-front-end/metamask.ts");
-/* harmony import */ var _profile__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./profile */ "./static/ts-front-end/profile.ts");
-/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./utils */ "./static/ts-front-end/utils.ts");
+/* harmony import */ var _metamask__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../metamask */ "./static/ts-front-end/metamask.ts");
+/* harmony import */ var _profile__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../profile */ "./static/ts-front-end/profile.ts");
+/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../utils */ "./static/ts-front-end/utils.ts");
 var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -1583,6 +1583,229 @@ function handleUnselect(button) {
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({ init: init });
 
 
+/***/ }),
+
+/***/ "./static/ts-front-end/watchlist/open-positions.ts":
+/*!*********************************************************!*\
+  !*** ./static/ts-front-end/watchlist/open-positions.ts ***!
+  \*********************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils */ "./static/ts-front-end/utils.ts");
+var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __generator = (undefined && undefined.__generator) || function (thisArg, body) {
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
+            }
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+    }
+};
+
+// Global function for onclick in HTML
+window.toggleTraderPositions = toggleTraderPositions;
+function init() {
+    return __awaiter(this, void 0, void 0, function () {
+        var _this = this;
+        return __generator(this, function (_a) {
+            // Handle clicks within open positions tab
+            document.body.addEventListener("click", function (e) { return __awaiter(_this, void 0, void 0, function () {
+                var btn;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            btn = e.target.closest("button");
+                            if (!btn) return [3 /*break*/, 2];
+                            if (!btn.classList.contains("load-trades-btn")) return [3 /*break*/, 2];
+                            return [4 /*yield*/, handleLoadTrades(btn)];
+                        case 1:
+                            _a.sent();
+                            _a.label = 2;
+                        case 2: return [2 /*return*/];
+                    }
+                });
+            }); });
+            // Initialize collapsed state when tab becomes active
+            _utils__WEBPACK_IMPORTED_MODULE_0__["default"].watchElementsOfQuery(".tab-button[data-tab='all-open-positions']", function (element) {
+                var tabBtn = element;
+                tabBtn.addEventListener("click", function () {
+                    // Small delay to ensure tab content is loaded
+                    setTimeout(function () {
+                        initializeCollapsedState();
+                    }, 100);
+                });
+            });
+            return [2 /*return*/];
+        });
+    });
+}
+function initializeCollapsedState() {
+    var traderGroups = document.querySelectorAll(".trader-positions-group");
+    traderGroups.forEach(function (group) {
+        // Ensure all positions start collapsed
+        var positionsList = group.querySelector(".positions-list");
+        if (positionsList) {
+            positionsList.classList.add("collapsed");
+            positionsList.classList.remove("expanded");
+        }
+        // Ensure trader group is not marked as expanded
+        group.classList.remove("expanded");
+    });
+}
+function toggleTraderPositions(traderAddress) {
+    var traderGroup = document.querySelector(".trader-positions-group[data-trader=\"".concat(traderAddress, "\"]"));
+    if (!traderGroup)
+        return;
+    var positionsList = traderGroup.querySelector(".positions-list");
+    if (!positionsList)
+        return;
+    var isCurrentlyCollapsed = positionsList.classList.contains("collapsed");
+    if (isCurrentlyCollapsed) {
+        // Expand
+        positionsList.classList.remove("collapsed");
+        positionsList.classList.add("expanded");
+        traderGroup.classList.add("expanded");
+    }
+    else {
+        // Collapse
+        positionsList.classList.remove("expanded");
+        positionsList.classList.add("collapsed");
+        traderGroup.classList.remove("expanded");
+    }
+}
+function handleLoadTrades(button) {
+    return __awaiter(this, void 0, void 0, function () {
+        var traderAddress, positionId, originalText, response, trades, positionCard, error_1;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    traderAddress = button.dataset.trader;
+                    positionId = button.dataset.position;
+                    if (!traderAddress || !positionId) {
+                        console.error("Missing trader address or position ID");
+                        return [2 /*return*/];
+                    }
+                    originalText = button.textContent;
+                    // Set loading state
+                    button.classList.add("loading");
+                    button.textContent = "Loading...";
+                    button.disabled = true;
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 6, , 7]);
+                    return [4 /*yield*/, fetch("/api/traders/".concat(traderAddress, "/positions/").concat(positionId, "/trades"))];
+                case 2:
+                    response = _a.sent();
+                    if (!response.ok) {
+                        throw new Error("Failed to load trades: ".concat(response.statusText));
+                    }
+                    return [4 /*yield*/, response.json()];
+                case 3:
+                    trades = _a.sent();
+                    positionCard = button.closest(".position-card");
+                    if (!positionCard) return [3 /*break*/, 5];
+                    return [4 /*yield*/, renderTradesInPosition(positionCard, trades)];
+                case 4:
+                    _a.sent();
+                    _a.label = 5;
+                case 5:
+                    // Update button to show success
+                    button.textContent = " Trades Loaded";
+                    button.classList.remove("loading");
+                    // Hide the button after successful load
+                    setTimeout(function () {
+                        button.style.display = "none";
+                    }, 1500);
+                    return [3 /*break*/, 7];
+                case 6:
+                    error_1 = _a.sent();
+                    console.error("Error loading trades:", error_1);
+                    _utils__WEBPACK_IMPORTED_MODULE_0__["default"].showNotification(error_1.message || "Failed to load trades", "error");
+                    // Reset button state
+                    button.textContent = originalText;
+                    button.classList.remove("loading");
+                    button.disabled = false;
+                    return [3 /*break*/, 7];
+                case 7: return [2 /*return*/];
+            }
+        });
+    });
+}
+function renderTradesInPosition(positionCard, trades) {
+    return __awaiter(this, void 0, void 0, function () {
+        var tradesSection, tradesHtml;
+        return __generator(this, function (_a) {
+            tradesSection = positionCard.querySelector(".associated-trades");
+            if (!tradesSection) {
+                // Create new trades section
+                tradesSection = document.createElement("div");
+                tradesSection.className = "associated-trades";
+                positionCard.appendChild(tradesSection);
+            }
+            tradesHtml = "\n    <h4 class=\"trades-header\">Associated Trades (".concat(trades.length, ")</h4>\n    <div class=\"trades-list\">\n      ").concat(trades.map(function (trade) { return renderTradeRow(trade); }).join(""), "\n    </div>\n  ");
+            tradesSection.innerHTML = tradesHtml;
+            // Add fade-in animation
+            tradesSection.style.opacity = "0";
+            tradesSection.style.transition = "opacity 0.3s ease";
+            setTimeout(function () {
+                tradesSection.style.opacity = "1";
+            }, 50);
+            return [2 /*return*/];
+        });
+    });
+}
+function renderTradeRow(trade) {
+    var orderTypeNames = {
+        0: "MarketSwap",
+        1: "LimitSwap",
+        2: "MarketIncrease",
+        3: "LimitIncrease",
+        4: "MarketDecrease",
+        5: "LimitDecrease",
+        6: "StopLossDecrease",
+        7: "Liquidation",
+        8: "StopIncrease",
+        9: "Deposit",
+    };
+    var orderTypeName = orderTypeNames[trade.orderType] || "Unknown";
+    var timestamp = new Date(trade.timestamp * 1000).toLocaleDateString();
+    var pnlClass = trade.rpnl >= 0 ? "positive" : "negative";
+    return "\n    <div class=\"trade-row\">\n      <div class=\"trade-info\">\n        <span class=\"trade-type\">".concat(orderTypeName, "</span>\n        <span class=\"trade-date\">").concat(timestamp, "</span>\n      </div>\n      <div class=\"trade-details\">\n      </div>\n    </div>\n  ");
+}
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({ init: init });
+
+
 /***/ })
 
 /******/ 	});
@@ -1663,7 +1886,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _metamask__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./metamask */ "./static/ts-front-end/metamask.ts");
 /* harmony import */ var _profile__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./profile */ "./static/ts-front-end/profile.ts");
 /* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./utils */ "./static/ts-front-end/utils.ts");
-/* harmony import */ var _watchlist__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./watchlist */ "./static/ts-front-end/watchlist.ts");
+/* harmony import */ var _watchlist_favorites__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./watchlist/favorites */ "./static/ts-front-end/watchlist/favorites.ts");
+/* harmony import */ var _watchlist_open_positions__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./watchlist/open-positions */ "./static/ts-front-end/watchlist/open-positions.ts");
 var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -1705,6 +1929,7 @@ var __generator = (undefined && undefined.__generator) || function (thisArg, bod
 
 
 
+
 console.log("DEXMT JS file loaded");
 window.addEventListener("popstate", function () { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
@@ -1726,7 +1951,8 @@ document.addEventListener("DOMContentLoaded", function () { return __awaiter(voi
             case 0:
                 console.log("DOM loaded, setting up DEXMT...");
                 _profile__WEBPACK_IMPORTED_MODULE_1__["default"].init();
-                _watchlist__WEBPACK_IMPORTED_MODULE_3__["default"].init();
+                _watchlist_favorites__WEBPACK_IMPORTED_MODULE_3__["default"].init();
+                _watchlist_open_positions__WEBPACK_IMPORTED_MODULE_4__["default"].init();
                 _a.label = 1;
             case 1:
                 _a.trys.push([1, 4, , 5]);

@@ -9,7 +9,8 @@ import {
 } from "./metamask";
 import profile from "./profile";
 import utils from "./utils";
-import watchlist from "./watchlist";
+import favorites from "./watchlist/favorites";
+import openPositions from "./watchlist/open-positions";
 
 console.log("DEXMT JS file loaded");
 
@@ -23,7 +24,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   console.log("DOM loaded, setting up DEXMT...");
 
   profile.init();
-  watchlist.init();
+  favorites.init();
+  openPositions.init();
 
   try {
     // Auto-reconnect wallet if previously connected

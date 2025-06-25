@@ -1,6 +1,6 @@
-import { provider } from "./metamask";
-import profile from "./profile";
-import utils from "./utils";
+import { provider } from "../metamask";
+import profile from "../profile";
+import utils from "../utils";
 
 async function init() {
   document.body.addEventListener("click", async (e) => {

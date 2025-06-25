@@ -28,16 +28,21 @@ export interface TradersTable {
 
 export interface TradesTable {
   id: Generated<number>;
+  trade_id: string;
+  order_type: number;
   trader_address: string;
-  token_in: string;
-  token_out: string;
-  amount_in: string;
-  amount_out: string;
-  price: string;
-  transaction_hash: string;
-  block_number: bigint;
-  chain_id: string;
-  status: "pending" | "completed" | "failed";
+  market_address: string;
+  long_token_address: string;
+  short_token_address: string;
+  is_long: boolean;
+  market_name: string;
+  token_name: string;
+  size_usd: number;
+  price_usd: number;
+  initial_collateral_usd: number;
+  size_delta_usd: number;
+  rpnl: number;
+  timestamp: number;
   created_at: ColumnType<Date, string | undefined, never>;
   updated_at: ColumnType<Date, string | undefined, string | undefined>;
 }

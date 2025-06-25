@@ -1,5 +1,6 @@
 import database from "./database";
 import scraper from "./scraper";
+import { DEXTradeAction } from "./types/trader";
 
 const UPDATE_USERS_ON_START = false;
 
@@ -40,16 +41,16 @@ async function updateOpenPositions() {
       const dbPositions = await selectedTrader.getPositions({ fromDb: true });
 
       const closedPositions = dbPositions.filter(
-        (dbPosition) => !sdkPositions.some((sdkPosition) => sdkPosition.contractKey === dbPosition.contractKey)
+        (dbPosition) => !sdkPositions.some((sdkPosition) => sdkPosition.key === dbPosition.key)
       );
       // created = new in SDK
       const createdPositions = sdkPositions.filter(
-        (sdkPosition) => !dbPositions.some((dbPosition) => dbPosition.contractKey === sdkPosition.contractKey)
+        (sdkPosition) => !dbPositions.some((dbPosition) => dbPosition.key === sdkPosition.key)
       );
 
       // updated = still there but values changed
       const updatedPositions = sdkPositions.filter((sdkPosition) => {
-        const dbPosition = dbPositions.find((d) => d.contractKey === sdkPosition.contractKey);
+        const dbPosition = dbPositions.find((d) => d.key === sdkPosition.key);
         return (
           !!dbPosition &&
           (dbPosition.sizeUsd !== sdkPosition.sizeUsd ||
@@ -69,6 +70,32 @@ async function updateOpenPositions() {
   }
 }
 
+async function updateTradeHistory() {
+  const traders = await database.getTraders({ isMirroring: true });
+
+  for (const trader of traders) {
+    const newTrades: DEXTradeAction[] = [];
+
+    for (const selectedTrader of await database.getTraders({
+      favoriteOfAddress: trader.address,
+      selected: true,
+    })) {
+      const sdkTrades = await selectedTrader.getTrades({ fromDb: false, amount: 5 });
+      const dbTrades = await selectedTrader.getTrades({ fromDb: true }); //FIXME: This is not efficient, we should only query trades from the current day?
+
+      // find only brand‐new trades
+      const freshTrades = sdkTrades.filter((t) => !dbTrades.some((dt) => dt.id === t.id));
+
+      if (freshTrades.length) {
+        await database.insertTrades(freshTrades);
+        newTrades.push(...freshTrades);
+      }
+    }
+
+    await trader.mirrorTrades(newTrades);
+  }
+}
+
 // Separate function to start the interval
 function startUpdateLeaderboardTask() {
   setInterval(updateTraderLeaderboard, 300000); // 5 minutes
@@ -80,8 +107,10 @@ function startUpdateLeaderboardTask() {
 
 function startMirrorTradesTask() {
   setInterval(updateOpenPositions, 60000); // 1 minute
+  setInterval(updateTradeHistory, 60000); // 1 minute
 
   //updateOpenPositions();
+  //updateTradeHistory();
 }
 
 function init() {

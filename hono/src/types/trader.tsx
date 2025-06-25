@@ -1,6 +1,7 @@
 import { Position } from "@gmx-io/sdk/types/positions";
 import database from "../database";
 import gmxSdk from "../gmxsdk";
+import utils from "../utils";
 
 export enum DEXOrderType {
   MarketSwap = 0,
@@ -16,12 +17,19 @@ export enum DEXOrderType {
 }
 
 export type DEXTradeAction = {
+  id: string;
   orderType: DEXOrderType;
   traderAddr: string;
+  marketAddr: string;
+  longTokenAddress: string;
+  shortTokenAddress: string;
   isLong: boolean;
-  market: string;
-  size: number;
-  price: number;
+  marketName: string;
+  tokenName: string;
+  sizeUsd: number;
+  priceUsd: number;
+  initialCollateralUsd: number;
+  sizeDeltaUsd: number;
   rpnl: number;
   timestamp: number;
 };
@@ -103,6 +111,131 @@ export class Trader {
     this.watchingAmt = watchingAmt;
   }
 
+  async modifyPosition(position: DEXPosition, trade: DEXTradeAction): Promise<DEXPosition | undefined> {
+    const updatedPosition: DEXPosition | undefined = undefined; //FIXME: Implement position modification logic
+    if (updatedPosition) {
+      //await database.savePosition(updatedPosition);
+    }
+    return updatedPosition;
+  }
+
+  async closePosition(position: DEXPosition): Promise<void> {
+    //await gmxSdk.closePosition(position);
+    await database.closePositions(position);
+  }
+
+  async createPosition(trade: DEXTradeAction): Promise<DEXPosition | undefined> {
+    // Create a new position based on the trade details
+    const newPosition: DEXPosition | undefined = await gmxSdk.createPosition(this, trade);
+
+    if (!newPosition) {
+      utils.logOutput(`Failed to create position for ${this.address} on market ${trade.marketName}`);
+      return;
+    }
+
+    await database.createPositions(newPosition);
+
+    return newPosition;
+  }
+
+  async getPositionFromTrade(trade: DEXTradeAction): Promise<DEXPosition | undefined> {
+    // Fetch all open positions from the DB
+    const positions = await this.getPositions({ fromDb: true });
+    // Find a position with the same market address & side (long/short)
+    return positions.find((pos) => pos.marketAddress === trade.marketAddr && pos.isLong === trade.isLong);
+  }
+
+  async getTradesFromPosition(position: DEXPosition): Promise<DEXTradeAction[]> {
+    // Fetch all trades from the DB for this trader
+    const allTrades = await this.getTrades({ fromDb: true });
+    // Filter trades that match the position's market address and side
+    return allTrades.filter((trade) => 
+      trade.marketAddr === position.marketAddress && 
+      trade.isLong === position.isLong
+    );
+  }
+
+  async mirrorTrades(newTrades: DEXTradeAction[]) {
+    if (!this.isMirroringTrades || newTrades.length === 0) {
+      return;
+    }
+
+    // Sort the new trades by timestamp in descending order
+    newTrades.sort((a, b) => b.timestamp - a.timestamp);
+
+    utils.logOutput(`Mirroring trades for ${this.address} (${newTrades.length} new trade(s))`);
+
+    //1. Determine if we are to market increase/decrease our order, or we deposit (collateral adjustment)
+    for (const trade of newTrades) {
+      const associatedPosition: DEXPosition | undefined = await this.getPositionFromTrade(trade);
+
+      utils.logOutput("================================================================================");
+      utils.logOutput(
+        `Processing [${trade.isLong ? "long" : "short"}] trade - copying ${trade.traderAddr} for ${this.address}`
+      );
+      utils.logOutput(`Order Type: ${DEXOrderType[trade.orderType]}`);
+      utils.logOutput(`Trade ID: ${trade.id}`);
+      utils.logOutput(`Size USD: ${trade.sizeUsd}`);
+      utils.logOutput(`Price USD: ${trade.priceUsd}`);
+      utils.logOutput(`Initial Collateral: ${trade.initialCollateralUsd}`);
+      utils.logOutput(`Market Name : ${trade.marketName}`);
+      utils.logOutput(`Market Address: ${trade.marketAddr}`);
+      utils.logOutput(`Associated Position: ${associatedPosition ? "Found" : "Not Found"}\n`);
+
+      switch (trade.orderType) {
+        case DEXOrderType.MarketIncrease:
+          if (trade.sizeUsd > 0 && !associatedPosition) {
+            utils.logOutput(`NO ACTION: Increasing position`);
+          }
+
+          // Market increase means we are opening a new position or increasing an existing one
+          if (trade.sizeUsd > 0 && associatedPosition) {
+            // We are increasing an existing position
+            utils.logOutput(`ACTION: Increasing position`);
+            this.modifyPosition(associatedPosition, trade);
+          } else if (trade.sizeUsd <= 0) {
+            // We are opening a new position
+            utils.logOutput(`ACTION: Opening new position`);
+            await this.createPosition(trade);
+          }
+          break;
+        case DEXOrderType.MarketDecrease:
+          // Market decrease means we are closing a position or decreasing an existing one
+
+          if (trade.sizeUsd > 0 && !associatedPosition) {
+            utils.logOutput(`NO ACTION: Decreasing position`);
+          }
+
+          if (trade.sizeUsd <= 0 && !associatedPosition) {
+            utils.logOutput(`NO ACTION: Closing position`);
+          }
+
+          if (trade.sizeUsd > 0 && associatedPosition) {
+            utils.logOutput(`ACTION: Decreasing position`);
+            this.modifyPosition(associatedPosition, trade);
+          } else if (associatedPosition) {
+            utils.logOutput(`ACTION: Closing position`);
+            this.closePosition(associatedPosition);
+          }
+          break;
+        case DEXOrderType.Deposit:
+          // Deposit means we are adjusting collateral, either increasing or decreasing, without changing the position size
+
+          if (trade.sizeUsd > 0 && !associatedPosition) {
+            utils.logOutput(`NO ACTION: Deposit without an existing position`);
+          }
+
+          if (trade.sizeUsd > 0 && associatedPosition) {
+            utils.logOutput(`ACTION: Adjusting collateral for position`);
+            this.modifyPosition(associatedPosition, trade);
+          }
+          break;
+      }
+
+      utils.logOutput("================================================================================\n");
+    }
+  }
+
   async getTrades(options?: { fromDb?: boolean; amount?: number }): Promise<DEXTradeAction[]> {
     const validAddress: `0x${string}` = this.address as `0x${string}`;
 
@@ -111,8 +244,27 @@ export class Trader {
     }
 
     if (options?.fromDb) {
-      //const dbTrades = await database.getTrades(this.address);
-      // …map dbTrades to DEXTradeAction…
+      const dbTrades = await database.getTrades(this.address);
+      // Map dbTrades to DEXTradeAction
+      const dexTrades: DEXTradeAction[] = dbTrades.map(
+        (dbTrade) =>
+          ({
+            id: dbTrade.trade_id,
+            orderType: dbTrade.order_type,
+            traderAddr: dbTrade.trader_address,
+            marketAddr: dbTrade.market_address,
+            isLong: dbTrade.is_long,
+            marketName: dbTrade.market_name,
+            tokenName: dbTrade.token_name,
+            sizeUsd: dbTrade.size_usd,
+            priceUsd: dbTrade.price_usd,
+            initialCollateralUsd: dbTrade.initial_collateral_usd,
+            sizeDeltaUsd: dbTrade.size_delta_usd,
+            rpnl: dbTrade.rpnl,
+            timestamp: dbTrade.timestamp,
+          }) as DEXTradeAction
+      );
+      return dexTrades;
     }
 
     const rawTrades = await gmxSdk.getTradeHistory({
@@ -128,7 +280,7 @@ export class Trader {
     const requestedAmount = options?.amount || 10;
     const tradesWithPrice = rawTrades.filter((trade: any) => trade.executionPrice !== undefined);
 
-    console.log(`Fetched ${rawTrades.length} trades, ` + `${tradesWithPrice.length} have executionPrice`);
+    //console.log(`Fetched ${rawTrades.length} trades, ` + `${tradesWithPrice.length} have executionPrice`);
 
     // take up to the requested amount
     const tradeActions = tradesWithPrice.slice(0, requestedAmount);
@@ -137,7 +289,7 @@ export class Trader {
       return [];
     }
 
-    console.log(`Returning ${tradeActions.length} valid trades for ${validAddress}`);
+    //console.log(`Returning ${tradeActions.length} valid trades for ${validAddress}`);
 
     //console.log(tradeActions[4]);
     //const filePath = path.resolve(__dirname, "tradeActions.json");
@@ -158,15 +310,22 @@ export class Trader {
       const orderType = sizeDeltaUsd <= 0 && trade.orderType == 2 ? DEXOrderType.Deposit : trade.orderType;
 
       return {
+        id: trade.id,
         orderType: orderType,
-        traderAddress: validAddress,
+        traderAddr: validAddress,
+        marketAddr: trade.marketAddress,
+        longTokenAddress: trade.marketInfo.longTokenAddress,
+        shortTokenAddress: trade.marketInfo.shortTokenAddress,
         isLong: trade.isLong,
-        market: market,
-        size: size,
-        price: price,
+        marketName: market,
+        tokenName: trade.indexToken.symbol,
+        sizeUsd: size,
+        priceUsd: price,
+        initialCollateralUsd: initialCollateralUsd,
+        sizeDeltaUsd: sizeDeltaUsd,
         rpnl: rpnl,
         timestamp: "timestamp" in trade ? Number(trade.timestamp) : -1,
-      };
+      } as DEXTradeAction;
     });
   }
 

@@ -2,6 +2,8 @@ import { GmxSdk } from "@gmx-io/sdk";
 import { MarketsInfoData } from "@gmx-io/sdk/types/markets";
 import { Position, PositionsData } from "@gmx-io/sdk/types/positions";
 import { TokensData } from "@gmx-io/sdk/types/tokens";
+import { DEXPosition, DEXTradeAction, Trader } from "./types/trader";
+import utils from "./utils";
 
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
 const USE_GMX_TESTNET = false; // Set to true to use Arbitrum Goerli testnet
@@ -313,6 +315,28 @@ async function getTraderPositions(user_address: string): Promise<
   }
 }
 
+async function createPosition(trader: Trader, trade: DEXTradeAction): Promise<DEXPosition | undefined> {
+  const sdk = getGmxSdk();
+  const { marketsInfoData, tokensData } = await getMarketsInfoCached();
+
+  if (!marketsInfoData) {
+    utils.logOutput(`Error: marketsInfoData is undefined for trader ${trader.address}`, "error");
+    return;
+  }
+
+  if (!tokensData) {
+    utils.logOutput(`Error: tokensData is undefined for trader ${trader.address}`, "error");
+    return;
+  }
+  sdk.setAccount(trader.address as `0x${string}`);
+
+  try {
+  } catch (error) {
+    console.error("Error creating position:", error);
+    utils.logOutput(`Error creating position for trader ${trader.address}: ${error}`, "error");
+  }
+}
+
 // Function to invalidate cache manually if needed
 function invalidateCache() {
   marketsInfoCache = undefined;
@@ -331,6 +355,7 @@ const gmxSdk = {
   getMarketsInfoCached,
   invalidateCache,
   getPositionValuesInUsd,
+  createPosition,
 };
 
 export default gmxSdk;

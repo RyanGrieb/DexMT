@@ -7,8 +7,9 @@ import dexmtAPI from "./api/dexmt-api";
 import database from "./database";
 import { renderLeaderboard } from "./frontend/leaderboard";
 import { renderTraderProfile } from "./frontend/profile";
-import { renderWatchlist } from "./frontend/watchlist";
+import { renderWatchlist } from "./frontend/watchlist/watchlist";
 import scheduler from "./scheduler";
+import utils from "./utils";
 
 const app = new Hono();
 const startTime = Date.now();
@@ -182,6 +183,7 @@ app.get("/img/*", async (c) => {
 });
 
 app.get("/health", (c) => {
+  utils.logOutput(`Health check - Start time: ${startTime}`);
   return c.json({ startTime });
 });
 
@@ -196,7 +198,8 @@ async function startup() {
     port,
   });
 
-  console.log(`Server is running on port ${port}`);
+  utils.logOutput(`Server started on port ${port}`);
+  utils.clearOldLogs(5);
 }
 
 startup().catch(console.error);

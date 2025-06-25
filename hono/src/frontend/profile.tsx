@@ -316,9 +316,9 @@ function renderTrades(trades: DEXTradeAction[], timeZone: string | undefined) {
       <tr class="trade-row">
         <td class="trade-action-cell">${orderType}</td>
         <td class="trade-date-cell">${formattedDate}</td>
-        <td class="trade-market-cell">${trade.isLong ? "LONG" : "SHORT"} - ${trade.market}</td>
-        <td class="trade-size-cell">${trade.size.toFixed(2)}</td>
-        <td class="trade-price-cell">${trade.price.toFixed(2)}</td>
+        <td class="trade-market-cell">${trade.isLong ? "LONG" : "SHORT"} - ${trade.marketName}</td>
+        <td class="trade-size-cell">${trade.sizeUsd.toFixed(2)}</td>
+        <td class="trade-price-cell">${trade.priceUsd.toFixed(2)}</td>
         <td class="trade-pnl-cell ${pnlClass}">${trade.rpnl.toFixed(2)}</td>
       </tr>
     `;
