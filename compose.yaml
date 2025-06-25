@@ -42,6 +42,7 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=dexmt
+      - TZ=America/Chicago
     ports:
       - "5432:5432"
     volumes:

@@ -1,5 +1,5 @@
-* Fix wallet getting disconnected when navigating the webpage.
-
+* Load profiles even if they are not in our leaderboard table
+* Load leaderboard by scanning the GMX arbitrum blockchain.
 
 * Improve DB security. Get better password storage, and don't do pure SQL calls,
 have us use an ORM like https://kysely.dev/.
@@ -11,3 +11,6 @@ Use a secrets manager, environment variables (DO NOT commit `.env` files to your
 I want the original leverage.
 
 * If a trader drops below rank 20, we don't properly update him and we end up with 2 traders with the rank #20.
+
+* Don't rely on GMX SDK, directly access the GMX information through the Arbitrum network.
+https://chat.deepseek.com/a/chat/s/3e73420e-bfcd-40eb-87ef-81be29c585df
