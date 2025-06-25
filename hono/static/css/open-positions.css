@@ -455,8 +455,12 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Responsive Design */
@@ -464,43 +468,43 @@
   .positions-summary {
     flex-direction: column;
   }
-  
+
   .trader-group-header {
     flex-direction: column;
     gap: 16px;
     align-items: flex-start;
   }
-  
+
   .trader-stats {
     width: 100%;
     justify-content: space-around;
   }
-  
+
   .position-header {
     flex-direction: column;
     gap: 12px;
     align-items: flex-start;
   }
-  
+
   .position-stats {
     width: 100%;
     justify-content: space-around;
   }
-  
+
   .position-details {
     grid-template-columns: 1fr;
   }
-  
+
   .trade-row {
     flex-direction: column;
     gap: 8px;
     align-items: flex-start;
   }
-  
+
   .position-actions {
     margin-top: 8px;
   }
-  
+
   .load-trades-btn {
     font-size: 0.75rem;
     padding: 6px 12px;

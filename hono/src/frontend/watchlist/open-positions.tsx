@@ -16,12 +16,12 @@ export async function renderAllOpenPositions(selectedTraders: Trader[]) {
 
     // Get positions for all selected traders
     for (const trader of selectedTraders) {
-      const positions = await trader.getPositions({ fromDb: true });
+      const positions: DEXPosition[] = await trader.getPositions({ fromDb: true });
       if (positions && positions.length > 0) {
         openPositions.push({ trader, positions });
         totalPositions += positions.length;
-        totalPnL += positions.reduce((sum: number, pos: any) => sum + (pos.pnlUsd || 0), 0);
-        totalSize += positions.reduce((sum: number, pos: any) => sum + Math.abs(pos.sizeUsd || 0), 0);
+        totalPnL += positions.reduce((sum: number, pos: DEXPosition) => sum + (pos.pnlUsd || 0), 0);
+        totalSize += positions.reduce((sum: number, pos: DEXPosition) => sum + Math.abs(pos.sizeUsd || 0), 0);
       }
     }
 
@@ -155,7 +155,12 @@ async function renderPositionWithTrades(trader: Trader, position: DEXPosition) {
           </div>
         </div>
         <div class="position-actions">
-          <button type="button" class="load-trades-btn" data-trader="${trader.address}" data-position="${position.key || position.marketAddress}">
+          <button
+            type="button"
+            class="load-trades-btn"
+            data-trader="${trader.address}"
+            data-position="${position.key || position.marketAddress}"
+          >
             📊 Load Trades
           </button>
         </div>

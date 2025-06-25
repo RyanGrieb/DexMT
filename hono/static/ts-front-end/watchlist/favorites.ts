@@ -1,5 +1,6 @@
 import { provider } from "../metamask";
 import profile from "../profile";
+import router from "../router";
 import utils from "../utils";
 
 async function init() {
@@ -13,7 +14,7 @@ async function init() {
       const traderCard = traderIdentity.closest(".trader-card") as HTMLElement;
       const address = traderCard?.getAttribute("data-address");
       if (address) {
-        utils.loadProfile(address, walletAddress);
+        router.loadProfile(address, walletAddress);
       }
     }
 

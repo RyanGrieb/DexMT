@@ -8,6 +8,7 @@ import {
   updateWalletUI,
 } from "./metamask";
 import profile from "./profile";
+import router from "./router";
 import utils from "./utils";
 import favorites from "./watchlist/favorites";
 import openPositions from "./watchlist/open-positions";
@@ -15,8 +16,8 @@ import openPositions from "./watchlist/open-positions";
 console.log("DEXMT JS file loaded");
 
 window.addEventListener("popstate", async () => {
-  console.log("Popstate event detected, loading content for current page...");
-  await utils.loadContentForCurrentPage();
+  console.log("Popstate, loading content…");
+  await router.loadContentForCurrentPage();
 });
 
 // Main application initialization
@@ -37,15 +38,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     utils.showToast("Initialization error", "error");
   }
 
-  // Load content based on current URL
-  await utils.loadContentForCurrentPage();
+  // initial load
+  await router.loadContentForCurrentPage();
 
   const topTradersBtn = document.getElementById("topTradersBtn");
   const myWatchListBtn = document.getElementById("myWatchListBtn");
 
   if (topTradersBtn) {
     topTradersBtn.addEventListener("click", async () => {
-      await utils.loadContent({
+      await router.loadContent({
         apiUrl: "/api/html/toptraders",
         browserUrl: "/toptraders",
         title: "Top Traders",
@@ -57,7 +58,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     //FIXME: Authenticate user selected address before loading watchlist
     myWatchListBtn.addEventListener("click", async () => {
       const walletAddress = provider?.selectedAddress;
-      await utils.loadContent({
+      await router.loadContent({
         apiUrl: "/api/html/mywatchlist",
         browserUrl: "/mywatchlist",
         title: "My Watchlist",
@@ -79,7 +80,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Get current wallet address for the header (if available)
     const walletAddress = provider?.selectedAddress;
 
-    utils.loadProfile(address, walletAddress);
+    await router.loadProfile(address, walletAddress);
   });
 
   // Setup wallet connection button

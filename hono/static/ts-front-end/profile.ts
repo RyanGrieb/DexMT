@@ -9,7 +9,6 @@ function init() {
   });
 
   utils.watchElementsOfQuery(".favorite-button", (button) => {
-    console.log("Found favorite button");
     button.addEventListener("click", async () => {
       const favoriteAddr = button.getAttribute("data-address");
 

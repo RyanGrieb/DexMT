@@ -650,7 +650,6 @@ function init() {
         });
     });
     _utils__WEBPACK_IMPORTED_MODULE_1__["default"].watchElementsOfQuery(".favorite-button", function (button) {
-        console.log("Found favorite button");
         button.addEventListener("click", function () { return __awaiter(_this, void 0, void 0, function () {
             var favoriteAddr, walletAddress, originalText, isFavorited, heartPath, svgElement, path1, path2, error_1;
             var _a;
@@ -847,10 +846,10 @@ var profile = {
 
 /***/ }),
 
-/***/ "./static/ts-front-end/utils.ts":
-/*!**************************************!*\
-  !*** ./static/ts-front-end/utils.ts ***!
-  \**************************************/
+/***/ "./static/ts-front-end/router.ts":
+/*!***************************************!*\
+  !*** ./static/ts-front-end/router.ts ***!
+  \***************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
@@ -858,6 +857,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
 /* harmony import */ var _metamask__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./metamask */ "./static/ts-front-end/metamask.ts");
+/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./utils */ "./static/ts-front-end/utils.ts");
 var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -895,6 +895,190 @@ var __generator = (undefined && undefined.__generator) || function (thisArg, bod
     }
 };
 
+
+function loadProfile(address, walletAddress) {
+    return __awaiter(this, void 0, void 0, function () {
+        var apiUrl, browserUrl;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    if (!address) return [3 /*break*/, 2];
+                    apiUrl = "/api/html/traderprofile?address=".concat(encodeURIComponent(address));
+                    browserUrl = "/traderprofile?address=".concat(encodeURIComponent(address));
+                    if (walletAddress) {
+                        apiUrl += "&userAddress=".concat(encodeURIComponent(walletAddress));
+                    }
+                    return [4 /*yield*/, loadContent({
+                            apiUrl: apiUrl,
+                            browserUrl: browserUrl,
+                            title: "Trader Profile",
+                            walletAddr: walletAddress || undefined,
+                            updateUrl: true, // ← now pushState into history
+                        })];
+                case 1:
+                    _a.sent();
+                    return [3 /*break*/, 4];
+                case 2: return [4 /*yield*/, loadContent({
+                        title: "Trader Profile",
+                        content: '<div class="error-message">Trader address is required</div>',
+                        updateUrl: false,
+                    })];
+                case 3:
+                    _a.sent();
+                    _a.label = 4;
+                case 4: return [2 /*return*/];
+            }
+        });
+    });
+}
+// Function to load content based on current URL
+function loadContentForCurrentPage() {
+    return __awaiter(this, void 0, void 0, function () {
+        var currentPath, searchParams, walletAddress, _a, address, error_1;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
+                case 0:
+                    currentPath = window.location.pathname;
+                    searchParams = new URLSearchParams(window.location.search);
+                    walletAddress = _metamask__WEBPACK_IMPORTED_MODULE_0__.provider === null || _metamask__WEBPACK_IMPORTED_MODULE_0__.provider === void 0 ? void 0 : _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.selectedAddress;
+                    _b.label = 1;
+                case 1:
+                    _b.trys.push([1, 9, , 10]);
+                    _a = currentPath;
+                    switch (_a) {
+                        case "/toptraders": return [3 /*break*/, 2];
+                        case "/mywatchlist": return [3 /*break*/, 4];
+                        case "/traderprofile": return [3 /*break*/, 6];
+                    }
+                    return [3 /*break*/, 7];
+                case 2: return [4 /*yield*/, loadContent({
+                        apiUrl: "/api/html/toptraders",
+                        title: "Top Traders",
+                        updateUrl: false, // Don't update URL on initial page load
+                    })];
+                case 3:
+                    _b.sent();
+                    return [3 /*break*/, 8];
+                case 4: return [4 /*yield*/, loadContent({
+                        apiUrl: "/api/html/mywatchlist",
+                        title: "My Watchlist",
+                        walletAddr: walletAddress || undefined,
+                        updateUrl: false, // Don't update URL on initial page load
+                    })];
+                case 5:
+                    _b.sent();
+                    return [3 /*break*/, 8];
+                case 6:
+                    address = searchParams.get("address");
+                    loadProfile(address, walletAddress);
+                    return [3 /*break*/, 8];
+                case 7: 
+                // For root or unknown paths, don't load anything (let redirect handle it)
+                return [3 /*break*/, 8];
+                case 8: return [3 /*break*/, 10];
+                case 9:
+                    error_1 = _b.sent();
+                    console.error("Error loading initial content:", error_1);
+                    return [3 /*break*/, 10];
+                case 10: return [2 /*return*/];
+            }
+        });
+    });
+}
+// Helper function to update content with optional URL change
+function loadContent(_a) {
+    return __awaiter(this, arguments, void 0, function (_b) {
+        var contentDiv_1, walletAddress, tz, headers, response, html, contentDiv, error_2;
+        var apiUrl = _b.apiUrl, browserUrl = _b.browserUrl, title = _b.title, walletAddr = _b.walletAddr, content = _b.content, _c = _b.updateUrl, updateUrl = _c === void 0 ? true : _c;
+        return __generator(this, function (_d) {
+            switch (_d.label) {
+                case 0:
+                    _d.trys.push([0, 3, , 4]);
+                    if (content) {
+                        contentDiv_1 = document.querySelector(".index-content");
+                        if (contentDiv_1) {
+                            contentDiv_1.innerHTML = content;
+                        }
+                        document.title = title;
+                        // Update URL if requested and browserUrl is provided
+                        if (updateUrl && browserUrl) {
+                            window.history.pushState({}, title, browserUrl);
+                        }
+                        return [2 /*return*/];
+                    }
+                    if (!apiUrl) {
+                        throw new Error("No API URL or content provided");
+                    }
+                    document.title = title;
+                    // Update browser URL if requested and browserUrl is provided
+                    if (updateUrl && browserUrl) {
+                        window.history.pushState({}, title, browserUrl);
+                    }
+                    showLoadingState();
+                    walletAddress = walletAddr || (_metamask__WEBPACK_IMPORTED_MODULE_0__.provider === null || _metamask__WEBPACK_IMPORTED_MODULE_0__.provider === void 0 ? void 0 : _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.selectedAddress);
+                    tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                    headers = {
+                        "Content-Type": "application/json",
+                        "x-timezone": tz,
+                    };
+                    // Add wallet address to headers if available
+                    if (walletAddress) {
+                        headers["x-wallet-address"] = walletAddress;
+                    }
+                    return [4 /*yield*/, fetch(apiUrl, {
+                            method: "GET",
+                            headers: headers,
+                        })];
+                case 1:
+                    response = _d.sent();
+                    if (!response.ok) {
+                        throw new Error("HTTP error! status: ".concat(response.status));
+                    }
+                    return [4 /*yield*/, response.text()];
+                case 2:
+                    html = _d.sent();
+                    contentDiv = document.querySelector(".index-content");
+                    if (contentDiv) {
+                        contentDiv.innerHTML = html;
+                    }
+                    return [3 /*break*/, 4];
+                case 3:
+                    error_2 = _d.sent();
+                    console.error("Error loading content:", error_2);
+                    _utils__WEBPACK_IMPORTED_MODULE_1__["default"].showNotification("Error loading content", "error");
+                    return [3 /*break*/, 4];
+                case 4: return [2 /*return*/];
+            }
+        });
+    });
+}
+function showLoadingState() {
+    var contentArea = document.querySelector(".index-content");
+    if (contentArea) {
+        contentArea.innerHTML = "\n      <div class=\"loading-container\">\n        <div class=\"loading-spinner\"></div>\n        <p class=\"loading-text\">Loading content, please wait...</p>\n      </div>\n    ";
+    }
+}
+var router = {
+    loadProfile: loadProfile,
+    loadContentForCurrentPage: loadContentForCurrentPage,
+    loadContent: loadContent,
+    showLoadingState: showLoadingState,
+};
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (router);
+
+
+/***/ }),
+
+/***/ "./static/ts-front-end/utils.ts":
+/*!**************************************!*\
+  !*** ./static/ts-front-end/utils.ts ***!
+  \**************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
 // Number formatting utilities
 function formatNumber(value, decimals) {
     if (decimals === void 0) { decimals = 2; }
@@ -951,101 +1135,12 @@ function showToast(message, type) {
     // TODO: Implement toast notification system
     console.log("[".concat(type.toUpperCase(), "] ").concat(message));
 }
-function getPlatformIcon(platform) {
-    if (!platform) {
-        return '<span style="color:#666;">-</span>';
-    }
-    var platformLower = platform.toLowerCase();
-    switch (platformLower) {
-        case "gmx":
-            return "\n        <svg width=\"24\" height=\"24\" viewBox=\"0 0 30 30\" xmlns=\"http://www.w3.org/2000/svg\">\n          <defs>\n            <linearGradient id=\"gmx-gradient-watched\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"100%\">\n              <stop offset=\"0%\" style=\"stop-color:#4f46e5;stop-opacity:1\" />\n              <stop offset=\"100%\" style=\"stop-color:#06b6d4;stop-opacity:1\" />\n            </linearGradient>\n          </defs>\n          <path fill=\"url(#gmx-gradient-watched)\" transform=\"translate(-525.667 -696) scale(1)\" d=\"m555.182 717.462-14.735-21.462-14.78 21.462h20.592l-5.812-8.191-2.883 4.256h-3.064l5.949-8.557 8.6 12.493z\"/>\n        </svg>\n      ";
-        case "dydx":
-            return "<span style=\"font-size:0.75rem;color:#888;\">DYDX</span>";
-        case "hyperliquid":
-            return "<span style=\"font-size:0.75rem;color:#888;\">HL</span>";
-        default:
-            return "<span style=\"font-size:0.75rem;color:#888;\">".concat(platform.toUpperCase(), "</span>");
-    }
-}
 function generateIconColor(address) {
     var hash = address.slice(2, 8);
     var r = parseInt(hash.slice(0, 2), 16);
     var g = parseInt(hash.slice(2, 4), 16);
     var b = parseInt(hash.slice(4, 6), 16);
     return "rgb(".concat(r, ", ").concat(g, ", ").concat(b, ")");
-}
-// Helper function to update content with optional URL change
-function loadContent(_a) {
-    return __awaiter(this, arguments, void 0, function (_b) {
-        var contentDiv_1, walletAddress, tz, headers, response, html, contentDiv, error_1;
-        var apiUrl = _b.apiUrl, browserUrl = _b.browserUrl, title = _b.title, walletAddr = _b.walletAddr, content = _b.content, _c = _b.updateUrl, updateUrl = _c === void 0 ? true : _c;
-        return __generator(this, function (_d) {
-            switch (_d.label) {
-                case 0:
-                    _d.trys.push([0, 3, , 4]);
-                    if (content) {
-                        contentDiv_1 = document.querySelector(".index-content");
-                        if (contentDiv_1) {
-                            contentDiv_1.innerHTML = content;
-                        }
-                        document.title = title;
-                        // Update URL if requested and browserUrl is provided
-                        if (updateUrl && browserUrl) {
-                            window.history.pushState({}, title, browserUrl);
-                        }
-                        return [2 /*return*/];
-                    }
-                    if (!apiUrl) {
-                        throw new Error("No API URL or content provided");
-                    }
-                    document.title = title;
-                    // Update browser URL if requested and browserUrl is provided
-                    if (updateUrl && browserUrl) {
-                        window.history.pushState({}, title, browserUrl);
-                    }
-                    showLoadingState();
-                    walletAddress = walletAddr || (_metamask__WEBPACK_IMPORTED_MODULE_0__.provider === null || _metamask__WEBPACK_IMPORTED_MODULE_0__.provider === void 0 ? void 0 : _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.selectedAddress);
-                    tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-                    headers = {
-                        "Content-Type": "application/json",
-                        "x-timezone": tz,
-                    };
-                    // Add wallet address to headers if available
-                    if (walletAddress) {
-                        headers["x-wallet-address"] = walletAddress;
-                    }
-                    return [4 /*yield*/, fetch(apiUrl, {
-                            method: "GET",
-                            headers: headers,
-                        })];
-                case 1:
-                    response = _d.sent();
-                    if (!response.ok) {
-                        throw new Error("HTTP error! status: ".concat(response.status));
-                    }
-                    return [4 /*yield*/, response.text()];
-                case 2:
-                    html = _d.sent();
-                    contentDiv = document.querySelector(".index-content");
-                    if (contentDiv) {
-                        contentDiv.innerHTML = html;
-                    }
-                    return [3 /*break*/, 4];
-                case 3:
-                    error_1 = _d.sent();
-                    console.error("Error loading content:", error_1);
-                    showNotification("Error loading content", "error");
-                    return [3 /*break*/, 4];
-                case 4: return [2 /*return*/];
-            }
-        });
-    });
-}
-function showLoadingState() {
-    var contentArea = document.querySelector(".index-content");
-    if (contentArea) {
-        contentArea.innerHTML = "\n      <div class=\"loading-container\">\n        <div class=\"loading-spinner\"></div>\n        <p class=\"loading-text\">Loading content, please wait...</p>\n      </div>\n    ";
-    }
 }
 function watchElementsOfQuery(query, onElementLoad) {
     // Handle existing elements on initial load
@@ -1089,95 +1184,6 @@ function showNotification(message, type) {
         setTimeout(function () { return notification.remove(); }, 300);
     }, 3000);
 }
-function loadProfile(address, walletAddress) {
-    return __awaiter(this, void 0, void 0, function () {
-        var apiUrl, browserUrl;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    if (!address) return [3 /*break*/, 2];
-                    apiUrl = "/api/html/traderprofile?address=".concat(encodeURIComponent(address));
-                    browserUrl = "/traderprofile?address=".concat(encodeURIComponent(address));
-                    if (walletAddress) {
-                        apiUrl += "&userAddress=".concat(encodeURIComponent(walletAddress));
-                    }
-                    return [4 /*yield*/, loadContent({
-                            apiUrl: apiUrl,
-                            browserUrl: browserUrl,
-                            title: "Trader Profile",
-                            walletAddr: walletAddress || undefined,
-                            updateUrl: true, // ← now pushState into history
-                        })];
-                case 1:
-                    _a.sent();
-                    return [3 /*break*/, 4];
-                case 2: return [4 /*yield*/, loadContent({
-                        title: "Trader Profile",
-                        content: '<div class="error-message">Trader address is required</div>',
-                        updateUrl: false,
-                    })];
-                case 3:
-                    _a.sent();
-                    _a.label = 4;
-                case 4: return [2 /*return*/];
-            }
-        });
-    });
-}
-// Function to load content based on current URL
-function loadContentForCurrentPage() {
-    return __awaiter(this, void 0, void 0, function () {
-        var currentPath, searchParams, walletAddress, _a, address, error_2;
-        return __generator(this, function (_b) {
-            switch (_b.label) {
-                case 0:
-                    currentPath = window.location.pathname;
-                    searchParams = new URLSearchParams(window.location.search);
-                    walletAddress = _metamask__WEBPACK_IMPORTED_MODULE_0__.provider === null || _metamask__WEBPACK_IMPORTED_MODULE_0__.provider === void 0 ? void 0 : _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.selectedAddress;
-                    _b.label = 1;
-                case 1:
-                    _b.trys.push([1, 9, , 10]);
-                    _a = currentPath;
-                    switch (_a) {
-                        case "/toptraders": return [3 /*break*/, 2];
-                        case "/mywatchlist": return [3 /*break*/, 4];
-                        case "/traderprofile": return [3 /*break*/, 6];
-                    }
-                    return [3 /*break*/, 7];
-                case 2: return [4 /*yield*/, loadContent({
-                        apiUrl: "/api/html/toptraders",
-                        title: "Top Traders",
-                        updateUrl: false, // Don't update URL on initial page load
-                    })];
-                case 3:
-                    _b.sent();
-                    return [3 /*break*/, 8];
-                case 4: return [4 /*yield*/, loadContent({
-                        apiUrl: "/api/html/mywatchlist",
-                        title: "My Watchlist",
-                        walletAddr: walletAddress || undefined,
-                        updateUrl: false, // Don't update URL on initial page load
-                    })];
-                case 5:
-                    _b.sent();
-                    return [3 /*break*/, 8];
-                case 6:
-                    address = searchParams.get("address");
-                    loadProfile(address, walletAddress);
-                    return [3 /*break*/, 8];
-                case 7: 
-                // For root or unknown paths, don't load anything (let redirect handle it)
-                return [3 /*break*/, 8];
-                case 8: return [3 /*break*/, 10];
-                case 9:
-                    error_2 = _b.sent();
-                    console.error("Error loading initial content:", error_2);
-                    return [3 /*break*/, 10];
-                case 10: return [2 /*return*/];
-            }
-        });
-    });
-}
 var utils = {
     formatNumber: formatNumber,
     formatCurrency: formatCurrency,
@@ -1188,13 +1194,9 @@ var utils = {
     timeAgo: timeAgo,
     createElement: createElement,
     showToast: showToast,
-    getPlatformIcon: getPlatformIcon,
     generateIconColor: generateIconColor,
-    loadContent: loadContent,
     watchElementsOfQuery: watchElementsOfQuery,
     showNotification: showNotification,
-    loadProfile: loadProfile,
-    loadContentForCurrentPage: loadContentForCurrentPage,
 };
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (utils);
 
@@ -1213,7 +1215,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _metamask__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../metamask */ "./static/ts-front-end/metamask.ts");
 /* harmony import */ var _profile__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../profile */ "./static/ts-front-end/profile.ts");
-/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../utils */ "./static/ts-front-end/utils.ts");
+/* harmony import */ var _router__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../router */ "./static/ts-front-end/router.ts");
+/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../utils */ "./static/ts-front-end/utils.ts");
 var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -1253,6 +1256,7 @@ var __generator = (undefined && undefined.__generator) || function (thisArg, bod
 
 
 
+
 function init() {
     return __awaiter(this, void 0, void 0, function () {
         var _this = this;
@@ -1269,7 +1273,7 @@ function init() {
                                 traderCard = traderIdentity.closest(".trader-card");
                                 address = traderCard === null || traderCard === void 0 ? void 0 : traderCard.getAttribute("data-address");
                                 if (address) {
-                                    _utils__WEBPACK_IMPORTED_MODULE_2__["default"].loadProfile(address, walletAddress);
+                                    _router__WEBPACK_IMPORTED_MODULE_2__["default"].loadProfile(address, walletAddress);
                                 }
                             }
                             btn = e.target.closest("button");
@@ -1296,7 +1300,7 @@ function init() {
                 });
             }); });
             // Handle auto‐copy toggle switch
-            _utils__WEBPACK_IMPORTED_MODULE_2__["default"].watchElementsOfQuery("#mirrorToggle", function (mirrorToggle) {
+            _utils__WEBPACK_IMPORTED_MODULE_3__["default"].watchElementsOfQuery("#mirrorToggle", function (mirrorToggle) {
                 // Set initial state based on user's current auto-copy setting
                 mirrorToggle.addEventListener("change", function (e) { return __awaiter(_this, void 0, void 0, function () {
                     return __generator(this, function (_a) {
@@ -1310,7 +1314,7 @@ function init() {
                 }); });
             });
             // Tab‐switching logic
-            _utils__WEBPACK_IMPORTED_MODULE_2__["default"].watchElementsOfQuery(".tab-button", function (element) {
+            _utils__WEBPACK_IMPORTED_MODULE_3__["default"].watchElementsOfQuery(".tab-button", function (element) {
                 var tabBtn = element;
                 tabBtn.addEventListener("click", function () {
                     var tab = tabBtn.getAttribute("data-tab");
@@ -1338,7 +1342,7 @@ function handleMirrorToggle(toggle) {
             switch (_b.label) {
                 case 0:
                     if (!(_metamask__WEBPACK_IMPORTED_MODULE_0__.provider === null || _metamask__WEBPACK_IMPORTED_MODULE_0__.provider === void 0 ? void 0 : _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.selectedAddress)) {
-                        _utils__WEBPACK_IMPORTED_MODULE_2__["default"].showNotification("Please connect your wallet first", "error");
+                        _utils__WEBPACK_IMPORTED_MODULE_3__["default"].showNotification("Please connect your wallet first", "error");
                         // revert UI toggle if no wallet
                         toggle.checked = !toggle.checked;
                         return [2 /*return*/];
@@ -1381,12 +1385,12 @@ function handleMirrorToggle(toggle) {
                     if (labelText) {
                         labelText.textContent = targetEnable ? "Disable Auto-Copy" : "Enable Auto-Copy";
                     }
-                    _utils__WEBPACK_IMPORTED_MODULE_2__["default"].showNotification("Auto-copy trading ".concat(targetEnable ? "enabled" : "disabled"), "success");
+                    _utils__WEBPACK_IMPORTED_MODULE_3__["default"].showNotification("Auto-copy trading ".concat(targetEnable ? "enabled" : "disabled"), "success");
                     return [3 /*break*/, 7];
                 case 5:
                     err_1 = _b.sent();
                     console.error(err_1);
-                    _utils__WEBPACK_IMPORTED_MODULE_2__["default"].showNotification(err_1.message, "error");
+                    _utils__WEBPACK_IMPORTED_MODULE_3__["default"].showNotification(err_1.message, "error");
                     // on error, keep it reverted and restore correct label
                     if (labelText) {
                         labelText.textContent = targetEnable ? "Enable Auto-Copy" : "Disable Auto-Copy";
@@ -1410,7 +1414,7 @@ function handleRemove(button) {
                     if (!copyAddr)
                         return [2 /*return*/, console.error("No trader address")];
                     if (!(_metamask__WEBPACK_IMPORTED_MODULE_0__.provider === null || _metamask__WEBPACK_IMPORTED_MODULE_0__.provider === void 0 ? void 0 : _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.selectedAddress)) {
-                        return [2 /*return*/, _utils__WEBPACK_IMPORTED_MODULE_2__["default"].showNotification("Please connect your wallet first", "error")];
+                        return [2 /*return*/, _utils__WEBPACK_IMPORTED_MODULE_3__["default"].showNotification("Please connect your wallet first", "error")];
                     }
                     wallet = _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.selectedAddress;
                     origText = button.textContent;
@@ -1422,7 +1426,7 @@ function handleRemove(button) {
                     return [4 /*yield*/, _profile__WEBPACK_IMPORTED_MODULE_1__["default"].unfavoriteTrader(wallet, copyAddr)];
                 case 2:
                     _a.sent();
-                    _utils__WEBPACK_IMPORTED_MODULE_2__["default"].showNotification("Trader removed from favorites", "success");
+                    _utils__WEBPACK_IMPORTED_MODULE_3__["default"].showNotification("Trader removed from favorites", "success");
                     traderCard_1 = button.closest(".trader-card") || button.closest(".watchlist-item");
                     if (traderCard_1) {
                         // Add fade-out animation
@@ -1437,7 +1441,7 @@ function handleRemove(button) {
                 case 3:
                     err_2 = _a.sent();
                     console.error(err_2);
-                    _utils__WEBPACK_IMPORTED_MODULE_2__["default"].showNotification(err_2.message || "Failed to remove trader", "error");
+                    _utils__WEBPACK_IMPORTED_MODULE_3__["default"].showNotification(err_2.message || "Failed to remove trader", "error");
                     button.textContent = origText;
                     return [3 /*break*/, 5];
                 case 4:
@@ -1460,7 +1464,7 @@ function handleSelect(button) {
                     if (!copyAddr)
                         return [2 /*return*/, console.error("No trader address")];
                     if (!(_metamask__WEBPACK_IMPORTED_MODULE_0__.provider === null || _metamask__WEBPACK_IMPORTED_MODULE_0__.provider === void 0 ? void 0 : _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.selectedAddress)) {
-                        return [2 /*return*/, _utils__WEBPACK_IMPORTED_MODULE_2__["default"].showNotification("Please connect your wallet first", "error")];
+                        return [2 /*return*/, _utils__WEBPACK_IMPORTED_MODULE_3__["default"].showNotification("Please connect your wallet first", "error")];
                     }
                     wallet = _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.selectedAddress;
                     origText = button.textContent;
@@ -1495,7 +1499,7 @@ function handleSelect(button) {
                     if (!res.ok || !json.success) {
                         throw new Error(json.error || "Failed to select trader");
                     }
-                    _utils__WEBPACK_IMPORTED_MODULE_2__["default"].showNotification("Trader selected", "success");
+                    _utils__WEBPACK_IMPORTED_MODULE_3__["default"].showNotification("Trader selected", "success");
                     button.textContent = "✓ Selected for Copying";
                     button.classList.replace("select-trader", "unselect-trader");
                     button.classList.replace("btn-primary", "btn-success");
@@ -1504,7 +1508,7 @@ function handleSelect(button) {
                 case 5:
                     err_3 = _a.sent();
                     console.error(err_3);
-                    _utils__WEBPACK_IMPORTED_MODULE_2__["default"].showNotification(err_3.message, "error");
+                    _utils__WEBPACK_IMPORTED_MODULE_3__["default"].showNotification(err_3.message, "error");
                     button.textContent = origText;
                     return [3 /*break*/, 7];
                 case 6:
@@ -1525,7 +1529,7 @@ function handleUnselect(button) {
                     if (!copyAddr)
                         return [2 /*return*/, console.error("No trader address")];
                     if (!(_metamask__WEBPACK_IMPORTED_MODULE_0__.provider === null || _metamask__WEBPACK_IMPORTED_MODULE_0__.provider === void 0 ? void 0 : _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.selectedAddress)) {
-                        return [2 /*return*/, _utils__WEBPACK_IMPORTED_MODULE_2__["default"].showNotification("Please connect your wallet first", "error")];
+                        return [2 /*return*/, _utils__WEBPACK_IMPORTED_MODULE_3__["default"].showNotification("Please connect your wallet first", "error")];
                     }
                     wallet = _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.selectedAddress;
                     origText = button.textContent;
@@ -1560,7 +1564,7 @@ function handleUnselect(button) {
                     if (!res.ok || !json.success) {
                         throw new Error(json.error || "Failed to unselect trader");
                     }
-                    _utils__WEBPACK_IMPORTED_MODULE_2__["default"].showNotification("Trader unselected", "success");
+                    _utils__WEBPACK_IMPORTED_MODULE_3__["default"].showNotification("Trader unselected", "success");
                     button.textContent = "Select for Copying";
                     button.classList.replace("unselect-trader", "select-trader");
                     button.classList.replace("btn-success", "btn-primary");
@@ -1569,7 +1573,7 @@ function handleUnselect(button) {
                 case 5:
                     err_4 = _a.sent();
                     console.error(err_4);
-                    _utils__WEBPACK_IMPORTED_MODULE_2__["default"].showNotification(err_4.message, "error");
+                    _utils__WEBPACK_IMPORTED_MODULE_3__["default"].showNotification(err_4.message, "error");
                     button.textContent = origText;
                     return [3 /*break*/, 7];
                 case 6:
@@ -1885,9 +1889,10 @@ var __webpack_exports__ = {};
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _metamask__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./metamask */ "./static/ts-front-end/metamask.ts");
 /* harmony import */ var _profile__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./profile */ "./static/ts-front-end/profile.ts");
-/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./utils */ "./static/ts-front-end/utils.ts");
-/* harmony import */ var _watchlist_favorites__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./watchlist/favorites */ "./static/ts-front-end/watchlist/favorites.ts");
-/* harmony import */ var _watchlist_open_positions__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./watchlist/open-positions */ "./static/ts-front-end/watchlist/open-positions.ts");
+/* harmony import */ var _router__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./router */ "./static/ts-front-end/router.ts");
+/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./utils */ "./static/ts-front-end/utils.ts");
+/* harmony import */ var _watchlist_favorites__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./watchlist/favorites */ "./static/ts-front-end/watchlist/favorites.ts");
+/* harmony import */ var _watchlist_open_positions__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./watchlist/open-positions */ "./static/ts-front-end/watchlist/open-positions.ts");
 var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -1930,13 +1935,14 @@ var __generator = (undefined && undefined.__generator) || function (thisArg, bod
 
 
 
+
 console.log("DEXMT JS file loaded");
 window.addEventListener("popstate", function () { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                console.log("Popstate event detected, loading content for current page...");
-                return [4 /*yield*/, _utils__WEBPACK_IMPORTED_MODULE_2__["default"].loadContentForCurrentPage()];
+                console.log("Popstate, loading content…");
+                return [4 /*yield*/, _router__WEBPACK_IMPORTED_MODULE_2__["default"].loadContentForCurrentPage()];
             case 1:
                 _a.sent();
                 return [2 /*return*/];
@@ -1951,8 +1957,8 @@ document.addEventListener("DOMContentLoaded", function () { return __awaiter(voi
             case 0:
                 console.log("DOM loaded, setting up DEXMT...");
                 _profile__WEBPACK_IMPORTED_MODULE_1__["default"].init();
-                _watchlist_favorites__WEBPACK_IMPORTED_MODULE_3__["default"].init();
-                _watchlist_open_positions__WEBPACK_IMPORTED_MODULE_4__["default"].init();
+                _watchlist_favorites__WEBPACK_IMPORTED_MODULE_4__["default"].init();
+                _watchlist_open_positions__WEBPACK_IMPORTED_MODULE_5__["default"].init();
                 _a.label = 1;
             case 1:
                 _a.trys.push([1, 4, , 5]);
@@ -1970,13 +1976,13 @@ document.addEventListener("DOMContentLoaded", function () { return __awaiter(voi
             case 4:
                 error_1 = _a.sent();
                 console.error("Error during initialization:", error_1);
-                _utils__WEBPACK_IMPORTED_MODULE_2__["default"].showToast("Initialization error", "error");
+                _utils__WEBPACK_IMPORTED_MODULE_3__["default"].showToast("Initialization error", "error");
                 return [3 /*break*/, 5];
             case 5: 
-            // Load content based on current URL
-            return [4 /*yield*/, _utils__WEBPACK_IMPORTED_MODULE_2__["default"].loadContentForCurrentPage()];
+            // initial load
+            return [4 /*yield*/, _router__WEBPACK_IMPORTED_MODULE_2__["default"].loadContentForCurrentPage()];
             case 6:
-                // Load content based on current URL
+                // initial load
                 _a.sent();
                 topTradersBtn = document.getElementById("topTradersBtn");
                 myWatchListBtn = document.getElementById("myWatchListBtn");
@@ -1984,7 +1990,7 @@ document.addEventListener("DOMContentLoaded", function () { return __awaiter(voi
                     topTradersBtn.addEventListener("click", function () { return __awaiter(void 0, void 0, void 0, function () {
                         return __generator(this, function (_a) {
                             switch (_a.label) {
-                                case 0: return [4 /*yield*/, _utils__WEBPACK_IMPORTED_MODULE_2__["default"].loadContent({
+                                case 0: return [4 /*yield*/, _router__WEBPACK_IMPORTED_MODULE_2__["default"].loadContent({
                                         apiUrl: "/api/html/toptraders",
                                         browserUrl: "/toptraders",
                                         title: "Top Traders",
@@ -2004,7 +2010,7 @@ document.addEventListener("DOMContentLoaded", function () { return __awaiter(voi
                             switch (_a.label) {
                                 case 0:
                                     walletAddress = _metamask__WEBPACK_IMPORTED_MODULE_0__.provider === null || _metamask__WEBPACK_IMPORTED_MODULE_0__.provider === void 0 ? void 0 : _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.selectedAddress;
-                                    return [4 /*yield*/, _utils__WEBPACK_IMPORTED_MODULE_2__["default"].loadContent({
+                                    return [4 /*yield*/, _router__WEBPACK_IMPORTED_MODULE_2__["default"].loadContent({
                                             apiUrl: "/api/html/mywatchlist",
                                             browserUrl: "/mywatchlist",
                                             title: "My Watchlist",
@@ -2021,15 +2027,20 @@ document.addEventListener("DOMContentLoaded", function () { return __awaiter(voi
                 document.addEventListener("click", function (event) { return __awaiter(void 0, void 0, void 0, function () {
                     var traderRow, address, walletAddress;
                     return __generator(this, function (_a) {
-                        traderRow = event.target.closest("tr");
-                        if (!traderRow)
-                            return [2 /*return*/];
-                        address = traderRow.getAttribute("address");
-                        if (!address)
-                            return [2 /*return*/];
-                        walletAddress = _metamask__WEBPACK_IMPORTED_MODULE_0__.provider === null || _metamask__WEBPACK_IMPORTED_MODULE_0__.provider === void 0 ? void 0 : _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.selectedAddress;
-                        _utils__WEBPACK_IMPORTED_MODULE_2__["default"].loadProfile(address, walletAddress);
-                        return [2 /*return*/];
+                        switch (_a.label) {
+                            case 0:
+                                traderRow = event.target.closest("tr");
+                                if (!traderRow)
+                                    return [2 /*return*/];
+                                address = traderRow.getAttribute("address");
+                                if (!address)
+                                    return [2 /*return*/];
+                                walletAddress = _metamask__WEBPACK_IMPORTED_MODULE_0__.provider === null || _metamask__WEBPACK_IMPORTED_MODULE_0__.provider === void 0 ? void 0 : _metamask__WEBPACK_IMPORTED_MODULE_0__.provider.selectedAddress;
+                                return [4 /*yield*/, _router__WEBPACK_IMPORTED_MODULE_2__["default"].loadProfile(address, walletAddress)];
+                            case 1:
+                                _a.sent();
+                                return [2 /*return*/];
+                        }
                     });
                 }); });
                 connectButton = document.getElementById("connectButton");
@@ -2063,7 +2074,7 @@ document.addEventListener("DOMContentLoaded", function () { return __awaiter(voi
 // Global error handler
 window.addEventListener("error", function (event) {
     console.error("Global error:", event.error);
-    _utils__WEBPACK_IMPORTED_MODULE_2__["default"].showToast("An error occurred. Please refresh the page.", "error");
+    _utils__WEBPACK_IMPORTED_MODULE_3__["default"].showToast("An error occurred. Please refresh the page.", "error");
 });
 // Export for debugging/compatibility
 window.DEXMT = {

@@ -98,7 +98,8 @@ function abbreviateNumber(value: number | string): string {
   return num.toLocaleString();
 }
 
-function getPlatformIcon(platform: string | null | undefined): ReturnType<typeof html> {
+function getPlatformIcon(platform: string | null) {
+  console.log("getPlatformIcon called with platform:", platform);
   if (!platform) {
     return html`<span style="color:#666;">-</span>`;
   }
@@ -107,11 +108,25 @@ function getPlatformIcon(platform: string | null | undefined): ReturnType<typeof
 
   switch (platformLower) {
     case "gmx":
-      return html`<span style="color:#4f46e5; font-weight: bold;">GMX</span>`;
+      return html`
+        <svg width="24" height="24" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="gmx-gradient-watched" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#4f46e5;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#06b6d4;stop-opacity:1" />
+            </linearGradient>
+          </defs>
+          <path
+            fill="url(#gmx-gradient-watched)"
+            transform="translate(-525.667 -696) scale(1)"
+            d="m555.182 717.462-14.735-21.462-14.78 21.462h20.592l-5.812-8.191-2.883 4.256h-3.064l5.949-8.557 8.6 12.493z"
+          />
+        </svg>
+      `;
     case "dydx":
-      return html`<span style="color:#6366f1; font-weight: bold;">dYdX</span>`;
+      return html`<span style="font-size:0.75rem;color:#888;">DYDX</span>`;
     case "hyperliquid":
-      return html`<span style="color:#8b5cf6; font-weight: bold;">HL</span>`;
+      return html`<span style="font-size:0.75rem;color:#888;">HL</span>`;
     default:
       return html`<span style="font-size:0.75rem;color:#888;">${platform.toUpperCase()}</span>`;
   }
