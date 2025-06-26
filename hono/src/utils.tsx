@@ -98,7 +98,7 @@ function abbreviateNumber(value: number | string): string {
   return num.toLocaleString();
 }
 
-function getPlatformIcon(platform: string | null) {
+function getPlatformIcon(platform: string | null | undefined) {
   console.log("getPlatformIcon called with platform:", platform);
   if (!platform) {
     return html`<span style="color:#666;">-</span>`;

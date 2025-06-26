@@ -14,11 +14,14 @@ let connectedWallets: ConnectedWallet[] = [];
 
 async function init(app: Hono) {
   app.post("/api/wallet/connect", async (c) => {
-    const { address, chainId } = await c.req.json();
+    let { address, chainId } = await c.req.json();
 
     if (!address || !chainId) {
       return c.json({ error: "Missing address or chainId" }, 400);
     }
+
+    // Ensure address has the proper uppercase format
+    address = ethers.getAddress(address);
 
     // Store wallet connection
     const existingIndex = connectedWallets.findIndex((w) => w.address === address);
@@ -33,6 +36,7 @@ async function init(app: Hono) {
     }
 
     // Add user to database
+    console.log("add user to db");
     const trader: Trader = new Trader({
       address: address,
       balance: await getEthBalance(address, "https://arb1.arbitrum.io/rpc"),
@@ -48,7 +52,10 @@ async function init(app: Hono) {
 
   // API endpoint to disconnect wallet
   app.post("/api/wallet/disconnect", async (c) => {
-    const { address } = await c.req.json();
+    let { address } = await c.req.json();
+
+    // Ensure address has the proper uppercase format
+    address = ethers.getAddress(address);
 
     connectedWallets = connectedWallets.filter((w) => w.address !== address);
 

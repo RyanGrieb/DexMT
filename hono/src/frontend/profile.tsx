@@ -15,10 +15,18 @@ export async function renderTraderProfile({
   try {
     // Fetch trader data from database
     const traders = await database.getTraders();
-    const trader = traders.find((t) => t.address === traderAddress);
+    let trader = traders.find((t) => t.address === traderAddress);
 
     if (!trader) {
-      return renderTraderNotFound(traderAddress);
+      // If trader not found in database, try to fetch from GMX SDK.
+      utils.logOutput(`Trader profile not found in database, searching with address: ${traderAddress}`);
+      trader = await Trader.fromAddress({ address: traderAddress, fromDb: false });
+      // Save the trader to the database if found
+      if (trader) {
+        await database.addTrader(trader);
+      } else {
+        return renderTraderNotFound(traderAddress);
+      }
     }
 
     // Fetch positions for this trader

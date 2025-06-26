@@ -111,6 +111,13 @@ export class Trader {
     this.watchingAmt = watchingAmt;
   }
 
+  static async fromAddress(options: { address: string; fromDb: boolean }): Promise<Trader | undefined> {
+    const { address, fromDb } = options;
+
+    //gmxSdk.getTraderFromAddress(address);
+    return undefined;
+  }
+
   async modifyPosition(position: DEXPosition, trade: DEXTradeAction): Promise<DEXPosition | undefined> {
     const updatedPosition: DEXPosition | undefined = undefined; //FIXME: Implement position modification logic
     if (updatedPosition) {
@@ -149,10 +156,7 @@ export class Trader {
     // Fetch all trades from the DB for this trader
     const allTrades = await this.getTrades({ fromDb: true });
     // Filter trades that match the position's market address and side
-    return allTrades.filter((trade) => 
-      trade.marketAddr === position.marketAddress && 
-      trade.isLong === position.isLong
-    );
+    return allTrades.filter((trade) => trade.marketAddr === position.marketAddress && trade.isLong === position.isLong);
   }
 
   async mirrorTrades(newTrades: DEXTradeAction[]) {
