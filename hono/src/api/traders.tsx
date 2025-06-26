@@ -1,3 +1,4 @@
+import { ethers } from "ethers";
 import { Hono } from "hono";
 import database from "../database";
 import scheduler from "../scheduler";
@@ -87,8 +88,11 @@ async function init(app: Hono) {
 
   app.post("/api/traders/:address/auto_copy", async (c) => {
     try {
-      const { address } = c.req.param();
+      let { address } = c.req.param();
       const { message, signature, timestamp, enable } = await c.req.json();
+
+      // Ensure address has the proper uppercase format
+      address = ethers.getAddress(address);
 
       // Validate required fields
       if (!address || !message || !signature || !timestamp || enable === undefined) {

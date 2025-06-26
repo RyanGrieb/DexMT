@@ -73,15 +73,19 @@ async function updateOpenPositions() {
 async function updateTradeHistory() {
   const traders = await database.getTraders({ isMirroring: true });
 
+  console.log(`Found ${traders.length} traders to update trades for`);
+
   for (const trader of traders) {
     const newTrades: DEXTradeAction[] = [];
-
+    console.log(`Updating trades for trader: ${trader.address}`);
     for (const selectedTrader of await database.getTraders({
       favoriteOfAddress: trader.address,
       selected: true,
     })) {
       const sdkTrades = await selectedTrader.getTrades({ fromDb: false, amount: 5 });
       const dbTrades = await selectedTrader.getTrades({ fromDb: true }); //FIXME: This is not efficient, we should only query trades from the current day?
+
+      console.log(sdkTrades.length, dbTrades.length);
 
       // find only brand‐new trades
       const freshTrades = sdkTrades.filter((t) => !dbTrades.some((dt) => dt.id === t.id));
@@ -110,7 +114,7 @@ function startMirrorTradesTask() {
   setInterval(updateTradeHistory, 60000); // 1 minute
 
   //updateOpenPositions();
-  //updateTradeHistory();
+  updateTradeHistory();
 }
 
 function init() {
@@ -121,6 +125,7 @@ function init() {
 const scheduler = {
   init,
   updateOpenPositions,
+  updateTradeHistory,
 };
 
 export default scheduler;

@@ -114,6 +114,13 @@ export class Trader {
   static async fromAddress(options: { address: string; fromDb: boolean }): Promise<Trader | undefined> {
     const { address, fromDb } = options;
 
+    if (fromDb) {
+      const traders = await database.getTraders();
+      return traders.find((t) => t.address === address);
+    }
+
+    //FIXME: Implement logic to fetch trader from database or SDK
+    // This is meant to replace other calls to database.getTraders() and make our code cleaner
     //gmxSdk.getTraderFromAddress(address);
     return undefined;
   }

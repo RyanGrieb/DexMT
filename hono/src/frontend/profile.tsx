@@ -14,8 +14,7 @@ export async function renderTraderProfile({
 }): Promise<string> {
   try {
     // Fetch trader data from database
-    const traders = await database.getTraders();
-    let trader = traders.find((t) => t.address === traderAddress);
+    let trader = await Trader.fromAddress({ address: traderAddress, fromDb: true });
 
     if (!trader) {
       // If trader not found in database, try to fetch from GMX SDK.
