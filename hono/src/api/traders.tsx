@@ -1,11 +1,8 @@
 import { zValidator } from "@hono/zod-validator";
-import { ethers } from "ethers";
 import { Hono } from "hono";
 import database from "../database";
 import scheduler from "../scheduler";
 import schemas from "../schemas";
-import utils from "../utils";
-import wallet from "./wallet";
 
 async function init(app: Hono) {
   // API endpoint to get users from database with all trading data
@@ -21,7 +18,7 @@ async function init(app: Hono) {
   });
 
   app.post(
-    "/api/traders/:address/favorite_trader",
+    "/api/traders/favorite_trader",
     zValidator("json", schemas.favoriteTrader, (result, c) => {
       if (!result.success) {
         return c.json({ error: result.error.message }, 400);
@@ -34,7 +31,7 @@ async function init(app: Hono) {
   );
 
   app.post(
-    "/api/traders/:address/select_trader",
+    "/api/traders/select_trader",
     zValidator("json", schemas.selectTrader, (result, c) => {
       if (!result.success) {
         return c.json({ error: result.error.message }, 400);
@@ -46,48 +43,43 @@ async function init(app: Hono) {
     }
   );
 
-  app.post("/api/traders/:address/auto_copy", async (c) => {
-    try {
-      const { address } = c.req.param();
-      const { message, signature, timestamp, enable } = await c.req.json();
-
-      // Validate required fields
-      if (!address || !message || !signature || !timestamp || enable === undefined) {
-        return c.json({ error: "Missing required fields" }, 400);
+  app.post(
+    "/api/traders/toggle_auto_copy",
+    zValidator("json", schemas.autoCopy, (result, c) => {
+      if (!result.success) {
+        return c.json({ error: result.error.message }, 400);
       }
-
-      // Ensure walletAddr has the proper uppercase format
-      const walletAddr = ethers.getAddress(address);
-
-      console.log(`Received request to '${enable ? "enable" : "disable"}' auto-copying trades:`);
-
-      const tsValidation = utils.validateTimestamp(timestamp);
-
-      if (!tsValidation.isValid) {
-        return c.json({ error: tsValidation.error }, 400);
-      }
-
-      //TODO: Validate wallet message
-
-      // Verify the signature
-      if (!wallet.verifySignature(message, signature, walletAddr)) {
-        return c.json({ error: "Invalid wallet signature" }, 401);
-      }
-
-      await database.mirrorTrades({ address: walletAddr, enable: enable });
-
-      console.log(`Copy trading ${enable ? "enabled" : "disabled"} for: ${walletAddr}`);
-
-      return c.json({
-        success: true,
-        message: `Auto-copy trading ${enable ? "enabled" : "disabled"} successfully`,
-        address: walletAddr,
-      });
-    } catch (error) {
-      console.error("Error starting auto-copy trading:", error);
-      return c.json({ error: "Internal server error" }, 500);
+    }),
+    async (c) => {
+      const args = c.req.valid("json");
+      return handleToggleAutoCopy(c, args);
     }
-  });
+  );
+}
+
+async function handleToggleAutoCopy(
+  c: any,
+  args: {
+    walletAddr: string;
+    enable: boolean;
+  }
+) {
+  const { walletAddr, enable } = args;
+
+  try {
+    await database.mirrorTrades({ address: walletAddr, enable: enable });
+
+    console.log(`Copy trading ${enable ? "enabled" : "disabled"} for: ${walletAddr}`);
+
+    return c.json({
+      success: true,
+      message: `Auto-copy trading ${enable ? "enabled" : "disabled"} successfully`,
+      address: walletAddr,
+    });
+  } catch (error) {
+    console.error("Error starting auto-copy trading:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
 }
 
 // Generic handler for favorite/unfavorite

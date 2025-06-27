@@ -111,7 +111,7 @@ async function favoriteTrader(favoriteAddr: string, favorite: boolean): Promise<
     }
 
     // Send request to backend
-    const response = await fetch(`/api/traders/${walletAddr}/favorite_trader`, {
+    const response = await fetch("/api/traders/favorite_trader", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

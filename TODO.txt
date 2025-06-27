@@ -1,5 +1,3 @@
-* 
-
 * When we favorite & select a non-leaderboard user, the open positions in the watchlist don't get updated right away, 
 we rely on waiting for updateTradeHistory() in the scheduler.
 

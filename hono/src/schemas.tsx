@@ -38,6 +38,27 @@ const walletSignatureRefinement = {
   path: ["signature"],
 };
 
+const invalidMessageError = {
+  message: "Message format does not match expected pattern",
+  path: ["message"],
+};
+
+const autoCopy = z
+  .object({
+    walletAddr: defineValidWalletAddr(),
+    signature: z.string(),
+    message: z.string(),
+    timestamp: defineValidTimestamp(),
+    enable: z.boolean(),
+  })
+  .refine(walletSignatureRefinement.refine, walletSignatureRefinement)
+  .refine((data) => {
+    const { enable, walletAddr, timestamp, message } = data;
+    const action = enable ? "Enable" : "Disable";
+    const expectedMessage = `${action} auto-copy trading for ${walletAddr} at ${timestamp}`;
+    return message === expectedMessage;
+  }, invalidMessageError);
+
 const selectTrader = z
   .object({
     walletAddr: defineValidWalletAddr(),
@@ -47,19 +68,13 @@ const selectTrader = z
     timestamp: defineValidTimestamp(),
     selected: z.boolean(),
   })
-  .refine(
-    (data) => {
-      const { selected, traderAddr, walletAddr, timestamp, message } = data;
-      const action = selected ? "Selected" : "Unselected";
-      const expectedMessage = `${action} trader ${traderAddr} for ${walletAddr} at ${timestamp}`;
-      return message === expectedMessage;
-    },
-    {
-      message: "Message format does not match expected pattern",
-      path: ["message"],
-    }
-  )
-  .refine(walletSignatureRefinement.refine, walletSignatureRefinement);
+  .refine(walletSignatureRefinement.refine, walletSignatureRefinement)
+  .refine((data) => {
+    const { selected, traderAddr, walletAddr, timestamp, message } = data;
+    const action = selected ? "Selected" : "Unselected";
+    const expectedMessage = `${action} trader ${traderAddr} for ${walletAddr} at ${timestamp}`;
+    return message === expectedMessage;
+  }, invalidMessageError);
 
 const favoriteTrader = z
   .object({
@@ -70,23 +85,31 @@ const favoriteTrader = z
     timestamp: defineValidTimestamp(),
     favorite: z.boolean(),
   })
-  .refine(
-    (data) => {
-      const { favorite, traderAddr, walletAddr, timestamp, message } = data;
-      const action = favorite ? "Favorite" : "Unfavorite";
-      const expectedMessage = `${action} trader ${traderAddr} for ${walletAddr} at ${timestamp}`;
-      return message === expectedMessage;
-    },
-    {
-      message: "Message format does not match expected pattern",
-      path: ["message"],
-    }
-  )
-  .refine(walletSignatureRefinement.refine, walletSignatureRefinement);
+  .refine(walletSignatureRefinement.refine, walletSignatureRefinement)
+  .refine((data) => {
+    const { favorite, traderAddr, walletAddr, timestamp, message } = data;
+    const action = favorite ? "Favorite" : "Unfavorite";
+    const expectedMessage = `${action} trader ${traderAddr} for ${walletAddr} at ${timestamp}`;
+    return message === expectedMessage;
+  }, invalidMessageError);
+
+const connectWallet = z.object({
+  address: defineValidWalletAddr(),
+  chainId: z.string().refine((id) => utils.isValidChainId(id), {
+    message: "Invalid chain ID",
+  }),
+});
+
+const disconnectWallet = z.object({
+  address: defineValidWalletAddr(),
+});
 
 const schemas = {
   favoriteTrader,
   selectTrader,
+  autoCopy,
+  connectWallet,
+  disconnectWallet,
 };
 
 export default schemas;

@@ -95,10 +95,16 @@ async function handleMirrorToggle(toggle: HTMLInputElement) {
     });
 
     // call backend
-    const res = await fetch(`/api/traders/${walletAddr}/auto_copy`, {
+    const res = await fetch("/api/traders/toggle_auto_copy", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: msg, signature: sig, timestamp: ts, enable: targetEnable }),
+      body: JSON.stringify({
+        walletAddr: walletAddr,
+        message: msg,
+        signature: sig,
+        timestamp: ts,
+        enable: targetEnable,
+      }),
     });
     const json = await res.json();
     if (!res.ok || !json.success) {
@@ -197,7 +203,7 @@ async function handleSelect(button: HTMLButtonElement, selected: boolean) {
       params: [msg, walletAddr],
     });
 
-    const res = await fetch(`/api/traders/${walletAddr}/select_trader`, {
+    const res = await fetch("/api/traders/select_trader", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

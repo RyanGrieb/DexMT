@@ -85,8 +85,6 @@ async function updateTradeHistory() {
       const sdkTrades = await selectedTrader.getTrades({ fromDb: false, amount: 5 });
       const dbTrades = await selectedTrader.getTrades({ fromDb: true }); //FIXME: This is not efficient, we should only query trades from the current day?
 
-      console.log(sdkTrades.length, dbTrades.length);
-
       // find only brand‐new trades
       const freshTrades = sdkTrades.filter((t) => !dbTrades.some((dt) => dt.id === t.id));
 

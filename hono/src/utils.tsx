@@ -174,6 +174,11 @@ function validateTimestamp(timestamp: string | number): {
   return { isValid: true, timestamp: BigInt(timestampMs) };
 }
 
+function isValidChainId(chainId: string | number): boolean {
+  const validChainIds = ["42161"]; // Only handling Arbitrum chain ID for now
+  return validChainIds.includes(String(chainId));
+}
+
 const utils = {
   abbreviateNumber,
   getPlatformIcon,
@@ -182,6 +187,7 @@ const utils = {
   logOutput,
   clearOldLogs,
   isValidAddress,
+  isValidChainId,
 };
 
 export default utils;

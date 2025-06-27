@@ -1,7 +1,10 @@
+import { zValidator } from "@hono/zod-validator";
 import { ethers } from "ethers";
 import { Hono } from "hono";
 import db from "../database";
+import schemas from "../schemas";
 import { Trader } from "../types/trader";
+import utils from "../utils";
 
 interface ConnectedWallet {
   address: string;
@@ -9,23 +12,18 @@ interface ConnectedWallet {
   timestamp: number;
 }
 
-// Store connected wallets (in production, use a database)
 let connectedWallets: ConnectedWallet[] = [];
 
 async function init(app: Hono) {
-  app.post("/api/wallet/connect", async (c) => {
-    let { address, chainId } = await c.req.json();
+  // TODO: Initialize connected wallets from database
+  //const wallets = await db.getConnectedWallets();
 
-    if (!address || !chainId) {
-      return c.json({ error: "Missing address or chainId" }, 400);
-    }
-
-    // Ensure address has the proper uppercase format
-    address = ethers.getAddress(address);
+  app.post("api/wallet/connect", zValidator("json", schemas.connectWallet), async (c) => {
+    const { address, chainId } = c.req.valid("json");
 
     // Store wallet connection
     const existingIndex = connectedWallets.findIndex((w) => w.address === address);
-    if (existingIndex >= 0) {
+    if (existingIndex !== -1) {
       connectedWallets[existingIndex] = {
         address,
         chainId,
@@ -36,7 +34,6 @@ async function init(app: Hono) {
     }
 
     // Add user to database
-    console.log("add user to db");
     const trader: Trader = new Trader({
       address: address,
       balance: await getEthBalance(address, "https://arb1.arbitrum.io/rpc"),
@@ -46,20 +43,17 @@ async function init(app: Hono) {
     });
     db.addTrader(trader);
 
-    console.log(`Wallet connected: ${address} on chain ${chainId}`);
+    utils.logOutput(`Wallet connected: ${address} on chain ${chainId}`);
     return c.json({ success: true, message: "Wallet registered" });
   });
 
   // API endpoint to disconnect wallet
-  app.post("/api/wallet/disconnect", async (c) => {
-    let { address } = await c.req.json();
-
-    // Ensure address has the proper uppercase format
-    address = ethers.getAddress(address);
+  app.post("/api/wallet/disconnect", zValidator("json", schemas.disconnectWallet), async (c) => {
+    const { address } = c.req.valid("json");
 
     connectedWallets = connectedWallets.filter((w) => w.address !== address);
 
-    console.log(`Wallet disconnected: ${address}`);
+    utils.logOutput(`Wallet disconnected: ${address}`);
     return c.json({ success: true, message: "Wallet disconnected" });
   });
 
