@@ -33,54 +33,18 @@ async function init(app: Hono) {
     }
   );
 
-  app.post("/api/traders/:address/select_traders", async (c) => {
-    return handleTraderSelection(c, true);
-  });
-
-  app.post("/api/traders/:address/unselect_traders", async (c) => {
-    return handleTraderSelection(c, false);
-  });
-
-  // Generic handler for favorite/unfavorite
-  async function handleFavoriteTrader(
-    c: any,
-    args: {
-      message: string;
-      walletAddr: string;
-      traderAddr: string;
-      signature: string;
-      timestamp: bigint;
-      favorite: boolean;
+  app.post(
+    "/api/traders/:address/select_trader",
+    zValidator("json", schemas.selectTrader, (result, c) => {
+      if (!result.success) {
+        return c.json({ error: result.error.message }, 400);
+      }
+    }),
+    async (c) => {
+      const args = c.req.valid("json");
+      return handleTraderSelection(c, args);
     }
-  ) {
-    const { message, walletAddr, traderAddr, signature, timestamp, favorite } = args;
-
-    try {
-      // Perform DB action
-      const dbMethod = favorite ? database.favoriteTrader : database.unfavoriteTrader;
-      await dbMethod({
-        followerAddr: walletAddr,
-        favoriteAddr: traderAddr,
-        signature,
-        message,
-        timestamp: timestamp,
-      });
-
-      // Build response
-      const respKey = favorite ? "favorite_trader" : "unfavorite_trader";
-      return c.json(
-        {
-          success: true,
-          follower_address: walletAddr,
-          [respKey]: traderAddr,
-        },
-        200
-      );
-    } catch (error) {
-      console.error(`Error ${favorite ? "favoriting" : "unfavoriting"} trader:`, error);
-      return c.json({ error: `Failed to ${favorite ? "favorite" : "unfavorite"} trader` }, 500);
-    }
-  }
+  );
 
   app.post("/api/traders/:address/auto_copy", async (c) => {
     try {
@@ -126,61 +90,67 @@ async function init(app: Hono) {
   });
 }
 
-async function handleTraderSelection(c: any, selected: boolean) {
+// Generic handler for favorite/unfavorite
+async function handleFavoriteTrader(
+  c: any,
+  args: {
+    message: string;
+    walletAddr: string;
+    traderAddr: string;
+    signature: string;
+    timestamp: bigint;
+    favorite: boolean;
+  }
+) {
+  const { message, walletAddr, traderAddr, signature, timestamp, favorite } = args;
+
   try {
-    let { walletAddr } = c.req.param();
-    const { traderAddresses, signature, message, timestamp } = await c.req.json();
+    // Perform DB action
+    const dbMethod = favorite ? database.favoriteTrader : database.unfavoriteTrader;
+    await dbMethod({
+      followerAddr: walletAddr,
+      favoriteAddr: traderAddr,
+      signature,
+      message,
+      timestamp: timestamp,
+    });
 
-    // Validate required parameters
-    if (!walletAddr || !traderAddresses || !signature || !message || !timestamp) {
-      return c.json(
-        {
-          error: "Missing required parameters: walletAddr, traderAddresses, signature, message, timestamp",
-        },
-        400
-      );
-    }
+    // Build response
+    const respKey = favorite ? "favorite_trader" : "unfavorite_trader";
+    return c.json(
+      {
+        success: true,
+        follower_address: walletAddr,
+        [respKey]: traderAddr,
+      },
+      200
+    );
+  } catch (error) {
+    console.error(`Error ${favorite ? "favoriting" : "unfavoriting"} trader:`, error);
+    return c.json({ error: `Failed to ${favorite ? "favorite" : "unfavorite"} trader` }, 500);
+  }
+}
 
-    // Ensure walletAddr has the proper uppercase format
-    walletAddr = ethers.getAddress(walletAddr);
-
-    // Validate traderAddresses is an array
-    if (!Array.isArray(traderAddresses) || traderAddresses.length === 0) {
-      return c.json(
-        {
-          error: "traderAddresses must be a non-empty array",
-        },
-        400
-      );
-    }
-
-    // Validate timestamp (should be within last 5 minutes to prevent replay attacks)
-    const tsValidation = utils.validateTimestamp(timestamp);
-    const timestampMs = tsValidation.timestamp;
-
-    if (!tsValidation.isValid) {
-      return c.json({ error: tsValidation.error }, 400);
-    }
-
-    // Verify the message contains the expected content
-    const expectedMessage = selected
-      ? `Select traders ${traderAddresses.join(",")} for ${walletAddr} at ${timestampMs}`
-      : `Unselect traders ${traderAddresses.join(",")} for ${walletAddr} at ${timestampMs}`;
-    if (message !== expectedMessage) {
-      return c.json({ error: "Invalid message format" }, 400);
-    }
-
-    // Verify signature
-    if (!wallet.verifySignature(message, signature, walletAddr)) {
-      return c.json({ error: "Invalid wallet signature" }, 401);
-    }
+async function handleTraderSelection(
+  c: any,
+  args: {
+    message: string;
+    walletAddr: string;
+    traderAddr: string;
+    signature: string;
+    timestamp: bigint;
+    selected: boolean;
+  }
+) {
+  try {
+    const { message, walletAddr, traderAddr, signature, timestamp, selected } = args;
 
     await database.selectTraders({
       followerAddr: walletAddr,
-      traderAddresses: traderAddresses,
+      traderAddresses: [traderAddr],
       signature: signature,
       message: message,
-      timestamp: timestampMs,
+      timestamp: timestamp,
       selected: selected,
     });
 
@@ -191,8 +161,7 @@ async function handleTraderSelection(c: any, selected: boolean) {
       {
         success: true,
         follower_address: walletAddr,
-        selected_traders: traderAddresses,
-        count: traderAddresses.length,
+        selected_trader: traderAddr,
       },
       200
     );

@@ -18,9 +18,25 @@ function defineValidWalletAddr() {
   );
 }
 
-function isValidWalletSignature(message: string, signature: string, walletAddr: string): boolean {
-  return wallet.verifySignature(message, signature, walletAddr);
+function defineValidTimestamp() {
+  return z
+    .number()
+    .refine((ts) => utils.validateTimestamp(ts).isValid, {
+      message: "Invalid timestamp format",
+    })
+    .transform((ts) => BigInt(ts));
 }
+
+function refineWalletSignature() {
+  return (data: { message: string; signature: string; walletAddr: string }) =>
+    wallet.verifySignature(data.message, data.signature, data.walletAddr);
+}
+
+const walletSignatureRefinement = {
+  refine: refineWalletSignature(),
+  message: "Invalid wallet signature",
+  path: ["signature"],
+};
 
 const selectTrader = z
   .object({
@@ -28,17 +44,11 @@ const selectTrader = z
     traderAddr: defineValidWalletAddr(),
     signature: z.string(),
     message: z.string(),
-    timestamp: z
-      .number()
-      .refine((ts) => utils.validateTimestamp(ts).isValid, {
-        message: "Invalid timestamp format",
-      })
-      .transform((ts) => BigInt(ts)),
+    timestamp: defineValidTimestamp(),
     selected: z.boolean(),
   })
   .refine(
     (data) => {
-      // Validate the message format using all fields
       const { selected, traderAddr, walletAddr, timestamp, message } = data;
       const action = selected ? "Selected" : "Unselected";
       const expectedMessage = `${action} trader ${traderAddr} for ${walletAddr} at ${timestamp}`;
@@ -46,13 +56,10 @@ const selectTrader = z
     },
     {
       message: "Message format does not match expected pattern",
-      path: ["message"], // This will attach the error to the message field
+      path: ["message"],
     }
   )
-  .refine((data) => isValidWalletSignature(data.message, data.signature, data.walletAddr), {
-    message: "Invalid wallet signature",
-    path: ["signature"],
-  });
+  .refine(walletSignatureRefinement.refine, walletSignatureRefinement);
 
 const favoriteTrader = z
   .object({
@@ -60,17 +67,11 @@ const favoriteTrader = z
     traderAddr: defineValidWalletAddr(),
     signature: z.string(),
     message: z.string(),
-    timestamp: z
-      .number()
-      .refine((ts) => utils.validateTimestamp(ts).isValid, {
-        message: "Invalid timestamp format",
-      })
-      .transform((ts) => BigInt(ts)),
+    timestamp: defineValidTimestamp(),
     favorite: z.boolean(),
   })
   .refine(
     (data) => {
-      // Validate the message format using all fields
       const { favorite, traderAddr, walletAddr, timestamp, message } = data;
       const action = favorite ? "Favorite" : "Unfavorite";
       const expectedMessage = `${action} trader ${traderAddr} for ${walletAddr} at ${timestamp}`;
@@ -78,16 +79,14 @@ const favoriteTrader = z
     },
     {
       message: "Message format does not match expected pattern",
-      path: ["message"], // This will attach the error to the message field
+      path: ["message"],
     }
   )
-  .refine((data) => isValidWalletSignature(data.message, data.signature, data.walletAddr), {
-    message: "Invalid wallet signature",
-    path: ["signature"],
-  });
+  .refine(walletSignatureRefinement.refine, walletSignatureRefinement);
 
 const schemas = {
   favoriteTrader,
+  selectTrader,
 };
 
 export default schemas;

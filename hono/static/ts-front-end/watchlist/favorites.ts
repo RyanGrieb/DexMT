@@ -22,11 +22,11 @@ async function init() {
     if (btn) {
       // SELECT
       if (btn.classList.contains("select-trader")) {
-        await handleSelect(btn as HTMLButtonElement);
+        await handleSelect(btn as HTMLButtonElement, true);
       }
       // UNSELECT
       else if (btn.classList.contains("selected")) {
-        await handleUnselect(btn as HTMLButtonElement);
+        await handleSelect(btn as HTMLButtonElement, false);
       }
       // REMOVE
       else if (btn.classList.contains("remove-trader")) {
@@ -170,15 +170,15 @@ async function handleRemove(button: HTMLButtonElement) {
   }
 }
 
-async function handleSelect(button: HTMLButtonElement) {
+async function handleSelect(button: HTMLButtonElement, selected: boolean) {
   if (!button.dataset.address) {
     return console.error("No trader address specified for selection");
   }
 
   const walletAddr = getWalletAddr();
-  const copyAddr = ethers.getAddress(button.dataset.address);
+  const traderAddr = ethers.getAddress(button.dataset.address);
 
-  if (!copyAddr) return console.error("No trader address");
+  if (!traderAddr) return console.error("No trader address");
 
   if (!provider || !walletAddr) {
     return utils.showNotification("Please connect your wallet first", "error");
@@ -190,32 +190,43 @@ async function handleSelect(button: HTMLButtonElement) {
 
   try {
     const ts = Date.now();
-    const msg = `Select traders ${copyAddr} for ${walletAddr} at ${ts}`;
+    const action = selected ? "Selected" : "Unselected";
+    const msg = `${action} trader ${traderAddr} for ${walletAddr} at ${ts}`;
     const sig = await provider.request({
       method: "personal_sign",
       params: [msg, walletAddr],
     });
 
-    const res = await fetch(`/api/traders/${walletAddr}/select_traders`, {
+    const res = await fetch(`/api/traders/${walletAddr}/select_trader`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        traderAddresses: [copyAddr],
+        walletAddr: walletAddr,
+        traderAddr: traderAddr,
         signature: sig,
         message: msg,
         timestamp: ts,
+        selected: selected,
       }),
     });
     const json = await res.json();
     if (!res.ok || !json.success) {
-      throw new Error(json.error || "Failed to select trader");
+      throw new Error(json.error || `Failed to ${selected ? "select" : "unselect"} trader`);
     }
 
-    utils.showNotification("Trader selected", "success");
-    button.textContent = "✓ Selected for Copying";
-    button.classList.replace("select-trader", "unselect-trader");
-    button.classList.replace("btn-primary", "btn-success");
-    button.classList.add("selected");
+    if (!selected) {
+      utils.showNotification("Trader unselected", "success");
+      button.textContent = "Select for Copying";
+      button.classList.replace("unselect-trader", "select-trader");
+      button.classList.replace("btn-success", "btn-primary");
+      button.classList.remove("selected");
+    } else {
+      utils.showNotification("Trader selected", "success");
+      button.textContent = "✓ Selected for Copying";
+      button.classList.replace("select-trader", "unselect-trader");
+      button.classList.replace("btn-primary", "btn-success");
+      button.classList.add("selected");
+    }
   } catch (err: any) {
     console.error(err);
     utils.showNotification(err.message, "error");

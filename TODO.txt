@@ -1,3 +1,28 @@
+* 
+
+* When we favorite & select a non-leaderboard user, the open positions in the watchlist don't get updated right away, 
+we rely on waiting for updateTradeHistory() in the scheduler.
+
+* Write tests for:
+-  Create a fake position for an address
+    - Check if we properly mirror the position
+
+* Display copied positions in copied-positions.tsx
+
+* Implement Trader.fromAddress({address: ..., fromDb: false});
+
+* Prevent user from favoriting themselves.
+
+* Filter favorited traders:
+- Sort by performance (daily, weekly, ect.)
+- Win rate
+- Max drawdown
+- Volume
+- Avg. Trade Size
+- Ect.
+- Leverage
+- Platform
+
 * Load profiles even if they are not in our leaderboard table
 * Load leaderboard by scanning the GMX arbitrum blockchain.
 
