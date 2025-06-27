@@ -407,7 +407,7 @@ async function selectTraders(args: {
       }
     });
 
-    console.log(`Traders selected: ${traderAddresses.join(", ")} by ${followerAddr}`);
+    console.log(`Traders ${selected ? "selected" : "deselected"}: ${traderAddresses.join(", ")} by ${followerAddr}`);
   } catch (error) {
     console.error("Error selecting traders:", error);
     throw error;

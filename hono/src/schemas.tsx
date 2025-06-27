@@ -4,18 +4,10 @@ import wallet from "./api/wallet";
 import utils from "./utils";
 
 function defineValidWalletAddr() {
-  return z.string().refine(
-    (addr) => {
-      if (!utils.isValidAddress(addr)) {
-        return false;
-      }
-      addr = ethers.getAddress(addr); // Ensure addresses have the proper uppercase format
-      return true;
-    },
-    {
-      message: "Invalid wallet address format",
-    }
-  );
+  return z
+    .string()
+    .refine((addr) => utils.isValidAddress(addr), { message: "Invalid wallet address format", path: ["walletAddr"] })
+    .transform((addr) => ethers.getAddress(addr));
 }
 
 function defineValidTimestamp() {
@@ -32,7 +24,7 @@ function refineWalletSignature() {
     wallet.verifySignature(data.message, data.signature, data.walletAddr);
 }
 
-const walletSignatureRefinement = {
+const walletSignatureRefine = {
   refine: refineWalletSignature(),
   message: "Invalid wallet signature",
   path: ["signature"],
@@ -51,7 +43,7 @@ const autoCopy = z
     timestamp: defineValidTimestamp(),
     enable: z.boolean(),
   })
-  .refine(walletSignatureRefinement.refine, walletSignatureRefinement)
+  .refine(walletSignatureRefine.refine, walletSignatureRefine)
   .refine((data) => {
     const { enable, walletAddr, timestamp, message } = data;
     const action = enable ? "Enable" : "Disable";
@@ -68,7 +60,7 @@ const selectTrader = z
     timestamp: defineValidTimestamp(),
     selected: z.boolean(),
   })
-  .refine(walletSignatureRefinement.refine, walletSignatureRefinement)
+  .refine(walletSignatureRefine.refine, walletSignatureRefine)
   .refine((data) => {
     const { selected, traderAddr, walletAddr, timestamp, message } = data;
     const action = selected ? "Selected" : "Unselected";
@@ -85,7 +77,7 @@ const favoriteTrader = z
     timestamp: defineValidTimestamp(),
     favorite: z.boolean(),
   })
-  .refine(walletSignatureRefinement.refine, walletSignatureRefinement)
+  .refine(walletSignatureRefine.refine, walletSignatureRefine)
   .refine((data) => {
     const { favorite, traderAddr, walletAddr, timestamp, message } = data;
     const action = favorite ? "Favorite" : "Unfavorite";
@@ -94,14 +86,15 @@ const favoriteTrader = z
   }, invalidMessageError);
 
 const connectWallet = z.object({
-  address: defineValidWalletAddr(),
+  walletAddr: defineValidWalletAddr(),
   chainId: z.string().refine((id) => utils.isValidChainId(id), {
     message: "Invalid chain ID",
+    path: ["chainId"],
   }),
 });
 
 const disconnectWallet = z.object({
-  address: defineValidWalletAddr(),
+  walletAddr: defineValidWalletAddr(),
 });
 
 const schemas = {

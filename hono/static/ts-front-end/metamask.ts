@@ -141,7 +141,7 @@ export async function connectWallet(): Promise<void> {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        address: provider.selectedAddress,
+        walletAddr: provider.selectedAddress,
         chainId: provider.chainId,
       }),
     });
@@ -219,7 +219,7 @@ export async function disconnectWallet(): Promise<void> {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            address: provider.selectedAddress,
+            walletAddr: provider.selectedAddress,
           }),
         });
       } catch (fetchError) {

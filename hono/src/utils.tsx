@@ -175,7 +175,7 @@ function validateTimestamp(timestamp: string | number): {
 }
 
 function isValidChainId(chainId: string | number): boolean {
-  const validChainIds = ["42161"]; // Only handling Arbitrum chain ID for now
+  const validChainIds = ["0xa4b1"]; // Only handling Arbitrum chain ID for now
   return validChainIds.includes(String(chainId));
 }
 

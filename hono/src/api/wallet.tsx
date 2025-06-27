@@ -15,45 +15,42 @@ interface ConnectedWallet {
 let connectedWallets: ConnectedWallet[] = [];
 
 async function init(app: Hono) {
-  // TODO: Initialize connected wallets from database
-  //const wallets = await db.getConnectedWallets();
-
   app.post("api/wallet/connect", zValidator("json", schemas.connectWallet), async (c) => {
-    const { address, chainId } = c.req.valid("json");
+    const { walletAddr, chainId } = c.req.valid("json");
 
     // Store wallet connection
-    const existingIndex = connectedWallets.findIndex((w) => w.address === address);
+    const existingIndex = connectedWallets.findIndex((w) => w.address === walletAddr);
     if (existingIndex !== -1) {
       connectedWallets[existingIndex] = {
-        address,
+        address: walletAddr,
         chainId,
         timestamp: Date.now(),
       };
     } else {
-      connectedWallets.push({ address, chainId, timestamp: Date.now() });
+      connectedWallets.push({ address: walletAddr, chainId, timestamp: Date.now() });
     }
 
     // Add user to database
     const trader: Trader = new Trader({
-      address: address,
-      balance: await getEthBalance(address, "https://arb1.arbitrum.io/rpc"),
+      address: walletAddr,
+      balance: await getEthBalance(walletAddr, "https://arb1.arbitrum.io/rpc"),
       chainId: chainId,
       updatedAt: new Date().toISOString(),
       isDexmtTrader: true,
     });
     db.addTrader(trader);
 
-    utils.logOutput(`Wallet connected: ${address} on chain ${chainId}`);
+    utils.logOutput(`Wallet connected: ${walletAddr} on chain ${chainId}`);
     return c.json({ success: true, message: "Wallet registered" });
   });
 
   // API endpoint to disconnect wallet
   app.post("/api/wallet/disconnect", zValidator("json", schemas.disconnectWallet), async (c) => {
-    const { address } = c.req.valid("json");
+    const { walletAddr } = c.req.valid("json");
 
-    connectedWallets = connectedWallets.filter((w) => w.address !== address);
+    connectedWallets = connectedWallets.filter((w) => w.address !== walletAddr);
 
-    utils.logOutput(`Wallet disconnected: ${address}`);
+    utils.logOutput(`Wallet disconnected: ${walletAddr}`);
     return c.json({ success: true, message: "Wallet disconnected" });
   });
 
@@ -61,17 +58,6 @@ async function init(app: Hono) {
   app.get("/api/wallets", (c) => {
     return c.json({ wallets: connectedWallets });
   });
-}
-
-// Utility function to verify signature
-function verifySignature(message: string, signature: string, expectedAddress: string): boolean {
-  try {
-    const recoveredAddress = ethers.verifyMessage(message, signature);
-    return recoveredAddress.toLowerCase() === expectedAddress.toLowerCase();
-  } catch (error) {
-    console.error("Error verifying signature:", error);
-    return false;
-  }
 }
 
 async function getEthBalance(address: string, rpcUrl: string): Promise<string> {
@@ -108,9 +94,18 @@ async function getEthBalance(address: string, rpcUrl: string): Promise<string> {
   }
 }
 
+function verifySignature(message: string, signature: string, expectedAddress: string): boolean {
+  try {
+    const recoveredAddress = ethers.verifyMessage(message, signature);
+    return recoveredAddress.toLowerCase() === expectedAddress.toLowerCase();
+  } catch (error) {
+    console.error("Error verifying signature:", error);
+    return false;
+  }
+}
+
 const dexmt_wallet = {
   init,
-  connectedWallets,
   verifySignature,
   getEthBalance,
 };
