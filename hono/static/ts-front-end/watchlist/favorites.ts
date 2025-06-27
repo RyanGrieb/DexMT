@@ -1,4 +1,5 @@
-import { provider } from "../metamask";
+import { ethers } from "ethers";
+import { getWalletAddr, provider } from "../metamask";
 import profile from "../profile";
 import router from "../router";
 import utils from "../utils";
@@ -10,11 +11,10 @@ async function init() {
     if (traderIdentity) {
       e.preventDefault();
 
-      const walletAddress = provider?.selectedAddress;
       const traderCard = traderIdentity.closest(".trader-card") as HTMLElement;
       const address = traderCard?.getAttribute("data-address");
       if (address) {
-        router.loadProfile(address, walletAddress);
+        router.loadProfile(address);
       }
     }
 
@@ -64,14 +64,15 @@ async function init() {
 }
 
 async function handleMirrorToggle(toggle: HTMLInputElement) {
-  if (!provider?.selectedAddress) {
+  const walletAddr = getWalletAddr();
+
+  if (!provider || !walletAddr) {
     utils.showNotification("Please connect your wallet first", "error");
     // revert UI toggle if no wallet
     toggle.checked = !toggle.checked;
     return;
   }
 
-  const wallet = provider.selectedAddress;
   const targetEnable = toggle.checked;
 
   // immediately revert the checkbox so it only reflects confirmed state
@@ -86,15 +87,15 @@ async function handleMirrorToggle(toggle: HTMLInputElement) {
 
   try {
     const ts = Date.now();
-    const msg = `${targetEnable ? "Enable" : "Disable"} auto-copy trading for ${wallet} at ${ts}`;
+    const msg = `${targetEnable ? "Enable" : "Disable"} auto-copy trading for ${walletAddr} at ${ts}`;
     // prompt MetaMask signature
     const sig = await provider.request({
       method: "personal_sign",
-      params: [msg, wallet],
+      params: [msg, walletAddr],
     });
 
     // call backend
-    const res = await fetch(`/api/traders/${wallet}/auto_copy`, {
+    const res = await fetch(`/api/traders/${walletAddr}/auto_copy`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message: msg, signature: sig, timestamp: ts, enable: targetEnable }),
@@ -124,19 +125,25 @@ async function handleMirrorToggle(toggle: HTMLInputElement) {
 }
 
 async function handleRemove(button: HTMLButtonElement) {
-  const copyAddr = button.dataset.address;
+  if (!button.dataset.address) {
+    return console.error("No trader address specified for removal");
+  }
+
+  const copyAddr = ethers.getAddress(button.dataset.address);
+  const walletAddr = getWalletAddr();
+
   if (!copyAddr) return console.error("No trader address");
-  if (!provider?.selectedAddress) {
+
+  if (!walletAddr) {
     return utils.showNotification("Please connect your wallet first", "error");
   }
 
-  const wallet = provider.selectedAddress;
   const origText = button.textContent;
   button.textContent = "Processing...";
   button.disabled = true;
 
   try {
-    await profile.unfavoriteTrader(wallet, copyAddr);
+    await profile.favoriteTrader(copyAddr, false);
 
     utils.showNotification("Trader removed from favorites", "success");
 
@@ -164,26 +171,32 @@ async function handleRemove(button: HTMLButtonElement) {
 }
 
 async function handleSelect(button: HTMLButtonElement) {
-  const copyAddr = button.dataset.address;
+  if (!button.dataset.address) {
+    return console.error("No trader address specified for selection");
+  }
+
+  const walletAddr = getWalletAddr();
+  const copyAddr = ethers.getAddress(button.dataset.address);
+
   if (!copyAddr) return console.error("No trader address");
-  if (!provider?.selectedAddress) {
+
+  if (!provider || !walletAddr) {
     return utils.showNotification("Please connect your wallet first", "error");
   }
 
-  const wallet = provider.selectedAddress;
   const origText = button.textContent;
   button.textContent = "Processing...";
   button.disabled = true;
 
   try {
     const ts = Date.now();
-    const msg = `Select traders ${copyAddr} for ${wallet} at ${ts}`;
+    const msg = `Select traders ${copyAddr} for ${walletAddr} at ${ts}`;
     const sig = await provider.request({
       method: "personal_sign",
-      params: [msg, wallet],
+      params: [msg, walletAddr],
     });
 
-    const res = await fetch(`/api/traders/${wallet}/select_traders`, {
+    const res = await fetch(`/api/traders/${walletAddr}/select_traders`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -213,26 +226,32 @@ async function handleSelect(button: HTMLButtonElement) {
 }
 
 async function handleUnselect(button: HTMLButtonElement) {
-  const copyAddr = button.dataset.address;
+  if (!button.dataset.address) {
+    return console.error("No trader address specified for unselection");
+  }
+
+  const walletAddr = getWalletAddr();
+  const copyAddr = ethers.getAddress(button.dataset.address);
+
   if (!copyAddr) return console.error("No trader address");
-  if (!provider?.selectedAddress) {
+
+  if (!provider || !walletAddr) {
     return utils.showNotification("Please connect your wallet first", "error");
   }
 
-  const wallet = provider.selectedAddress;
   const origText = button.textContent;
   button.textContent = "Processing...";
   button.disabled = true;
 
   try {
     const ts = Date.now();
-    const msg = `Unselect traders ${copyAddr} for ${wallet} at ${ts}`;
+    const msg = `Unselect traders ${copyAddr} for ${walletAddr} at ${ts}`;
     const sig = await provider.request({
       method: "personal_sign",
-      params: [msg, wallet],
+      params: [msg, walletAddr],
     });
 
-    const res = await fetch(`/api/traders/${wallet}/unselect_traders`, {
+    const res = await fetch(`/api/traders/${walletAddr}/unselect_traders`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

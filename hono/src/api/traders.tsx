@@ -1,7 +1,10 @@
+import { zValidator } from "@hono/zod-validator";
 import { ethers } from "ethers";
 import { Hono } from "hono";
 import database from "../database";
 import scheduler from "../scheduler";
+import schemas from "../schemas";
+import utils from "../utils";
 import wallet from "./wallet";
 
 async function init(app: Hono) {
@@ -17,6 +20,19 @@ async function init(app: Hono) {
     }
   });
 
+  app.post(
+    "/api/traders/:address/favorite_trader",
+    zValidator("json", schemas.favoriteTrader, (result, c) => {
+      if (!result.success) {
+        return c.json({ error: result.error.message }, 400);
+      }
+    }),
+    async (c) => {
+      const args = c.req.valid("json");
+      return handleFavoriteTrader(c, args);
+    }
+  );
+
   app.post("/api/traders/:address/select_traders", async (c) => {
     return handleTraderSelection(c, true);
   });
@@ -26,53 +42,37 @@ async function init(app: Hono) {
   });
 
   // Generic handler for favorite/unfavorite
-  async function handleFavoriteTrader(c: any, favorite: boolean) {
+  async function handleFavoriteTrader(
+    c: any,
+    args: {
+      message: string;
+      walletAddr: string;
+      traderAddr: string;
+      signature: string;
+      timestamp: bigint;
+      favorite: boolean;
+    }
+  ) {
+    const { message, walletAddr, traderAddr, signature, timestamp, favorite } = args;
+
     try {
-      const { address } = c.req.param();
-      const { favoriteAddr, signature, message, timestamp } = await c.req.json();
-
-      // Validate required parameters
-      if (!address || !favoriteAddr || !signature || !message || !timestamp) {
-        return c.json(
-          { error: "Missing required parameters: address, favoriteAddr, signature, message, timestamp" },
-          400
-        );
-      }
-
-      // Validate timestamp
-      const tsValidation = validateTimestamp(timestamp);
-      const timestampMs = tsValidation.timestamp;
-      if (!tsValidation.isValid) {
-        return c.json({ error: tsValidation.error }, 400);
-      }
-
-      // Build and verify expected message
-      const action = favorite ? "Favorite" : "Unfavorite";
-      const expectedMessage = `${action} trader ${favoriteAddr} for ${address} at ${timestampMs}`;
-      if (message !== expectedMessage) {
-        return c.json({ error: "Invalid message format" }, 400);
-      }
-      if (!wallet.verifySignature(message, signature, address)) {
-        return c.json({ error: "Invalid wallet signature" }, 401);
-      }
-
       // Perform DB action
       const dbMethod = favorite ? database.favoriteTrader : database.unfavoriteTrader;
       await dbMethod({
-        followerAddr: address,
-        favoriteAddr,
+        followerAddr: walletAddr,
+        favoriteAddr: traderAddr,
         signature,
         message,
-        timestamp: timestampMs,
+        timestamp: timestamp,
       });
 
       // Build response
-      const respKey = favorite ? "favorite_trader" : "unfavorited_trader";
+      const respKey = favorite ? "favorite_trader" : "unfavorite_trader";
       return c.json(
         {
           success: true,
-          follower_address: address,
-          [respKey]: favoriteAddr,
+          follower_address: walletAddr,
+          [respKey]: traderAddr,
         },
         200
       );
@@ -82,26 +82,22 @@ async function init(app: Hono) {
     }
   }
 
-  // Route registrations
-  app.post("/api/traders/:address/favorite_trader", async (c) => await handleFavoriteTrader(c, true));
-  app.post("/api/traders/:address/unfavorite_trader", async (c) => await handleFavoriteTrader(c, false));
-
   app.post("/api/traders/:address/auto_copy", async (c) => {
     try {
-      let { address } = c.req.param();
+      const { address } = c.req.param();
       const { message, signature, timestamp, enable } = await c.req.json();
-
-      // Ensure address has the proper uppercase format
-      address = ethers.getAddress(address);
 
       // Validate required fields
       if (!address || !message || !signature || !timestamp || enable === undefined) {
         return c.json({ error: "Missing required fields" }, 400);
       }
 
+      // Ensure walletAddr has the proper uppercase format
+      const walletAddr = ethers.getAddress(address);
+
       console.log(`Received request to '${enable ? "enable" : "disable"}' auto-copying trades:`);
 
-      const tsValidation = validateTimestamp(timestamp);
+      const tsValidation = utils.validateTimestamp(timestamp);
 
       if (!tsValidation.isValid) {
         return c.json({ error: tsValidation.error }, 400);
@@ -110,18 +106,18 @@ async function init(app: Hono) {
       //TODO: Validate wallet message
 
       // Verify the signature
-      if (!wallet.verifySignature(message, signature, address)) {
+      if (!wallet.verifySignature(message, signature, walletAddr)) {
         return c.json({ error: "Invalid wallet signature" }, 401);
       }
 
-      await database.mirrorTrades({ address: address, enable: enable });
+      await database.mirrorTrades({ address: walletAddr, enable: enable });
 
-      console.log(`Copy trading ${enable ? "enabled" : "disabled"} for: ${address}`);
+      console.log(`Copy trading ${enable ? "enabled" : "disabled"} for: ${walletAddr}`);
 
       return c.json({
         success: true,
         message: `Auto-copy trading ${enable ? "enabled" : "disabled"} successfully`,
-        address,
+        address: walletAddr,
       });
     } catch (error) {
       console.error("Error starting auto-copy trading:", error);
@@ -132,18 +128,21 @@ async function init(app: Hono) {
 
 async function handleTraderSelection(c: any, selected: boolean) {
   try {
-    const { address } = c.req.param();
+    let { walletAddr } = c.req.param();
     const { traderAddresses, signature, message, timestamp } = await c.req.json();
 
     // Validate required parameters
-    if (!address || !traderAddresses || !signature || !message || !timestamp) {
+    if (!walletAddr || !traderAddresses || !signature || !message || !timestamp) {
       return c.json(
         {
-          error: "Missing required parameters: address, traderAddresses, signature, message, timestamp",
+          error: "Missing required parameters: walletAddr, traderAddresses, signature, message, timestamp",
         },
         400
       );
     }
+
+    // Ensure walletAddr has the proper uppercase format
+    walletAddr = ethers.getAddress(walletAddr);
 
     // Validate traderAddresses is an array
     if (!Array.isArray(traderAddresses) || traderAddresses.length === 0) {
@@ -156,7 +155,7 @@ async function handleTraderSelection(c: any, selected: boolean) {
     }
 
     // Validate timestamp (should be within last 5 minutes to prevent replay attacks)
-    const tsValidation = validateTimestamp(timestamp);
+    const tsValidation = utils.validateTimestamp(timestamp);
     const timestampMs = tsValidation.timestamp;
 
     if (!tsValidation.isValid) {
@@ -165,19 +164,19 @@ async function handleTraderSelection(c: any, selected: boolean) {
 
     // Verify the message contains the expected content
     const expectedMessage = selected
-      ? `Select traders ${traderAddresses.join(",")} for ${address} at ${timestampMs}`
-      : `Unselect traders ${traderAddresses.join(",")} for ${address} at ${timestampMs}`;
+      ? `Select traders ${traderAddresses.join(",")} for ${walletAddr} at ${timestampMs}`
+      : `Unselect traders ${traderAddresses.join(",")} for ${walletAddr} at ${timestampMs}`;
     if (message !== expectedMessage) {
       return c.json({ error: "Invalid message format" }, 400);
     }
 
     // Verify signature
-    if (!wallet.verifySignature(message, signature, address)) {
+    if (!wallet.verifySignature(message, signature, walletAddr)) {
       return c.json({ error: "Invalid wallet signature" }, 401);
     }
 
     await database.selectTraders({
-      followerAddr: address,
+      followerAddr: walletAddr,
       traderAddresses: traderAddresses,
       signature: signature,
       message: message,
@@ -191,7 +190,7 @@ async function handleTraderSelection(c: any, selected: boolean) {
     return c.json(
       {
         success: true,
-        follower_address: address,
+        follower_address: walletAddr,
         selected_traders: traderAddresses,
         count: traderAddresses.length,
       },
@@ -201,35 +200,6 @@ async function handleTraderSelection(c: any, selected: boolean) {
     console.error("Error selecting traders:", error);
     return c.json({ error: "Failed to select traders" }, 500);
   }
-}
-
-// Helper function to validate timestamp
-function validateTimestamp(timestamp: string | number): {
-  isValid: boolean;
-  timestamp: bigint;
-  error?: string;
-} {
-  const now = Date.now();
-  const timestampMs = typeof timestamp === "string" ? parseInt(timestamp) : timestamp;
-
-  if (isNaN(timestampMs)) {
-    return {
-      isValid: false,
-      timestamp: BigInt(0),
-      error: "Invalid timestamp format",
-    };
-  }
-
-  // Check if timestamp is within last 5 minutes to prevent replay attacks
-  if (Math.abs(now - timestampMs) > 5 * 60 * 1000) {
-    return {
-      isValid: false,
-      timestamp: BigInt(timestampMs),
-      error: "Request timestamp too old",
-    };
-  }
-
-  return { isValid: true, timestamp: BigInt(timestampMs) };
 }
 
 const traders = {

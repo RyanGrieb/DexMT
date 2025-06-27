@@ -1,7 +1,7 @@
 import { serve } from "@hono/node-server";
+import { ethers } from "ethers";
 import fs from "fs/promises";
 import { Hono } from "hono";
-import { html } from "hono/html";
 import path from "path";
 import dexmtAPI from "./api/dexmt-api";
 import database from "./database";
@@ -41,36 +41,6 @@ app.get("/api/html/traderprofile", async (c) => {
   }
 });
 
-interface SiteData {
-  title: string;
-  description: string;
-  image: string;
-  children?: any;
-}
-const Layout = (props: SiteData) => html`
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>${props.title}</title>
-  <meta name="description" content="${props.description}">
-  <head prefix="og: http://ogp.me/ns#">
-  <meta property="og:type" content="article">
-  <!-- More elements slow down JSX, but not template literals. -->
-  <meta property="og:title" content="${props.title}">
-  <meta property="og:image" content="${props.image}">
-</head>
-<body>
-  ${props.children}
-</body>
-</html>
-`;
-
-const Content = (props: { siteData: SiteData; name: string }) => (
-  <Layout {...props.siteData}>
-    <h1>Hello {props.name}</h1>
-  </Layout>
-);
-
 app.get("/api/html/toptraders", async (c) => {
   try {
     const props = {
@@ -92,8 +62,15 @@ app.get("/api/html/toptraders", async (c) => {
 
 app.get("/api/html/mywatchlist", async (c) => {
   try {
-    const userAddress = c.req.query("address") || c.req.header("x-wallet-address");
-    const watchlistHTML = await renderWatchlist(userAddress);
+    let userAddr = c.req.query("address") || c.req.header("x-wallet-address");
+
+    if (!userAddr) {
+      return c.html('<div class="error-message">User address is required</div>', 400);
+    }
+
+    userAddr = ethers.getAddress(userAddr);
+
+    const watchlistHTML = await renderWatchlist(userAddr);
     return c.html(watchlistHTML);
   } catch (error) {
     console.error("Error rendering watchlist:", error);

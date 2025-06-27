@@ -1,5 +1,6 @@
 import detectEthereumProvider from "@metamask/detect-provider";
 import type { MetaMaskInpageProvider } from "@metamask/providers";
+import { ethers } from "ethers";
 
 // Define MetaMask-specific interfaces in this file
 export interface ArbitrumNetwork {
@@ -404,4 +405,13 @@ export async function isWalletConnected(): Promise<boolean> {
     console.error("Error checking wallet connection:", error);
     return false;
   }
+}
+
+export function getWalletAddr(): string | undefined {
+  if (!provider || !provider.selectedAddress) {
+    console.warn("No wallet address available");
+    return undefined;
+  }
+
+  return ethers.getAddress(provider.selectedAddress);
 }

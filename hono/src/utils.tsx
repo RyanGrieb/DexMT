@@ -99,7 +99,7 @@ function abbreviateNumber(value: number | string): string {
 }
 
 function getPlatformIcon(platform: string | null | undefined) {
-  console.log("getPlatformIcon called with platform:", platform);
+  //console.log("getPlatformIcon called with platform:", platform);
   if (!platform) {
     return html`<span style="color:#666;">-</span>`;
   }
@@ -140,12 +140,48 @@ function generateIconColor(address: string): string {
   return `rgb(${r}, ${g}, ${b})`;
 }
 
+function isValidAddress(address: string): boolean {
+  // Basic validation for Ethereum addresses (0x followed by 40 hex characters)
+  return /^0x[a-fA-F0-9]{40}$/.test(address);
+}
+
+// Helper function to validate timestamp
+function validateTimestamp(timestamp: string | number): {
+  isValid: boolean;
+  timestamp: bigint;
+  error?: string;
+} {
+  const now = Date.now();
+  const timestampMs = typeof timestamp === "string" ? parseInt(timestamp) : timestamp;
+
+  if (isNaN(timestampMs)) {
+    return {
+      isValid: false,
+      timestamp: BigInt(0),
+      error: "Invalid timestamp format",
+    };
+  }
+
+  // Check if timestamp is within last 5 minutes to prevent replay attacks
+  if (Math.abs(now - timestampMs) > 5 * 60 * 1000) {
+    return {
+      isValid: false,
+      timestamp: BigInt(timestampMs),
+      error: "Request timestamp too old",
+    };
+  }
+
+  return { isValid: true, timestamp: BigInt(timestampMs) };
+}
+
 const utils = {
   abbreviateNumber,
   getPlatformIcon,
   generateIconColor,
+  validateTimestamp,
   logOutput,
   clearOldLogs,
+  isValidAddress,
 };
 
 export default utils;

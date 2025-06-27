@@ -1,12 +1,5 @@
 // Import only what you need from each module
-import {
-  autoReconnectWallet,
-  connectWallet,
-  disconnectWallet,
-  isWalletConnected,
-  provider,
-  updateWalletUI,
-} from "./metamask";
+import { autoReconnectWallet, connectWallet, disconnectWallet, isWalletConnected, updateWalletUI } from "./metamask";
 import profile from "./profile";
 import router from "./router";
 import utils from "./utils";
@@ -57,12 +50,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (myWatchListBtn) {
     //FIXME: Authenticate user selected address before loading watchlist
     myWatchListBtn.addEventListener("click", async () => {
-      const walletAddress = provider?.selectedAddress;
       await router.loadContent({
         apiUrl: "/api/html/mywatchlist",
         browserUrl: "/mywatchlist",
         title: "My Watchlist",
-        walletAddr: walletAddress || undefined,
       });
     });
   }
@@ -73,14 +64,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (!traderRow) return;
 
-    const address = traderRow.getAttribute("address");
+    const profileAddr = traderRow.getAttribute("address");
 
-    if (!address) return;
+    if (!profileAddr) return;
 
-    // Get current wallet address for the header (if available)
-    const walletAddress = provider?.selectedAddress;
-
-    await router.loadProfile(address, walletAddress);
+    await router.loadProfile(profileAddr);
   });
 
   // Setup wallet connection button

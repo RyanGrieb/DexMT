@@ -1,19 +1,20 @@
-import { provider } from "./metamask";
+import { getWalletAddr } from "./metamask";
 import utils from "./utils";
 
-async function loadProfile(address: string | null, walletAddress: string | null | undefined): Promise<void> {
+async function loadProfile(address: string | null): Promise<void> {
   if (address) {
     let apiUrl = `/api/html/traderprofile?address=${encodeURIComponent(address)}`;
     let browserUrl = `/traderprofile?address=${encodeURIComponent(address)}`;
-    if (walletAddress) {
-      apiUrl += `&userAddress=${encodeURIComponent(walletAddress)}`;
+
+    const walletAddr = getWalletAddr();
+    if (walletAddr) {
+      apiUrl += `&userAddress=${encodeURIComponent(walletAddr)}`;
     }
 
     await loadContent({
       apiUrl,
       browserUrl,
       title: "Trader Profile",
-      walletAddr: walletAddress || undefined,
       updateUrl: true, // ← now pushState into history
     });
   } else {
@@ -29,7 +30,6 @@ async function loadProfile(address: string | null, walletAddress: string | null 
 async function loadContentForCurrentPage(): Promise<void> {
   const currentPath = window.location.pathname;
   const searchParams = new URLSearchParams(window.location.search);
-  const walletAddress = provider?.selectedAddress;
 
   try {
     switch (currentPath) {
@@ -45,14 +45,13 @@ async function loadContentForCurrentPage(): Promise<void> {
         await loadContent({
           apiUrl: "/api/html/mywatchlist",
           title: "My Watchlist",
-          walletAddr: walletAddress || undefined,
           updateUrl: false, // Don't update URL on initial page load
         });
         break;
 
       case "/traderprofile":
         const address = searchParams.get("address");
-        loadProfile(address, walletAddress);
+        loadProfile(address);
         break;
 
       default:
@@ -69,14 +68,12 @@ async function loadContent({
   apiUrl,
   browserUrl,
   title,
-  walletAddr,
   content,
   updateUrl = true,
 }: {
   apiUrl?: string;
   browserUrl?: string;
   title: string;
-  walletAddr?: string;
   content?: string;
   updateUrl?: boolean;
 }): Promise<void> {
@@ -110,7 +107,6 @@ async function loadContent({
     showLoadingState();
 
     // Get the current wallet address if not provided
-    const walletAddress = walletAddr || provider?.selectedAddress;
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     const headers: Record<string, string> = {
@@ -119,8 +115,9 @@ async function loadContent({
     };
 
     // Add wallet address to headers if available
-    if (walletAddress) {
-      headers["x-wallet-address"] = walletAddress;
+    const walletAddr = getWalletAddr();
+    if (walletAddr) {
+      headers["x-wallet-address"] = walletAddr;
     }
 
     const response = await fetch(apiUrl, {
