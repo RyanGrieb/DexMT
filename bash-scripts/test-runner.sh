@@ -41,7 +41,7 @@ fi
 
 # Run integration tests
 echo "🔗 -------------------------------- Running integration tests... -------------------------------- 🔗"
-# TODO: Change this to use: "test:integration:quick": "vitest run tests/integration",
+# TODO: Change this to use: "test:integration": "vitest run tests/integration",
 npx vitest run tests/integration
 
 if [ $? -ne 0 ]; then

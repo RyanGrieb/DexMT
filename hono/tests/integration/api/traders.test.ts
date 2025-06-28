@@ -103,7 +103,7 @@ describe("Traders API Integration Tests (Simple)", () => {
     expect(found).toBe(true);
   });
 
-  test("expect /api/traders/favorite_trader to unfavorite trader (remove from favorites)", async () => {
+  test("expect /api/traders/favorite_trader to remove entry in 'favorite_traders' table", async () => {
     // Arrange: Create test wallet and favorite a trader first
     const testWallet = Wallet.createRandom();
     const timestamp = Date.now();
@@ -178,7 +178,7 @@ describe("Traders API Integration Tests (Simple)", () => {
     expect(found).toBe(false);
   });
 
-  test("should return HTML for root endpoint", async () => {
+  test("expect HTML for root endpoint", async () => {
     const response = await fetch(`${baseUrl}/`);
     expect(response.status).toBe(200);
 
