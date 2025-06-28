@@ -38,9 +38,10 @@ async function init(app: Hono) {
       updatedAt: new Date().toISOString(),
       isDexmtTrader: true,
     });
-    db.addTrader(trader);
+    await db.addTrader(trader);
 
     utils.logOutput(`Wallet connected: ${walletAddr} on chain ${chainId}`);
+
     return c.json({ success: true, message: "Wallet registered" });
   });
 
