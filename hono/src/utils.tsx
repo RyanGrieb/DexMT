@@ -89,6 +89,9 @@ function clearOldLogs(keepCount: number = 5) {
 // Helper functions (reuse from leaderboard.tsx)
 function abbreviateNumber(value: number | string): string {
   const num = Number(value) || 0;
+  if (Math.abs(num) >= 1e9) {
+    return (num / 1e9).toFixed(1).replace(/\.0$/, "") + "B";
+  }
   if (Math.abs(num) >= 1e6) {
     return (num / 1e6).toFixed(1).replace(/\.0$/, "") + "M";
   }

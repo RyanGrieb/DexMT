@@ -59,6 +59,24 @@ DEXMT is a platform that enables users to copy trades of top DeFi performers aut
 4. **Open the app**  
    Visit http://localhost:8787 in your browser
 
+🧪 Test Options:
+
+# Unit tests only (fast, no Docker needed)
+
+npm test
+
+# Integration tests with Docker (full setup)
+
+npm run test:integration
+
+# Quick integration tests (assumes server running)
+
+npm run test:integration:quick
+
+# All tests
+
+npm run test:all
+
 ---
 
 ### ⚠️ Disclaimer

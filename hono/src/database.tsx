@@ -6,10 +6,16 @@ import { DEXPosition, DEXTradeAction, Trader } from "./types/trader";
 import utils from "./utils";
 
 // PostgreSQL connection
+const getDbHost = () => {
+  if (process.env.DATABASE_URL?.includes("postgres-test")) return "postgres-test";
+  if (process.env.DATABASE_URL?.includes("postgres")) return "postgres";
+  return "localhost";
+};
+
 const dialect = new PostgresDialect({
   pool: new Pool({
-    database: "dexmt",
-    host: process.env.DATABASE_URL?.includes("postgres") ? "postgres" : "localhost",
+    database: process.env.NODE_ENV === "test" ? "dexmt_test" : "dexmt",
+    host: getDbHost(),
     user: "postgres",
     password: "password",
     port: 5432,

@@ -24,6 +24,15 @@ app.get("/", (c) => {
   return c.redirect("/toptraders");
 });
 
+// Health check endpoint for tests
+app.get("/health", (c) => {
+  return c.json({
+    status: "ok",
+    uptime: Date.now() - startTime,
+    timestamp: new Date().toISOString(),
+  });
+});
+
 app.get("/api/html/traderprofile", async (c) => {
   try {
     const traderAddress = c.req.query("address");
@@ -157,11 +166,6 @@ app.get("/img/*", async (c) => {
   } catch (err) {
     return c.text("Not Found", 404);
   }
-});
-
-app.get("/health", (c) => {
-  utils.logOutput(`Health check - Start time: ${startTime}`);
-  return c.json({ startTime });
 });
 
 // Modify the startup function to notify on restart

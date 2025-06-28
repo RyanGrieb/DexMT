@@ -1,0 +1,50 @@
+networks:
+  test-network:
+    driver: bridge
+
+services:
+  hono-test:
+    build:
+      context: ./hono
+      dockerfile: Dockerfile
+    ports:
+      - "8788:8787"  # Different port for testing
+    environment:
+      - PORT=8787
+      - NODE_ENV=test
+      - DATABASE_URL=postgresql://postgres:password@postgres-test:5432/dexmt_test
+    volumes:
+      - ./hono/src:/hono/src
+      - ./hono/static:/hono/static
+      - ./hono/tests:/hono/tests
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+    networks:
+      - test-network
+    mem_limit: 2g
+    shm_size: 512m
+    security_opt:
+      - seccomp:unconfined
+
+  postgres-test:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=dexmt_test
+      - TZ=America/Chicago
+    ports:
+      - "5433:5432"  # Different port for testing
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_test_data:

@@ -7,11 +7,6 @@ function formatNumber(value: number | string, decimals: number = 2): string {
   return num.toFixed(decimals);
 }
 
-function formatCurrency(value: number | string, currency: string = "$"): string {
-  const num = Number(value) || 0;
-  return `${currency}${num.toLocaleString()}`;
-}
-
 function formatPercentage(value: number | string): string {
   const num = Number(value) || 0;
   const sign = num >= 0 ? "+" : "";
@@ -126,7 +121,6 @@ function showNotification(message: string, type: "success" | "error" | "info"): 
 
 const utils = {
   formatNumber,
-  formatCurrency,
   formatPercentage,
   truncateAddress,
   isValidAddress,
