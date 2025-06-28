@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import database from "../database";
 import scheduler from "../scheduler";
 import schemas from "../schemas";
+import utils from "../utils";
 
 async function init(app: Hono) {
   // API endpoint to get users from database with all trading data
@@ -14,6 +15,39 @@ async function init(app: Hono) {
     } catch (error) {
       console.error("Error fetching traders:", error);
       return c.json({ error: "Failed to fetch traders" }, 500);
+    }
+  });
+
+  app.get(
+    "/api/traders/favorites",
+    zValidator("query", schemas.FavoritesOfWallet, (result, c) => {
+      if (!result.success) {
+        return c.json({ error: result.error.message }, 400);
+      }
+    }),
+    async (c) => {
+      const { walletAddr } = c.req.valid("query");
+
+      utils.logOutput(`Fetching favorite traders for wallet: ${walletAddr}`);
+      try {
+        const favorites = await database.getTraders({ favoriteOfAddress: walletAddr });
+        return c.json({ success: true, favorites }, 200);
+      } catch (error) {
+        console.error("Error fetching favorite traders:", error);
+        return c.json({ error: "Failed to fetch favorite traders" }, 500);
+      }
+    }
+  );
+
+  // FIXME: Check for the testing environment variable, this is only for testing purposes
+  app.post("/api/traders/reset", async (c) => {
+    try {
+      await database.resetTraders();
+      utils.logOutput("Traders reset successfully");
+      return c.json({ success: true }, 200);
+    } catch (error) {
+      console.error("Error resetting traders:", error);
+      return c.json({ error: "Failed to reset traders" }, 500);
     }
   });
 

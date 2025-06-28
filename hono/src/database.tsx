@@ -292,6 +292,7 @@ async function updateTraders(traders: Trader[]): Promise<void> {
 
 async function addTrader(trader: Trader) {
   if (!db) {
+    utils.logOutput("Database not initialized. Call initializeDatabase first.");
     throw new Error("Database not initialized. Call initializeDatabase first.");
   }
 
@@ -313,9 +314,10 @@ async function addTrader(trader: Trader) {
       )
       .execute();
 
-    console.log(`User added/updated in database: ${trader.address}`);
+    utils.logOutput(`User added/updated in database: ${trader.address}`);
   } catch (error) {
     console.error("Error adding user to database:", error);
+    utils.logOutput(`Error adding user to database: ${error}`);
   }
 }
 
@@ -814,6 +816,27 @@ async function insertTrades(trades: DEXTradeAction[]) {
   }
 }
 
+function resetTraders() {
+  if (!db) {
+    throw new Error("Database not initialized. Call initializeDatabase first.");
+  }
+
+  return db.transaction().execute(async (trx) => {
+    try {
+      await trx.deleteFrom("traders").execute();
+      await trx.deleteFrom("favorited_traders").execute();
+      await trx.deleteFrom("trades").execute();
+      await trx.deleteFrom("positions").execute();
+      await trx.deleteFrom("closed_positions").execute();
+
+      console.log("All traders and related data reset successfully");
+    } catch (error) {
+      console.error("Error resetting traders:", error);
+      throw error;
+    }
+  });
+}
+
 const database = {
   initializeDatabase,
   updateTraders,
@@ -830,6 +853,7 @@ const database = {
   createPositions,
   updatePositions,
   insertTrades,
+  resetTraders,
 };
 
 export default database;

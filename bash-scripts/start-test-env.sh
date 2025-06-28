@@ -2,13 +2,16 @@
 
 echo "🐳 -------------------------------- Starting test environment... -------------------------------- 🐳"
 
+# enable Compose → Bake delegation
+export COMPOSE_BAKE=true
+
 # Get the script directory and navigate to project root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
 cd "$PROJECT_ROOT"
 
-# Start test containers
+# Start test containers with hot reloading
 docker compose -f docker-compose.test.yml up -d --build --remove-orphans
 
 # Wait for health check

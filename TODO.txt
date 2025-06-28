@@ -24,6 +24,8 @@
 * Load profiles even if they are not in our leaderboard table
 * Load leaderboard by scanning the GMX arbitrum blockchain.
 
+* Add replay protection to the API using EIP-712 signatures (instead of timestamps)
+
 * Improve DB security. Get better password storage, and don't do pure SQL calls,
 have us use an ORM like https://kysely.dev/.
 

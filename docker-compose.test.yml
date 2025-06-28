@@ -8,7 +8,7 @@ services:
       context: ./hono
       dockerfile: Dockerfile
     ports:
-      - "8788:8787"  # Different port for testing
+      - "8788:8787" # Different port for testing
     environment:
       - PORT=8787
       - NODE_ENV=test
@@ -26,6 +26,25 @@ services:
     shm_size: 512m
     security_opt:
       - seccomp:unconfined
+    develop:
+      watch:
+        # Sync source code changes
+        - action: sync
+          path: ./hono/src
+          target: /hono/src
+        # Sync static file changes
+        - action: sync
+          path: ./hono/static
+          target: /hono/static
+        # Rebuild when package.json changes
+        - action: rebuild
+          path: ./hono/package.json
+        # Rebuild when Dockerfile changes
+        - action: rebuild
+          path: ./hono/Dockerfile
+        # Rebuild when tests file changes
+        - action: rebuild
+          path: ./hono/tests
 
   postgres-test:
     image: postgres:15
@@ -35,7 +54,7 @@ services:
       - POSTGRES_DB=dexmt_test
       - TZ=America/Chicago
     ports:
-      - "5433:5432"  # Different port for testing
+      - "5433:5432" # Different port for testing
     volumes:
       - postgres_test_data:/var/lib/postgresql/data
     networks:

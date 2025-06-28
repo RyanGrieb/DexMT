@@ -26,14 +26,36 @@ function refineWalletSignature() {
 
 const walletSignatureRefine = {
   refine: refineWalletSignature(),
-  message: "Invalid wallet signature",
+  message:
+    "Invalid wallet signature. Ensure the signature was created by signing the message with the wallet address provided.",
   path: ["signature"],
 };
 
-const invalidMessageError = {
-  message: "Message format does not match expected pattern",
-  path: ["message"],
-};
+function createInvalidMessageError(expectedPattern: string) {
+  return {
+    message: `Message format does not match expected pattern. Expected: "${expectedPattern}"`,
+    path: ["message"],
+  };
+}
+
+function createMessageValidator<T>(getExpectedMessage: (data: T) => string) {
+  return {
+    validator: (data: T) => {
+      const expectedMessage = getExpectedMessage(data);
+      return (data as any).message === expectedMessage;
+    },
+    errorHandler: (data: T) => {
+      const expectedMessage = getExpectedMessage(data);
+      return createInvalidMessageError(expectedMessage);
+    },
+  };
+}
+
+const autoCopyMessageValidator = createMessageValidator((data: any) => {
+  const { enable, walletAddr, timestamp } = data;
+  const action = enable ? "Enable" : "Disable";
+  return `${action} auto-copy trading for ${walletAddr} at ${timestamp}`;
+});
 
 const autoCopy = z
   .object({
@@ -44,12 +66,13 @@ const autoCopy = z
     enable: z.boolean(),
   })
   .refine(walletSignatureRefine.refine, walletSignatureRefine)
-  .refine((data) => {
-    const { enable, walletAddr, timestamp, message } = data;
-    const action = enable ? "Enable" : "Disable";
-    const expectedMessage = `${action} auto-copy trading for ${walletAddr} at ${timestamp}`;
-    return message === expectedMessage;
-  }, invalidMessageError);
+  .refine(autoCopyMessageValidator.validator, autoCopyMessageValidator.errorHandler);
+
+const selectTraderMessageValidator = createMessageValidator((data: any) => {
+  const { selected, traderAddr, walletAddr, timestamp } = data;
+  const action = selected ? "Selected" : "Unselected";
+  return `${action} trader ${traderAddr} for ${walletAddr} at ${timestamp}`;
+});
 
 const selectTrader = z
   .object({
@@ -61,12 +84,13 @@ const selectTrader = z
     selected: z.boolean(),
   })
   .refine(walletSignatureRefine.refine, walletSignatureRefine)
-  .refine((data) => {
-    const { selected, traderAddr, walletAddr, timestamp, message } = data;
-    const action = selected ? "Selected" : "Unselected";
-    const expectedMessage = `${action} trader ${traderAddr} for ${walletAddr} at ${timestamp}`;
-    return message === expectedMessage;
-  }, invalidMessageError);
+  .refine(selectTraderMessageValidator.validator, selectTraderMessageValidator.errorHandler);
+
+const favoriteTraderMessageValidator = createMessageValidator((data: any) => {
+  const { favorite, traderAddr, walletAddr, timestamp } = data;
+  const action = favorite ? "Favorite" : "Unfavorite";
+  return `${action} trader ${traderAddr} for ${walletAddr} at ${timestamp}`;
+});
 
 const favoriteTrader = z
   .object({
@@ -78,12 +102,7 @@ const favoriteTrader = z
     favorite: z.boolean(),
   })
   .refine(walletSignatureRefine.refine, walletSignatureRefine)
-  .refine((data) => {
-    const { favorite, traderAddr, walletAddr, timestamp, message } = data;
-    const action = favorite ? "Favorite" : "Unfavorite";
-    const expectedMessage = `${action} trader ${traderAddr} for ${walletAddr} at ${timestamp}`;
-    return message === expectedMessage;
-  }, invalidMessageError);
+  .refine(favoriteTraderMessageValidator.validator, favoriteTraderMessageValidator.errorHandler);
 
 const connectWallet = z.object({
   walletAddr: defineValidWalletAddr(),
@@ -97,12 +116,18 @@ const disconnectWallet = z.object({
   walletAddr: defineValidWalletAddr(),
 });
 
+const FavoritesOfWallet = z.object({
+  walletAddr: defineValidWalletAddr(),
+});
+
+// FIXME: These schemas should be in upper-case like 'FavoritesOfWallet'
 const schemas = {
   favoriteTrader,
   selectTrader,
   autoCopy,
   connectWallet,
   disconnectWallet,
+  FavoritesOfWallet,
 };
 
 export default schemas;

@@ -35,6 +35,9 @@ services:
         # Rebuild when Dockerfile changes
         - action: rebuild
           path: ./hono/Dockerfile
+        # Rebuild when tests file changes
+        - action: rebuild
+          path: ./hono/tests
 
   postgres:
     image: postgres:15
