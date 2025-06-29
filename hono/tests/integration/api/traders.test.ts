@@ -1,86 +1,44 @@
 import { Wallet } from "ethers";
 import { beforeAll, describe, expect, test } from "vitest";
+import { baseUrl, resetTraders, connectWallet, favoriteTrader, selectTrader } from "../../helpers/test-utils";
 
 describe("Traders API Integration Tests (Simple)", () => {
-  const baseUrl = "http://localhost:8788";
-  const targetWallet = Wallet.createRandom();
-
   beforeAll(async () => {
-    // Reset traders before running  tests
-    const resetResponse = await fetch(`${baseUrl}/api/traders/reset`, {
-      method: "POST",
-    });
-
-    expect(resetResponse.status).toBe(200);
-
-    // TODO: Test if the reset was successful (No traders in DB)
-
+    // Reset traders before running tests
     await new Promise((resolve) => setTimeout(resolve, 500));
   });
 
   test("expect /api/wallet/connect to register a wallet", async () => {
-    // Arrange: Prepare a valid request body
-    const connectBody = {
-      walletAddr: targetWallet.address,
-      chainId: "0xa4b1",
-    };
+    await resetTraders();
 
-    const response = await fetch(`${baseUrl}/api/wallet/connect`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(connectBody),
-    });
+    const testWallet = Wallet.createRandom();
+    await connectWallet(testWallet);
 
-    expect(response.status).toBe(200);
-
-    // Act: Fetch traders from the API
     const tradersResponse = await fetch(`${baseUrl}/api/traders`);
     expect(tradersResponse.status).toBe(200);
 
-    // Print the response body
     const tradersData = await tradersResponse.json();
 
     // Assert: Ensure targetWallet is inside the response
-    const walletExists = tradersData.some((trader: any) => trader.address === targetWallet.address);
+    const walletExists = tradersData.some((trader: any) => trader.address === testWallet.address);
     expect(walletExists).toBe(true);
   });
 
   test("expect /api/traders/favorite_trader to create entry in 'favorite_traders' table", async () => {
-    // Arrange: Prepare a valid request body
+    await resetTraders();
 
     const testWallet = Wallet.createRandom();
-    const timestamp = Date.now();
-    const message = `Favorite trader ${targetWallet.address} for ${testWallet.address} at ${timestamp}`;
-    const signature = await testWallet.signMessage(message);
+    const targetWallet = Wallet.createRandom();
 
-    const body = {
-      message: message,
-      walletAddr: testWallet.address,
-      traderAddr: targetWallet.address,
-      signature: signature,
-      timestamp: timestamp, // Use a number for test, backend expects bigint
-      favorite: true,
-    };
+    // Connect both wallets
+    await connectWallet(testWallet);
+    await connectWallet(targetWallet);
 
-    // Act: Send POST request
-    const response = await fetch(`${baseUrl}/api/traders/favorite_trader`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
+    const data = await favoriteTrader(testWallet, targetWallet, true);
 
-    // Assert: Status and response
-    if (response.status !== 200) {
-      console.error("Unexpected response status:", response.status);
-      const parsedError = await response.json();
-      console.error("Response body:", parsedError);
-      expect(response.status).toBe(200); // Fail the test explicitly
-    }
-
-    const data = await response.json();
     expect(data.success).toBe(true);
-    expect(data.follower_address).toBe(body.walletAddr);
-    expect(data.favorite_trader).toBe(body.traderAddr);
+    expect(data.follower_address).toBe(testWallet.address);
+    expect(data.favorite_trader).toBe(targetWallet.address);
 
     // Get the favorited traders of testWallet.address
     const favoritesResponse = await fetch(`${baseUrl}/api/traders/favorites?walletAddr=${testWallet.address}`, {
@@ -93,9 +51,6 @@ describe("Traders API Integration Tests (Simple)", () => {
 
     expect(favoritesData.success).toBe(true);
 
-    //console.log("Favorites response body:", favoritesData);
-    //console.log(`Wallet address: ${testWallet.address} Target wallet address: ${targetWallet.address}`);
-
     expect(Array.isArray(favoritesData.favorites)).toBe(true);
 
     // Assert: targetWallet.address is in the favorites list
@@ -104,63 +59,24 @@ describe("Traders API Integration Tests (Simple)", () => {
   });
 
   test("expect /api/traders/favorite_trader to remove entry in 'favorite_traders' table", async () => {
+    await resetTraders();
+
     // Arrange: Create test wallet and favorite a trader first
     const testWallet = Wallet.createRandom();
-    const timestamp = Date.now();
-    const favoriteMessage = `Favorite trader ${targetWallet.address} for ${testWallet.address} at ${timestamp}`;
-    const favoriteSignature = await testWallet.signMessage(favoriteMessage);
+    const targetWallet = Wallet.createRandom();
+
+    // Connect both wallets
+    await connectWallet(testWallet);
+    await connectWallet(targetWallet);
 
     // First, favorite the trader
-    const favoriteBody = {
-      message: favoriteMessage,
-      walletAddr: testWallet.address,
-      traderAddr: targetWallet.address,
-      signature: favoriteSignature,
-      timestamp: timestamp,
-      favorite: true,
-    };
-
-    const favoriteResponse = await fetch(`${baseUrl}/api/traders/favorite_trader`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(favoriteBody),
-    });
-
-    expect(favoriteResponse.status).toBe(200);
+    await favoriteTrader(testWallet, targetWallet, true);
 
     // Now unfavorite the trader
-    const unfavoriteTimestamp = Date.now();
-    const unfavoriteMessage = `Unfavorite trader ${targetWallet.address} for ${testWallet.address} at ${unfavoriteTimestamp}`;
-    const unfavoriteSignature = await testWallet.signMessage(unfavoriteMessage);
-
-    const unfavoriteBody = {
-      message: unfavoriteMessage,
-      walletAddr: testWallet.address,
-      traderAddr: targetWallet.address,
-      signature: unfavoriteSignature,
-      timestamp: unfavoriteTimestamp,
-      favorite: false,
-    };
-
-    // Act: Send unfavorite request
-    const unfavoriteResponse = await fetch(`${baseUrl}/api/traders/favorite_trader`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(unfavoriteBody),
-    });
-
-    // Assert: Status and response
-    if (unfavoriteResponse.status !== 200) {
-      console.error("Unexpected response status:", unfavoriteResponse.status);
-      const parsedError = await unfavoriteResponse.json();
-      console.error("Response body:", parsedError);
-      expect(unfavoriteResponse.status).toBe(200);
-    }
-
-    const unfavoriteData = await unfavoriteResponse.json();
+    const unfavoriteData = await favoriteTrader(testWallet, targetWallet, false);
     expect(unfavoriteData.success).toBe(true);
-    expect(unfavoriteData.follower_address).toBe(unfavoriteBody.walletAddr);
-    expect(unfavoriteData.unfavorite_trader).toBe(unfavoriteBody.traderAddr);
+    expect(unfavoriteData.follower_address).toBe(testWallet.address);
+    expect(unfavoriteData.unfavorite_trader).toBe(targetWallet.address);
 
     // Verify trader is no longer in favorites
     const favoritesResponse = await fetch(`${baseUrl}/api/traders/favorites?walletAddr=${testWallet.address}`, {
@@ -176,6 +92,29 @@ describe("Traders API Integration Tests (Simple)", () => {
     // Assert: targetWallet.address is NOT in the favorites list
     const found = favoritesData.favorites.some((fav: any) => fav.address === targetWallet.address);
     expect(found).toBe(false);
+  });
+
+  test("expect /api/traders/select_trader to update 'selected' in 'favorite_traders' table", async () => {
+    await resetTraders();
+    const testWallet = Wallet.createRandom();
+    const targetWallet = Wallet.createRandom();
+
+    // Connect both wallets
+    await connectWallet(testWallet);
+    await connectWallet(targetWallet);
+
+    // Favorite the target wallet first (required for selection)
+    await favoriteTrader(testWallet, targetWallet, true);
+
+    const selectData = await selectTrader(testWallet, targetWallet, true);
+
+    console.log(selectData);
+
+    expect(selectData.success).toBe(true);
+    expect(selectData.follower_address).toBe(testWallet.address);
+    expect(selectData.selected_trader).toBe(targetWallet.address);
+
+    // TODO: Verify that the selected trader is marked as selected in the favorites list
   });
 
   test("expect HTML for root endpoint", async () => {

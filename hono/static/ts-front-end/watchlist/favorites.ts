@@ -196,7 +196,7 @@ async function handleSelect(button: HTMLButtonElement, selected: boolean) {
 
   try {
     const ts = Date.now();
-    const action = selected ? "Selected" : "Unselected";
+    const action = selected ? "Select" : "Unselect";
     const msg = `${action} trader ${traderAddr} for ${walletAddr} at ${ts}`;
     const sig = await provider.request({
       method: "personal_sign",

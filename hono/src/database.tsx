@@ -816,22 +816,30 @@ async function insertTrades(trades: DEXTradeAction[]) {
   }
 }
 
-function resetTraders() {
+async function resetTraders() {
   if (!db) {
-    throw new Error("Database not initialized. Call initializeDatabase first.");
+    console.log("Database not initialized, initializing now...");
+    await initializeDatabase();
+  }
+
+  if (!db) {
+    throw new Error("Failed to initialize database");
   }
 
   return db.transaction().execute(async (trx) => {
     try {
-      await trx.deleteFrom("traders").execute();
+      // Delete in order to avoid any potential constraint issues
+      // Delete child tables first, then parent tables
       await trx.deleteFrom("favorited_traders").execute();
       await trx.deleteFrom("trades").execute();
       await trx.deleteFrom("positions").execute();
       await trx.deleteFrom("closed_positions").execute();
+      await trx.deleteFrom("traders").execute();
 
       console.log("All traders and related data reset successfully");
     } catch (error) {
       console.error("Error resetting traders:", error);
+      console.error("Error details:", JSON.stringify(error, null, 2));
       throw error;
     }
   });

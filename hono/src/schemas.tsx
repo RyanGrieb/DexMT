@@ -70,7 +70,7 @@ const autoCopy = z
 
 const selectTraderMessageValidator = createMessageValidator((data: any) => {
   const { selected, traderAddr, walletAddr, timestamp } = data;
-  const action = selected ? "Selected" : "Unselected";
+  const action = selected ? "Select" : "Unselect";
   return `${action} trader ${traderAddr} for ${walletAddr} at ${timestamp}`;
 });
 
@@ -120,6 +120,88 @@ const FavoritesOfWallet = z.object({
   walletAddr: defineValidWalletAddr(),
 });
 
+// Testing schemas - FIXME: Check for testing environment variable
+const injectFakeTrade = z.object({
+  id: z.string(),
+  orderType: z.number().int().min(0).max(9), // DEXOrderType enum values
+  traderAddr: defineValidWalletAddr(),
+  marketAddr: z.string(),
+  longTokenAddress: z.string(),
+  shortTokenAddress: z.string(),
+  isLong: z.boolean(),
+  marketName: z.string(),
+  tokenName: z.string(),
+  sizeUsd: z.number(),
+  priceUsd: z.number(),
+  initialCollateralUsd: z.number(),
+  sizeDeltaUsd: z.number(),
+  rpnl: z.number(),
+  timestamp: z.number(),
+});
+
+const injectFakePosition = z.object({
+  key: z.string(),
+  contractKey: z.string(),
+  account: defineValidWalletAddr(),
+  traderAddr: defineValidWalletAddr(),
+  marketAddress: z.string(),
+  collateralTokenAddress: z.string(),
+  sizeInUsd: z.union([z.bigint(), z.string()]).transform((val) => (typeof val === "string" ? BigInt(val) : val)),
+  sizeInTokens: z.union([z.bigint(), z.string()]).transform((val) => (typeof val === "string" ? BigInt(val) : val)),
+  collateralAmount: z.union([z.bigint(), z.string()]).transform((val) => (typeof val === "string" ? BigInt(val) : val)),
+  pendingBorrowingFeesUsd: z
+    .union([z.bigint(), z.string()])
+    .transform((val) => (typeof val === "string" ? BigInt(val) : val))
+    .default(BigInt(0)),
+  increasedAtTime: z
+    .union([z.bigint(), z.string()])
+    .transform((val) => (typeof val === "string" ? BigInt(val) : val))
+    .default(BigInt(Date.now())),
+  decreasedAtTime: z
+    .union([z.bigint(), z.string()])
+    .transform((val) => (typeof val === "string" ? BigInt(val) : val))
+    .default(BigInt(0)),
+  isLong: z.boolean(),
+  fundingFeeAmount: z
+    .union([z.bigint(), z.string()])
+    .transform((val) => (typeof val === "string" ? BigInt(val) : val))
+    .default(BigInt(0)),
+  claimableLongTokenAmount: z
+    .union([z.bigint(), z.string()])
+    .transform((val) => (typeof val === "string" ? BigInt(val) : val))
+    .default(BigInt(0)),
+  claimableShortTokenAmount: z
+    .union([z.bigint(), z.string()])
+    .transform((val) => (typeof val === "string" ? BigInt(val) : val))
+    .default(BigInt(0)),
+  isOpening: z.boolean().default(false),
+  pnl: z
+    .union([z.bigint(), z.string()])
+    .transform((val) => (typeof val === "string" ? BigInt(val) : val))
+    .default(BigInt(0)),
+  positionFeeAmount: z
+    .union([z.bigint(), z.string()])
+    .transform((val) => (typeof val === "string" ? BigInt(val) : val))
+    .default(BigInt(0)),
+  traderDiscountAmount: z
+    .union([z.bigint(), z.string()])
+    .transform((val) => (typeof val === "string" ? BigInt(val) : val))
+    .default(BigInt(0)),
+  uiFeeAmount: z
+    .union([z.bigint(), z.string()])
+    .transform((val) => (typeof val === "string" ? BigInt(val) : val))
+    .default(BigInt(0)),
+  data: z.string().default(""),
+  tokenName: z.string(),
+  collateralAmountUsd: z.number(),
+  liqPriceUsd: z.number(),
+  entryPriceUsd: z.number(),
+  markPriceUsd: z.number(),
+  sizeUsd: z.number(),
+  pnlUsd: z.number(),
+  leverage: z.number(),
+});
+
 // FIXME: These schemas should be in upper-case like 'FavoritesOfWallet'
 const schemas = {
   favoriteTrader,
@@ -128,6 +210,8 @@ const schemas = {
   connectWallet,
   disconnectWallet,
   FavoritesOfWallet,
+  injectFakeTrade,
+  injectFakePosition,
 };
 
 export default schemas;

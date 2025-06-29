@@ -28,7 +28,7 @@ async function init(app: Hono) {
     async (c) => {
       const { walletAddr } = c.req.valid("query");
 
-      utils.logOutput(`Fetching favorite traders for wallet: ${walletAddr}`);
+      //utils.logOutput(`Fetching favorite traders for wallet: ${walletAddr}`);
       try {
         const favorites = await database.getTraders({ favoriteOfAddress: walletAddr });
         return c.json({ success: true, favorites }, 200);
@@ -87,6 +87,106 @@ async function init(app: Hono) {
     async (c) => {
       const args = c.req.valid("json");
       return handleToggleAutoCopy(c, args);
+    }
+  );
+
+  // FIXME: Check for the testing environment variable, this is only for testing purposes
+  app.post("/api/traders/trigger_mirror_trades", async (c) => {
+    try {
+      utils.logOutput("Manually triggering mirror trades for testing...");
+
+      // Trigger both functions that the scheduler normally calls
+      await scheduler.updateOpenPositions();
+      await scheduler.updateTradeHistory();
+
+      utils.logOutput("Mirror trades triggered successfully");
+      return c.json(
+        {
+          success: true,
+          message: "Mirror trades processing triggered successfully",
+        },
+        200
+      );
+    } catch (error) {
+      console.error("Error triggering mirror trades:", error);
+      return c.json({ error: "Failed to trigger mirror trades" }, 500);
+    }
+  });
+
+  // FIXME: Check for the testing environment variable, this is only for testing purposes
+  app.post(
+    "/api/traders/inject_fake_trade",
+    zValidator("json", schemas.injectFakeTrade, (result, c) => {
+      if (!result.success) {
+        return c.json({ error: result.error.message }, 400);
+      }
+    }),
+    async (c) => {
+      try {
+        const trade = c.req.valid("json");
+        await database.insertTrades([trade]);
+
+        utils.logOutput(`Injected fake trade: ${trade.id} for ${trade.traderAddr}`);
+        return c.json(
+          {
+            success: true,
+            message: "Fake trade injected successfully",
+            trade: trade,
+          },
+          200
+        );
+      } catch (error) {
+        console.error("Error injecting fake trade:", error);
+        return c.json({ error: "Failed to inject fake trade" }, 500);
+      }
+    }
+  );
+
+  // FIXME: Check for the testing environment variable, this is only for testing purposes
+  app.post(
+    "/api/traders/inject_fake_position",
+    zValidator("json", schemas.injectFakePosition, (result, c) => {
+      if (!result.success) {
+        utils.logOutput(`Position validation failed: ${result.error.message}`, "error");
+        return c.json({ error: result.error.message }, 400);
+      }
+    }),
+    async (c) => {
+      try {
+        const position = c.req.valid("json");
+        utils.logOutput(`Attempting to inject position with key: ${position.key} for trader: ${position.traderAddr}`);
+
+        await database.createPositions([position]);
+
+        utils.logOutput(`Injected fake position: ${position.key} for ${position.traderAddr}`);
+        return c.json(
+          {
+            success: true,
+            message: "Fake position injected successfully",
+            position: {
+              key: position.key,
+              account: position.account,
+              traderAddr: position.traderAddr,
+              marketAddress: position.marketAddress,
+              sizeUsd: position.sizeUsd,
+              collateralAmountUsd: position.collateralAmountUsd,
+            },
+          },
+          200
+        );
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorStack = error instanceof Error ? error.stack : String(error);
+        utils.logOutput(`Error injecting fake position: ${errorMessage}`, "error");
+        utils.logOutput(`Error stack: ${errorStack}`, "error");
+        return c.json(
+          {
+            error: "Failed to inject fake position",
+            details: errorMessage,
+          },
+          500
+        );
+      }
     }
   );
 }
