@@ -2,4 +2,3 @@
 node_modules
 logs
 hono/static/js-compiled/
-test-results

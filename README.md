@@ -1,6 +1,6 @@
 # DEXMT (In Development)
 
-[![TypeScript](https://img.shields.io/badge/Built%20with-TypeScript-3178C6.svg?logo=typescript)](https://www.typescriptlang.org/) [![Docker Ready](https://img.shields.io/badge/Docker-Ready-2496ED.svg?logo=docker)](https://hub.docker.com/)
+[![Tests](https://github.com/RyanGrieb/DexMT/actions/workflows/main.yml/badge.svg)](https://github.com/RyanGrieb/DexMT/actions)
 
 Decentralized Exchange Mirror Trading Platform
 

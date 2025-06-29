@@ -2,11 +2,9 @@ name: Run Tests
 
 on:
   push:
-    branches:
-      - master
+    branches: [master]
   pull_request:
-    branches:
-      - master
+    branches: [master]
 
 jobs:
   test:
@@ -16,7 +14,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Update to Node.js 18+ which has full Web Crypto API support
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
@@ -29,6 +26,3 @@ jobs:
       - name: Run tests
         run: npm run test:all
         working-directory: hono
-        env:
-          DB_HOST: ${{ env.DB_HOST }}
-          DB_PORT: ${{ env.DB_PORT }}
