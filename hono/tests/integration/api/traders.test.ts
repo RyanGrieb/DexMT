@@ -1,6 +1,6 @@
 import { Wallet } from "ethers";
 import { beforeAll, describe, expect, test } from "vitest";
-import { baseUrl, resetTraders, connectWallet, favoriteTrader, selectTrader } from "../../helpers/test-utils";
+import { baseUrl, connectWallet, favoriteTrader, resetTraders, selectTrader } from "../../helpers/test-utils";
 
 describe("Traders API Integration Tests (Simple)", () => {
   beforeAll(async () => {
@@ -108,7 +108,7 @@ describe("Traders API Integration Tests (Simple)", () => {
 
     const selectData = await selectTrader(testWallet, targetWallet, true);
 
-    console.log(selectData);
+    //console.log(selectData);
 
     expect(selectData.success).toBe(true);
     expect(selectData.follower_address).toBe(testWallet.address);

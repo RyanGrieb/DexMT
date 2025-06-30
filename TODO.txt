@@ -1,9 +1,8 @@
-* Set up the web-ui for tests..?
+* Saving changes inside hono should restart the server inside our Test containers running from test:env:start.
 
-* Write tests for:
--  Create a fake position for an address
-    - Check if we properly mirror the position
-- 
+* Create a trader_options table (Contains copy-trade settings associated with walletAddr)
+
+* Set up the web-ui for tests..?
 
 * Display copied positions in copied-positions.tsx
 

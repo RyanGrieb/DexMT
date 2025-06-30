@@ -4,7 +4,7 @@ import { expect } from "vitest";
 export const baseUrl = "http://localhost:8788";
 export const chainId = "0xa4b1"; // Arbitrum One
 
-export async function getOpenPositions(wallet: HDNodeWallet) {
+export async function getPositions(wallet: HDNodeWallet) {
   const response = await fetch(`${baseUrl}/api/traders/positions?walletAddr=${wallet.address}`, {
     method: "GET",
     headers: { "Content-Type": "application/json" },

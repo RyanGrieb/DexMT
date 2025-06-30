@@ -39,6 +39,35 @@ function ensureLogsDirectory() {
   }
 }
 
+function ensureAddressDirectory() {
+  // Create the 'address' directory inside the logs directory
+  if (!fs.existsSync(path.join(logsDir, "address"))) {
+    fs.mkdirSync(path.join(logsDir, "address"), { recursive: true });
+  }
+}
+
+function logAddress(address: string, message: string, lvl: "info" | "error" | "warn" | "debug" = "info") {
+  ensureLogsDirectory();
+  ensureAddressDirectory();
+
+  const addressLogFilePath = path.join(logsDir, "address", `${address}.log`);
+  const level = lvl.toUpperCase();
+  try {
+    // debug where we're writing
+    //console.debug(`Writing log entry to ${addressLogFilePath}`);
+
+    const logEntry = `[${getFormattedDate()}] [${level}] ${message}\n`;
+
+    // append with encoding option object
+    fs.appendFileSync(addressLogFilePath, logEntry, { encoding: "utf8" });
+
+    console.log(`${level}: ${message}`);
+  } catch (error) {
+    console.error("Failed to write to address log file:", error);
+    console.log(`${level}: ${message}`);
+  }
+}
+
 function logOutput(message: string, lvl: "info" | "error" | "warn" | "debug" = "info") {
   const level = lvl.toUpperCase();
   try {
@@ -188,6 +217,7 @@ const utils = {
   generateIconColor,
   validateTimestamp,
   logOutput,
+  logAddress,
   clearOldLogs,
   isValidAddress,
   isValidChainId,

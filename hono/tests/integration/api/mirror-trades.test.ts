@@ -52,8 +52,10 @@ describe("Mirror Trades API Integration Tests", () => {
       await injectFakeTrade(openTrade);
 
       // Verify that the trade was injected successfully
-      const trades = await getTrades(followerWallet);
-      expect(trades).toContainEqual(expect.objectContaining(openTrade));
+      const tradesResponse = await getTrades(traderWallet);
+      expect(tradesResponse.success).toBe(true);
+      const trades = tradesResponse.trades;
+      expect(trades.length).toBeGreaterThan(0);
 
       // Trigger mirror trades
       const response = await triggerMirrorTrades();

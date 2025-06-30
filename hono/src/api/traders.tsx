@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import database from "../database";
 import scheduler from "../scheduler";
 import schemas from "../schemas";
+import { Trader } from "../types/trader";
 import utils from "../utils";
 
 async function init(app: Hono) {
@@ -35,6 +36,58 @@ async function init(app: Hono) {
       } catch (error) {
         console.error("Error fetching favorite traders:", error);
         return c.json({ error: "Failed to fetch favorite traders" }, 500);
+      }
+    }
+  );
+
+  app.get(
+    "/api/traders/positions",
+    zValidator("query", schemas.FavoritesOfWallet, (result, c) => {
+      if (!result.success) {
+        return c.json({ error: result.error.message }, 400);
+      }
+    }),
+    async (c) => {
+      const { walletAddr } = c.req.valid("query");
+      try {
+        const trader = await Trader.fromAddress({ address: walletAddr, fromDb: true });
+
+        if (!trader) {
+          return c.json({ success: false, positions: [] }, 200);
+        }
+
+        const positions = await trader.getPositions();
+
+        return c.json({ success: true, positions: positions }, 200);
+      } catch (error) {
+        console.error("Error fetching open positions:", error);
+        return c.json({ error: "Failed to fetch open positions" }, 500);
+      }
+    }
+  );
+
+  app.get(
+    "/api/traders/trades",
+    zValidator("query", schemas.FavoritesOfWallet, (result, c) => {
+      if (!result.success) {
+        return c.json({ error: result.error.message }, 400);
+      }
+    }),
+    async (c) => {
+      const { walletAddr } = c.req.valid("query");
+      try {
+        const trader = await Trader.fromAddress({ address: walletAddr, fromDb: true });
+
+        if (!trader) {
+          return c.json({ success: false, trades: [] }, 200);
+        }
+
+        const trades = await trader.getTrades({ fromDb: true });
+
+        return c.json({ success: true, trades: trades }, 200);
+      } catch (error) {
+        console.error("Error fetching open positions:", error);
+        return c.json({ error: "Failed to fetch open positions" }, 500);
       }
     }
   );

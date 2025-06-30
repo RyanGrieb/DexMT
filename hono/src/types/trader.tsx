@@ -136,6 +136,9 @@ export class Trader {
   async closePosition(position: DEXPosition): Promise<void> {
     //await gmxSdk.closePosition(position);
     await database.closePositions(position);
+
+    utils.logAddress(this.address, `Closed position: ${JSON.stringify(position)} on market ${position.marketAddress}`);
+    utils.logOutput(`Closed position for ${this.address} on market ${position.marketAddress}`);
   }
 
   async createPosition(trade: DEXTradeAction): Promise<DEXPosition | undefined> {
@@ -144,10 +147,14 @@ export class Trader {
 
     if (!newPosition) {
       utils.logOutput(`Failed to create position for ${this.address} on market ${trade.marketName}`);
+      utils.logAddress(this.address, `Failed to create position on market ${trade.marketName}`);
       return;
     }
 
     await database.createPositions(newPosition);
+
+    utils.logAddress(this.address, `Created position: ${JSON.stringify(newPosition)} on market ${trade.marketName}`);
+    utils.logOutput(`Created position for ${this.address} on market ${trade.marketName}`);
 
     return newPosition;
   }
@@ -264,6 +271,8 @@ export class Trader {
             orderType: dbTrade.order_type,
             traderAddr: dbTrade.trader_address,
             marketAddr: dbTrade.market_address,
+            longTokenAddress: dbTrade.long_token_address,
+            shortTokenAddress: dbTrade.short_token_address,
             isLong: dbTrade.is_long,
             marketName: dbTrade.market_name,
             tokenName: dbTrade.token_name,
