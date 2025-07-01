@@ -15,7 +15,8 @@
     "test:all": "../bash-scripts/test-runner.sh",
     "test:all:quick": "npm run test:unit && npm run test:integration",
     "lint": "eslint src tests --ext .ts,.tsx",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "compile:backend": "tsc --noEmit --project tsconfig.json"
   },
   "dependencies": {
     "@gmx-io/sdk": "^1.1.1",
@@ -25,16 +26,17 @@
     "@metamask/providers": "^22.1.0",
     "ethers": "^6.14.4",
     "hono": "^4.0.0",
+    "json-with-bigint": "^3.4.4",
     "kysely": "^0.28.2",
     "pg": "^8.11.3",
     "puppeteer": "^24.0.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.40.0",
     "@types/node": "^22.15.30",
     "@types/pg": "^8.10.9",
     "@types/react": "^19.1.8",
     "@types/supertest": "^6.0.0",
-    "@playwright/test": "^1.40.0",
     "@vitest/coverage-v8": "^1.0.0",
     "concurrently": "^8.2.2",
     "eslint": "^8.0.0",

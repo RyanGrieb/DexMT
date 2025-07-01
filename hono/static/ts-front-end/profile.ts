@@ -1,4 +1,5 @@
 import { ethers } from "ethers";
+import { JSONStringify } from "json-with-bigint";
 import { getWalletAddr, provider } from "./metamask";
 import utils from "./utils";
 
@@ -116,7 +117,7 @@ async function favoriteTrader(favoriteAddr: string, favorite: boolean): Promise<
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
+      body: JSONStringify({
         walletAddr: walletAddr,
         traderAddr: favoriteAddr,
         signature,

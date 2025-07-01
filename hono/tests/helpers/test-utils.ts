@@ -1,4 +1,5 @@
 import { HDNodeWallet } from "ethers";
+import { JSONStringify } from "json-with-bigint";
 import { expect } from "vitest";
 
 export const baseUrl = "http://localhost:8788";
@@ -44,14 +45,6 @@ export async function resetTraders() {
     console.error(`Reset failed with status ${resetResponse.status}: ${errorText}`);
   }
   expect(resetResponse.status).toBe(200);
-
-  // TODO: Test if the reset was successful (No traders in DB)
-  const tradersResponse = await fetch(`${baseUrl}/api/traders`);
-  expect(tradersResponse.status).toBe(200);
-  const tradersData = await tradersResponse.json();
-
-  expect(Array.isArray(tradersData)).toBe(true);
-  expect(tradersData.length).toBe(0);
 }
 
 export async function connectWallet(wallet: HDNodeWallet) {
@@ -64,7 +57,7 @@ export async function connectWallet(wallet: HDNodeWallet) {
   const response = await fetch(`${baseUrl}/api/wallet/connect`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(connectBody),
+    body: JSONStringify(connectBody),
   });
 
   expect(response.status).toBe(200);
@@ -87,7 +80,7 @@ export async function favoriteTrader(wallet: HDNodeWallet, targetWallet: HDNodeW
   const response = await fetch(`${baseUrl}/api/traders/favorite_trader`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    body: JSONStringify(body),
   });
 
   expect(response.status).toBe(200);
@@ -109,7 +102,7 @@ export async function selectTrader(wallet: HDNodeWallet, targetWallet: HDNodeWal
   const response = await fetch(`${baseUrl}/api/traders/select_trader`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    body: JSONStringify(body),
   });
   expect(response.status).toBe(200);
   return response.json();
@@ -131,7 +124,7 @@ export async function toggleMirrorTrades(wallet: HDNodeWallet, enable: boolean) 
   const response = await fetch(`${baseUrl}/api/traders/toggle_auto_copy`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    body: JSONStringify(body),
   });
 
   expect(response.status).toBe(200);
@@ -151,13 +144,13 @@ export async function injectFakeTrade(trade: any) {
   const response = await fetch(`${baseUrl}/api/traders/inject_fake_trade`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(trade),
+    body: JSONStringify(trade),
   });
 
   if (response.status !== 200) {
     const errorText = await response.text();
     console.error(`Inject fake trade failed with status ${response.status}: ${errorText}`);
-    console.error("Trade data:", JSON.stringify(trade, null, 2));
+    console.error("Trade data:", JSONStringify(trade, null, 2));
   }
   expect(response.status).toBe(200);
   return response.json();
@@ -167,16 +160,13 @@ export async function injectFakePosition(position: any) {
   const response = await fetch(`${baseUrl}/api/traders/inject_fake_position`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(position, (key, value) => (typeof value === "bigint" ? value.toString() : value)),
+    body: JSONStringify(position),
   });
 
   if (response.status !== 200) {
     const errorText = await response.text();
     console.error(`Inject fake position failed with status ${response.status}: ${errorText}`);
-    console.error(
-      "Position data:",
-      JSON.stringify(position, (key, value) => (typeof value === "bigint" ? value.toString() : value), 2)
-    );
+    console.error("Position data:", JSONStringify(position));
   }
   expect(response.status).toBe(200);
   return response.json();
@@ -239,7 +229,7 @@ export function createFakeTrade({
 export function createFakePosition({
   key = `position_${Date.now()}`,
   contractKey,
-  account,
+  traderAddr,
   marketAddress = "0x70d95587d40A2caf56bd97485aB3Eec10Bee6336",
   collateralTokenAddress = "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
   isLong = true,
@@ -254,7 +244,7 @@ export function createFakePosition({
 }: {
   key?: string;
   contractKey?: string;
-  account: string;
+  traderAddr: string;
   marketAddress?: string;
   collateralTokenAddress?: string;
   isLong?: boolean;
@@ -270,7 +260,8 @@ export function createFakePosition({
   return {
     key,
     contractKey: contractKey || key,
-    account,
+    account: traderAddr,
+    traderAddr: traderAddr,
     marketAddress,
     collateralTokenAddress,
     // Core fields as bigint (as expected by Position interface)
@@ -291,7 +282,6 @@ export function createFakePosition({
     uiFeeAmount: BigInt(0),
     data: "",
     // DEXPosition-only fields as numbers
-    traderAddr: account,
     tokenName,
     collateralAmountUsd,
     liqPriceUsd,

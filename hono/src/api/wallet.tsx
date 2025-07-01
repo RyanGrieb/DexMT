@@ -1,10 +1,11 @@
 import { zValidator } from "@hono/zod-validator";
 import { ethers } from "ethers";
 import { Hono } from "hono";
+import { JSONStringify } from "json-with-bigint";
 import db from "../database";
 import schemas from "../schemas";
 import { Trader } from "../types/trader";
-import utils from "../utils";
+import log from "../utils/logs";
 
 interface ConnectedWallet {
   address: string;
@@ -40,7 +41,7 @@ async function init(app: Hono) {
     });
     await db.addTrader(trader);
 
-    utils.logOutput(`Wallet connected: ${walletAddr} on chain ${chainId}`);
+    log.output(`Wallet connected: ${walletAddr} on chain ${chainId}`);
 
     return c.json({ success: true, message: "Wallet registered" });
   });
@@ -51,7 +52,7 @@ async function init(app: Hono) {
 
     connectedWallets = connectedWallets.filter((w) => w.address !== walletAddr);
 
-    utils.logOutput(`Wallet disconnected: ${walletAddr}`);
+    log.output(`Wallet disconnected: ${walletAddr}`);
     return c.json({ success: true, message: "Wallet disconnected" });
   });
 
@@ -68,7 +69,7 @@ async function getEthBalance(address: string, rpcUrl: string): Promise<string> {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
+      body: JSONStringify({
         jsonrpc: "2.0",
         method: "eth_getBalance",
         params: [address, "latest"],

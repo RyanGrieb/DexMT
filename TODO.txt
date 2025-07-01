@@ -1,6 +1,11 @@
-* Saving changes inside hono should restart the server inside our Test containers running from test:env:start.
+* Give claude and co-pilot context by default
+    - Location of logfiles
+    - Commands to run tests
+    - Command to compile backend
 
 * Create a trader_options table (Contains copy-trade settings associated with walletAddr)
+
+* Have our github action test if our backend compiles
 
 * Set up the web-ui for tests..?
 

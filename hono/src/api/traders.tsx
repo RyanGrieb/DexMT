@@ -4,7 +4,7 @@ import database from "../database";
 import scheduler from "../scheduler";
 import schemas from "../schemas";
 import { Trader } from "../types/trader";
-import utils from "../utils";
+import log from "../utils/logs";
 
 async function init(app: Hono) {
   // API endpoint to get users from database with all trading data
@@ -96,7 +96,8 @@ async function init(app: Hono) {
   app.post("/api/traders/reset", async (c) => {
     try {
       await database.resetTraders();
-      utils.logOutput("Traders reset successfully");
+      log.resetTraderLogs();
+      log.output("Traders reset successfully");
       return c.json({ success: true }, 200);
     } catch (error) {
       console.error("Error resetting traders:", error);
@@ -146,13 +147,13 @@ async function init(app: Hono) {
   // FIXME: Check for the testing environment variable, this is only for testing purposes
   app.post("/api/traders/trigger_mirror_trades", async (c) => {
     try {
-      utils.logOutput("Manually triggering mirror trades for testing...");
+      log.output("Manually triggering mirror trades for testing...");
 
       // Trigger both functions that the scheduler normally calls
       await scheduler.updateOpenPositions();
       await scheduler.updateTradeHistory();
 
-      utils.logOutput("Mirror trades triggered successfully");
+      log.output("Mirror trades triggered successfully");
       return c.json(
         {
           success: true,
@@ -179,7 +180,7 @@ async function init(app: Hono) {
         const trade = c.req.valid("json");
         await database.insertTrades([trade]);
 
-        utils.logOutput(`Injected fake trade: ${trade.id} for ${trade.traderAddr}`);
+        log.output(`Injected fake trade: ${trade.id} for ${trade.traderAddr}`);
         return c.json(
           {
             success: true,
@@ -200,18 +201,18 @@ async function init(app: Hono) {
     "/api/traders/inject_fake_position",
     zValidator("json", schemas.injectFakePosition, (result, c) => {
       if (!result.success) {
-        utils.logOutput(`Position validation failed: ${result.error.message}`, "error");
+        log.output(`Position validation failed: ${result.error.message}`, "error");
         return c.json({ error: result.error.message }, 400);
       }
     }),
     async (c) => {
       try {
         const position = c.req.valid("json");
-        utils.logOutput(`Attempting to inject position with key: ${position.key} for trader: ${position.traderAddr}`);
+        log.output(`Attempting to inject position with key: ${position.key} for trader: ${position.traderAddr}`);
 
         await database.createPositions([position]);
 
-        utils.logOutput(`Injected fake position: ${position.key} for ${position.traderAddr}`);
+        log.output(`Injected fake position: ${position.key} for ${position.traderAddr}`);
         return c.json(
           {
             success: true,
@@ -228,14 +229,14 @@ async function init(app: Hono) {
           200
         );
       } catch (error) {
+        log.error(error);
         const errorMessage = error instanceof Error ? error.message : String(error);
         const errorStack = error instanceof Error ? error.stack : String(error);
-        utils.logOutput(`Error injecting fake position: ${errorMessage}`, "error");
-        utils.logOutput(`Error stack: ${errorStack}`, "error");
+
         return c.json(
           {
             error: "Failed to inject fake position",
-            details: errorMessage,
+            details: `${errorMessage}${errorStack ? `\nStack trace:\n${errorStack}` : ""}`,
           },
           500
         );

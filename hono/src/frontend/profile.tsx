@@ -1,7 +1,8 @@
 import { html } from "hono/html";
 import database from "../database";
 import { DEXOrderType, DEXPosition, DEXTradeAction, Trader } from "../types/trader";
-import utils from "../utils";
+import log from "../utils/logs";
+import utils from "../utils/utils";
 
 export async function renderTraderProfile({
   traderAddress,
@@ -18,7 +19,7 @@ export async function renderTraderProfile({
 
     if (!trader) {
       // If trader not found in database, try to fetch from GMX SDK.
-      utils.logOutput(`Trader profile not found in database, searching with address: ${traderAddress}`);
+      log.output(`Trader profile not found in database, searching with address: ${traderAddress}`);
       trader = await Trader.fromAddress({ address: traderAddress, fromDb: false });
       // Save the trader to the database if found
       if (trader) {

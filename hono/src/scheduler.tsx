@@ -1,6 +1,6 @@
 import database from "./database";
-import scraper from "./scraper";
 import { DEXTradeAction } from "./types/trader";
+import scraper from "./utils/scraper";
 
 const UPDATE_USERS_ON_START = false;
 

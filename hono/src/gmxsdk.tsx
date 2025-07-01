@@ -3,7 +3,7 @@ import { MarketsInfoData } from "@gmx-io/sdk/types/markets";
 import { Position, PositionsData } from "@gmx-io/sdk/types/positions";
 import { TokensData } from "@gmx-io/sdk/types/tokens";
 import { DEXPosition, DEXTradeAction, Trader } from "./types/trader";
-import utils from "./utils";
+import log from "./utils/logs";
 
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
 const USE_GMX_TESTNET = false; // Set to true to use Arbitrum Goerli testnet
@@ -320,12 +320,12 @@ async function createPosition(trader: Trader, trade: DEXTradeAction): Promise<DE
   const { marketsInfoData, tokensData } = await getMarketsInfoCached();
 
   if (!marketsInfoData) {
-    utils.logOutput(`Error: marketsInfoData is undefined for trader ${trader.address}`, "error");
+    log.output(`Error: marketsInfoData is undefined for trader ${trader.address}`, "error");
     return;
   }
 
   if (!tokensData) {
-    utils.logOutput(`Error: tokensData is undefined for trader ${trader.address}`, "error");
+    log.output(`Error: tokensData is undefined for trader ${trader.address}`, "error");
     return;
   }
   sdk.setAccount(trader.address as `0x${string}`);
@@ -333,7 +333,7 @@ async function createPosition(trader: Trader, trade: DEXTradeAction): Promise<DE
   try {
   } catch (error) {
     console.error("Error creating position:", error);
-    utils.logOutput(`Error creating position for trader ${trader.address}: ${error}`, "error");
+    log.output(`Error creating position for trader ${trader.address}: ${error}`, "error");
   }
 }
 

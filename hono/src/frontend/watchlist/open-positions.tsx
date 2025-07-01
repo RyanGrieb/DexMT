@@ -1,6 +1,6 @@
 import { html, raw } from "hono/html";
 import { DEXOrderType, DEXPosition, DEXTradeAction, Trader } from "../../types/trader";
-import utils from "../../utils";
+import utils from "../../utils/utils";
 
 /*
  * Render all open positions from selected traders with their associated trades

@@ -1,4 +1,5 @@
 import { ethers } from "ethers";
+import { JSONStringify } from "json-with-bigint";
 import { getWalletAddr, provider } from "../metamask";
 import profile from "../profile";
 import router from "../router";
@@ -98,7 +99,7 @@ async function handleMirrorToggle(toggle: HTMLInputElement) {
     const res = await fetch("/api/traders/toggle_auto_copy", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+      body: JSONStringify({
         walletAddr: walletAddr,
         message: msg,
         signature: sig,
@@ -206,7 +207,7 @@ async function handleSelect(button: HTMLButtonElement, selected: boolean) {
     const res = await fetch("/api/traders/select_trader", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+      body: JSONStringify({
         walletAddr: walletAddr,
         traderAddr: traderAddr,
         signature: sig,
@@ -271,7 +272,7 @@ async function handleUnselect(button: HTMLButtonElement) {
     const res = await fetch(`/api/traders/${walletAddr}/unselect_traders`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+      body: JSONStringify({
         traderAddresses: [copyAddr],
         signature: sig,
         message: msg,

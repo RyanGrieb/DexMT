@@ -9,7 +9,7 @@ import { renderLeaderboard } from "./frontend/leaderboard";
 import { renderTraderProfile } from "./frontend/profile";
 import { renderWatchlist } from "./frontend/watchlist/watchlist";
 import scheduler from "./scheduler";
-import utils from "./utils";
+import log from "./utils/logs";
 
 const app = new Hono();
 const startTime = Date.now();
@@ -179,8 +179,8 @@ async function startup() {
     port,
   });
 
-  utils.logOutput(`Server started on port ${port}`);
-  utils.clearOldLogs(5);
+  log.output(`Server started on port ${port}`);
+  log.clearOldLogs(5);
 }
 
 startup().catch(console.error);

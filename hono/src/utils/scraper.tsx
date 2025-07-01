@@ -1,5 +1,5 @@
 import puppeteer from "puppeteer";
-import { Trader } from "./types/trader";
+import { Trader } from "../types/trader";
 
 /**
  * Fetch top traders for a given platform.
@@ -208,7 +208,7 @@ async function getTopTraders(opts: { platform: string; limit: number }): Promise
       };
     });
 
-    //console.log("Debug info from page:", JSON.stringify(debugInfo, null, 2));
+    //console.log("Debug info from page:", JSONStringify(debugInfo, null, 2));
 
     // Extract the top traders data and convert to Trader objects
     const users = await page.evaluate((maxUsers) => {

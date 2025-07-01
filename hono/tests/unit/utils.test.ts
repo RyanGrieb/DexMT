@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import utils from "../../src/utils";
+import utils from "../../src/utils/utils";
 
 // Test utility functions that don't require external dependencies
 describe("Utility Functions", () => {

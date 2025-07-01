@@ -1,5 +1,5 @@
 import { html } from "hono/html";
-import utils from "../../utils";
+import utils from "../../utils/utils";
 
 export function renderFavoritedTraders(traders: any[], userAddress: string, selectedAddresses: Set<string>) {
   if (traders.length === 0) {

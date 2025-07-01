@@ -14,18 +14,18 @@ import {
   triggerMirrorTrades,
 } from "../../helpers/test-utils";
 
+// This test suite focuses on the Mirror Trades API integration tests
+// Please note that these are run sequentially to avoid
 describe("Mirror Trades API Integration Tests", () => {
   beforeAll(async () => {
-    // Reset traders before running tests
     await new Promise((resolve) => setTimeout(resolve, 500));
   });
 
   beforeEach(async () => {
-    // Add a small delay between tests for isolation
     await new Promise((resolve) => setTimeout(resolve, 100));
   });
 
-  describe("Position Opening Tests (MarketIncrease)", () => {
+  describe("Position Opening Tests (MarketIncrease)", async () => {
     test("should open new position when MarketIncrease trade has no existing position", async () => {
       await resetTraders();
 
@@ -80,7 +80,7 @@ describe("Mirror Trades API Integration Tests", () => {
 
       // First, inject an existing position for the follower
       const existingPosition = createFakePosition({
-        account: followerWallet.address,
+        traderAddr: followerWallet.address,
         isLong: true,
         sizeUsd: 1000,
       });
@@ -157,7 +157,7 @@ describe("Mirror Trades API Integration Tests", () => {
 
       // First, inject an existing position for the follower
       const existingPosition = createFakePosition({
-        account: followerWallet.address,
+        traderAddr: followerWallet.address,
         isLong: true,
         sizeUsd: 1000,
       });
@@ -198,7 +198,7 @@ describe("Mirror Trades API Integration Tests", () => {
 
       // First, inject an existing position for the follower
       const existingPosition = createFakePosition({
-        account: followerWallet.address,
+        traderAddr: followerWallet.address,
         isLong: true,
         sizeUsd: 1000,
       });
@@ -287,7 +287,7 @@ describe("Mirror Trades API Integration Tests", () => {
 
       // First, inject an existing position for the follower
       const existingPosition = createFakePosition({
-        account: followerWallet.address,
+        traderAddr: followerWallet.address,
         isLong: true,
         sizeUsd: 1000,
         collateralAmountUsd: 200,

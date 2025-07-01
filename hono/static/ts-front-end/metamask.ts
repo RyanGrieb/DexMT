@@ -1,6 +1,7 @@
 import detectEthereumProvider from "@metamask/detect-provider";
 import type { MetaMaskInpageProvider } from "@metamask/providers";
 import { ethers } from "ethers";
+import { JSONStringify } from "json-with-bigint";
 
 // Define MetaMask-specific interfaces in this file
 export interface ArbitrumNetwork {
@@ -140,7 +141,7 @@ export async function connectWallet(): Promise<void> {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
+      body: JSONStringify({
         walletAddr: provider.selectedAddress,
         chainId: provider.chainId,
       }),
@@ -218,7 +219,7 @@ export async function disconnectWallet(): Promise<void> {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
+          body: JSONStringify({
             walletAddr: provider.selectedAddress,
           }),
         });

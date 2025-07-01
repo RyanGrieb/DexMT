@@ -1,7 +1,7 @@
 import { html } from "hono/html";
 import database from "../database";
 import { Trader } from "../types/trader";
-import utils from "../utils";
+import utils from "../utils/utils";
 
 export async function renderLeaderboard(): Promise<string> {
   try {

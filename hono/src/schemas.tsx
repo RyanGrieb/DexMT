@@ -1,7 +1,7 @@
 import { ethers } from "ethers";
 import { z } from "zod";
 import wallet from "./api/wallet";
-import utils from "./utils";
+import utils from "./utils/utils";
 
 function defineValidWalletAddr() {
   return z
@@ -146,51 +146,21 @@ const injectFakePosition = z.object({
   traderAddr: defineValidWalletAddr(),
   marketAddress: z.string(),
   collateralTokenAddress: z.string(),
-  sizeInUsd: z.union([z.bigint(), z.string()]).transform((val) => (typeof val === "string" ? BigInt(val) : val)),
-  sizeInTokens: z.union([z.bigint(), z.string()]).transform((val) => (typeof val === "string" ? BigInt(val) : val)),
-  collateralAmount: z.union([z.bigint(), z.string()]).transform((val) => (typeof val === "string" ? BigInt(val) : val)),
-  pendingBorrowingFeesUsd: z
-    .union([z.bigint(), z.string()])
-    .transform((val) => (typeof val === "string" ? BigInt(val) : val))
-    .default(BigInt(0)),
-  increasedAtTime: z
-    .union([z.bigint(), z.string()])
-    .transform((val) => (typeof val === "string" ? BigInt(val) : val))
-    .default(BigInt(Date.now())),
-  decreasedAtTime: z
-    .union([z.bigint(), z.string()])
-    .transform((val) => (typeof val === "string" ? BigInt(val) : val))
-    .default(BigInt(0)),
+  sizeInUsd: z.number().transform(BigInt),
+  sizeInTokens: z.number().transform(BigInt),
+  collateralAmount: z.number().transform(BigInt),
+  pendingBorrowingFeesUsd: z.number().transform(BigInt).default(0),
+  increasedAtTime: z.number().transform(BigInt).default(Date.now()),
+  decreasedAtTime: z.number().transform(BigInt).default(0),
   isLong: z.boolean(),
-  fundingFeeAmount: z
-    .union([z.bigint(), z.string()])
-    .transform((val) => (typeof val === "string" ? BigInt(val) : val))
-    .default(BigInt(0)),
-  claimableLongTokenAmount: z
-    .union([z.bigint(), z.string()])
-    .transform((val) => (typeof val === "string" ? BigInt(val) : val))
-    .default(BigInt(0)),
-  claimableShortTokenAmount: z
-    .union([z.bigint(), z.string()])
-    .transform((val) => (typeof val === "string" ? BigInt(val) : val))
-    .default(BigInt(0)),
+  fundingFeeAmount: z.number().transform(BigInt).default(0),
+  claimableLongTokenAmount: z.number().transform(BigInt).default(0),
+  claimableShortTokenAmount: z.number().transform(BigInt).default(0),
   isOpening: z.boolean().default(false),
-  pnl: z
-    .union([z.bigint(), z.string()])
-    .transform((val) => (typeof val === "string" ? BigInt(val) : val))
-    .default(BigInt(0)),
-  positionFeeAmount: z
-    .union([z.bigint(), z.string()])
-    .transform((val) => (typeof val === "string" ? BigInt(val) : val))
-    .default(BigInt(0)),
-  traderDiscountAmount: z
-    .union([z.bigint(), z.string()])
-    .transform((val) => (typeof val === "string" ? BigInt(val) : val))
-    .default(BigInt(0)),
-  uiFeeAmount: z
-    .union([z.bigint(), z.string()])
-    .transform((val) => (typeof val === "string" ? BigInt(val) : val))
-    .default(BigInt(0)),
+  pnl: z.number().transform(BigInt).default(0),
+  positionFeeAmount: z.number().transform(BigInt).default(0),
+  traderDiscountAmount: z.number().transform(BigInt).default(0),
+  uiFeeAmount: z.number().transform(BigInt).default(0),
   data: z.string().default(""),
   tokenName: z.string(),
   collateralAmountUsd: z.number(),

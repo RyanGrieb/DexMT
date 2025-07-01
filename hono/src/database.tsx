@@ -1,9 +1,10 @@
+import { JSONStringify } from "json-with-bigint";
 import { Kysely, PostgresDialect, sql } from "kysely";
 import { Pool } from "pg";
 import wallet from "./api/wallet";
 import { Database } from "./types/dbtypes";
 import { DEXPosition, DEXTradeAction, Trader } from "./types/trader";
-import utils from "./utils";
+import log from "./utils/logs";
 
 // PostgreSQL connection
 const getDbHost = () => {
@@ -292,7 +293,7 @@ async function updateTraders(traders: Trader[]): Promise<void> {
 
 async function addTrader(trader: Trader) {
   if (!db) {
-    utils.logOutput("Database not initialized. Call initializeDatabase first.");
+    log.output("Database not initialized. Call initializeDatabase first.");
     throw new Error("Database not initialized. Call initializeDatabase first.");
   }
 
@@ -314,10 +315,10 @@ async function addTrader(trader: Trader) {
       )
       .execute();
 
-    utils.logOutput(`User added/updated in database: ${trader.address}`);
+    log.output(`User added/updated in database: ${trader.address}`);
   } catch (error) {
     console.error("Error adding user to database:", error);
-    utils.logOutput(`Error adding user to database: ${error}`);
+    log.output(`Error adding user to database: ${error}`);
   }
 }
 
@@ -350,6 +351,7 @@ async function favoriteTrader(args: {
       .execute();
 
     console.log(`Trader favorited: ${favoriteAddr} by copier: ${followerAddr}`);
+    log.address(followerAddr, `Favorited trader: ${favoriteAddr}`);
   } catch (error) {
     console.error("Error favoriting trader:", error);
   }
@@ -379,6 +381,7 @@ async function unfavoriteTrader(args: {
       .execute();
 
     console.log(`Trader unfavorited: ${favoriteAddr} by user: ${followerAddr}`);
+    log.address(followerAddr, `Unfavorited trader: ${favoriteAddr}`);
   } catch (error) {
     console.error("Error unfavoriting trader:", error);
     throw error;
@@ -416,6 +419,7 @@ async function selectTraders(args: {
     });
 
     console.log(`Traders ${selected ? "selected" : "deselected"}: ${traderAddresses.join(", ")} by ${followerAddr}`);
+    log.address(followerAddr, `Traders ${selected ? "selected" : "deselected"}: ${traderAddresses.join(", ")}`);
   } catch (error) {
     console.error("Error selecting traders:", error);
     throw error;
@@ -440,9 +444,11 @@ async function mirrorTrades(args: { address: string; enable: boolean }) {
       .where("address", "=", address)
       .execute();
   } catch (error) {
-    console.error("Error updating trader mirroring status:", error);
+    log.error(error);
     throw error;
   }
+
+  log.address(address, `Mirroring trades ${enable ? "enabled" : "disabled"}`);
 }
 
 async function getTraders(selection_args?: {
@@ -599,7 +605,7 @@ async function closePositions(positions: DEXPosition | DEXPosition[]) {
     return;
   }
 
-  utils.logOutput(
+  log.output(
     `Closing positions: ${positionsArr
       .map((p) => `${p.contractKey}(${p.tokenName} ${p.isLong ? "LONG" : "SHORT"})`)
       .join(", ")}`
@@ -646,13 +652,15 @@ async function closePositions(positions: DEXPosition | DEXPosition[]) {
 
         // Remove from open positions
         await trx.deleteFrom("positions").where("contract_key", "=", position.contractKey).execute();
+
+        log.address(position.traderAddr, `Position closed:\n ${JSONStringify(position)}`);
       }
     });
 
-    utils.logOutput(`Closed and removed ${positionsArr.length} positions`);
+    log.output(`Closed and removed ${positionsArr.length} positions`);
   } catch (error) {
     console.error("Error closing positions:", error);
-    utils.logOutput(`Error closing positions: ${error}`, "error");
+    log.output(`Error closing positions: ${error}`, "error");
     throw error;
   }
 }
@@ -707,10 +715,12 @@ async function createPositions(positions: DEXPosition | DEXPosition[]) {
             updated_at: sql`CURRENT_TIMESTAMP`,
           })
           .execute();
+
+        log.address(position.traderAddr, `Position created:\n ${JSONStringify(position)}`);
       }
     });
 
-    utils.logOutput(`Created ${positionsArr.length} positions`);
+    log.output(`Created ${positionsArr.length} positions`);
   } catch (error) {
     console.error("Error creating positions:", error);
     throw error;
@@ -763,6 +773,8 @@ async function updatePositions(positions: DEXPosition[]) {
           })
           .where("key", "=", position.key)
           .execute();
+
+        log.address(position.traderAddr, `Position updated:\n ${JSONStringify(position)}`);
       }
     });
 
@@ -806,6 +818,8 @@ async function insertTrades(trades: DEXTradeAction[]) {
           })
           .onConflict((oc) => oc.column("trade_id").doNothing())
           .execute();
+
+        log.address(trade.traderAddr, `Trade created:\n ${JSONStringify(trade)}`);
       }
     });
 
@@ -839,7 +853,8 @@ async function resetTraders() {
       console.log("All traders and related data reset successfully");
     } catch (error) {
       console.error("Error resetting traders:", error);
-      console.error("Error details:", JSON.stringify(error, null, 2));
+      console.error("Error details:", JSONStringify(error, null, 2));
+      log.error(error);
       throw error;
     }
   });
