@@ -95,6 +95,7 @@ async function init(app: Hono) {
   // FIXME: Check for the testing environment variable, this is only for testing purposes
   app.post("/api/traders/reset", async (c) => {
     try {
+      log.output("Resetting traders...");
       await database.resetTraders();
       log.resetTraderLogs();
       log.output("Traders reset successfully");
@@ -190,7 +191,7 @@ async function init(app: Hono) {
           200
         );
       } catch (error) {
-        console.error("Error injecting fake trade:", error);
+        log.error(error);
         return c.json({ error: "Failed to inject fake trade" }, 500);
       }
     }

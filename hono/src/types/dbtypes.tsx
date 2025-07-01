@@ -31,6 +31,7 @@ export interface TradesTable {
   trade_id: string;
   order_type: number;
   trader_address: string;
+  mirrored_trader_address: string | null;
   market_address: string;
   long_token_address: string;
   short_token_address: string;

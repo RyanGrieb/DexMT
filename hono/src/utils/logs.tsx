@@ -7,7 +7,6 @@ const logFileName = `server-${getFormattedDate()}.log`;
 const logFilePath = path.join(logsDir, logFileName);
 
 function resetTraderLogs() {
-  output("Resetting trader logs...");
   try {
     const addressDir = path.join(logsDir, "address");
     if (fs.existsSync(addressDir)) {

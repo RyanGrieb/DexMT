@@ -83,6 +83,7 @@ async function initializeDatabase() {
       .addColumn("trade_id", "varchar(255)", (col) => col.notNull().unique())
       .addColumn("order_type", "integer", (col) => col.notNull())
       .addColumn("trader_address", "varchar(42)", (col) => col.notNull())
+      .addColumn("mirrored_trader_address", "varchar(42)", (col) => col.defaultTo(null))
       .addColumn("market_address", "varchar(42)", (col) => col.notNull())
       .addColumn("long_token_address", "varchar(42)", (col) => col.notNull())
       .addColumn("short_token_address", "varchar(42)", (col) => col.notNull())
@@ -802,6 +803,7 @@ async function insertTrades(trades: DEXTradeAction[]) {
             trade_id: trade.id,
             order_type: trade.orderType,
             trader_address: trade.traderAddr,
+            mirrored_trader_address: trade.mirroredTraderAddr,
             market_address: trade.marketAddr,
             long_token_address: trade.longTokenAddress,
             short_token_address: trade.shortTokenAddress,

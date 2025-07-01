@@ -21,6 +21,7 @@ export type DEXTradeAction = {
   id: string;
   orderType: DEXOrderType;
   traderAddr: string;
+  mirroredTraderAddr?: string;
   marketAddr: string;
   longTokenAddress: string;
   shortTokenAddress: string;
@@ -183,6 +184,13 @@ export class Trader {
       return;
     }
 
+    // We need to properly assign the traderAddr and mirroredTraderAddr values when mirroring new trades
+    newTrades.forEach((trade) => {
+      const originalTraderAddr = trade.traderAddr;
+      trade.traderAddr = this.address;
+      trade.mirroredTraderAddr = originalTraderAddr;
+    });
+
     // Sort the new trades by timestamp in descending order
     newTrades.sort((a, b) => b.timestamp - a.timestamp);
 
@@ -195,7 +203,7 @@ export class Trader {
       log.address(this.address, "================================================================================");
       log.address(
         this.address,
-        `Processing [${trade.isLong ? "long" : "short"}] trade - copying ${trade.traderAddr} for ${this.address}`
+        `Processing [${trade.isLong ? "long" : "short"}] trade - copying ${trade.mirroredTraderAddr} for ${this.address}`
       );
       log.address(this.address, `Order Type: ${DEXOrderType[trade.orderType]}`);
       log.address(this.address, `Trade ID: ${trade.id}`);
@@ -267,8 +275,10 @@ export class Trader {
       return [];
     }
 
+    // Always fetch DB trades first for potential enrichment
+    const dbTrades = await database.getTrades(this.address);
+
     if (options?.fromDb) {
-      const dbTrades = await database.getTrades(this.address);
       // Map dbTrades to DEXTradeAction
       const dexTrades: DEXTradeAction[] = dbTrades.map(
         (dbTrade) =>
@@ -276,6 +286,7 @@ export class Trader {
             id: dbTrade.trade_id,
             orderType: dbTrade.order_type,
             traderAddr: dbTrade.trader_address,
+            mirroredTraderAddr: dbTrade.mirrored_trader_address,
             marketAddr: dbTrade.market_address,
             longTokenAddress: dbTrade.long_token_address,
             shortTokenAddress: dbTrade.short_token_address,
@@ -317,12 +328,8 @@ export class Trader {
 
     //console.log(`Returning ${tradeActions.length} valid trades for ${validAddress}`);
 
-    //console.log(tradeActions[4]);
-    //const filePath = path.resolve(__dirname, "tradeActions.json");
-    //fs.writeFileSync(
-    //  filePath,
-    //  JSONStringify(tradeActions[4], (_, value) => (typeof value === "bigint" ? value.toString() : value), 2)
-    // );
+    // Create lookup map from already fetched DB trades
+    const dbTradeMap = new Map(dbTrades.map((dbTrade) => [dbTrade.trade_id, dbTrade]));
 
     return tradeActions.map((trade: { [key: string]: any }) => {
       const market = "marketInfo" in trade ? trade.marketInfo.name.split(" ")[0] : "Unknown Market";
@@ -335,10 +342,14 @@ export class Trader {
       const rpnl = "pnlUsd" in trade && trade.pnlUsd ? Number(trade.pnlUsd) / 1e30 : 0;
       const orderType = sizeDeltaUsd <= 0 && trade.orderType == 2 ? DEXOrderType.Deposit : trade.orderType;
 
+      // Check if this trade exists in DB to get mirroredTraderAddr
+      const dbTrade = dbTradeMap.get(trade.id);
+
       return {
         id: trade.id,
         orderType: orderType,
         traderAddr: validAddress,
+        mirroredTraderAddr: dbTrade?.mirrored_trader_address,
         marketAddr: trade.marketAddress,
         longTokenAddress: trade.marketInfo.longTokenAddress,
         shortTokenAddress: trade.marketInfo.shortTokenAddress,

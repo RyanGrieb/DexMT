@@ -1,5 +1,5 @@
 import { Wallet } from "ethers";
-import { beforeAll, beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import {
   connectWallet,
   createFakePosition,
@@ -15,20 +15,15 @@ import {
 } from "../../helpers/test-utils";
 
 // This test suite focuses on the Mirror Trades API integration tests
-// Please note that these are run sequentially to avoid
-describe("Mirror Trades API Integration Tests", () => {
-  beforeAll(async () => {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-  });
-
+// Please note that these are run sequentially to avoid race conditions
+describe.sequential("Mirror Trades API Integration Tests", () => {
   beforeEach(async () => {
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    // Reset the traders database before running tests
+    await resetTraders();
   });
 
   describe("Position Opening Tests (MarketIncrease)", async () => {
     test("should open new position when MarketIncrease trade has no existing position", async () => {
-      await resetTraders();
-
       // Setup: Create follower and trader wallets
       const followerWallet = Wallet.createRandom();
       const traderWallet = Wallet.createRandom();
@@ -66,8 +61,6 @@ describe("Mirror Trades API Integration Tests", () => {
     });
 
     test("should increase existing position when MarketIncrease trade has existing position", async () => {
-      await resetTraders();
-
       const followerWallet = Wallet.createRandom();
       const traderWallet = Wallet.createRandom();
 
@@ -109,8 +102,6 @@ describe("Mirror Trades API Integration Tests", () => {
     });
 
     test("should take no action when MarketIncrease but conditions not met", async () => {
-      await resetTraders();
-
       const followerWallet = Wallet.createRandom();
       const traderWallet = Wallet.createRandom();
 
@@ -143,8 +134,6 @@ describe("Mirror Trades API Integration Tests", () => {
 
   describe("Position Closing Tests (MarketDecrease)", () => {
     test("should close position when MarketDecrease trade closes existing position", async () => {
-      await resetTraders();
-
       const followerWallet = Wallet.createRandom();
       const traderWallet = Wallet.createRandom();
 
@@ -184,8 +173,6 @@ describe("Mirror Trades API Integration Tests", () => {
     });
 
     test("should decrease position when MarketDecrease trade partially closes position", async () => {
-      await resetTraders();
-
       const followerWallet = Wallet.createRandom();
       const traderWallet = Wallet.createRandom();
 
@@ -225,8 +212,6 @@ describe("Mirror Trades API Integration Tests", () => {
     });
 
     test("should take no action when MarketDecrease but no existing position", async () => {
-      await resetTraders();
-
       const followerWallet = Wallet.createRandom();
       const traderWallet = Wallet.createRandom();
 
@@ -273,8 +258,6 @@ describe("Mirror Trades API Integration Tests", () => {
 
   describe("Collateral Management Tests (Deposit)", () => {
     test("should adjust collateral when Deposit trade has existing position", async () => {
-      await resetTraders();
-
       const followerWallet = Wallet.createRandom();
       const traderWallet = Wallet.createRandom();
 
@@ -316,8 +299,6 @@ describe("Mirror Trades API Integration Tests", () => {
     });
 
     test("should take no action when Deposit trade has no existing position", async () => {
-      await resetTraders();
-
       const followerWallet = Wallet.createRandom();
       const traderWallet = Wallet.createRandom();
 
@@ -351,8 +332,6 @@ describe("Mirror Trades API Integration Tests", () => {
 
   describe("Edge Cases and Error Handling", () => {
     test("should handle trades from before mirror trading was enabled (no action)", async () => {
-      await resetTraders();
-
       const followerWallet = Wallet.createRandom();
       const traderWallet = Wallet.createRandom();
 
@@ -386,8 +365,6 @@ describe("Mirror Trades API Integration Tests", () => {
     });
 
     test("should handle mirroring disabled (no processing)", async () => {
-      await resetTraders();
-
       const followerWallet = Wallet.createRandom();
       const traderWallet = Wallet.createRandom();
 

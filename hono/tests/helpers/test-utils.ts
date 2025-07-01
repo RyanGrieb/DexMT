@@ -152,8 +152,14 @@ export async function injectFakeTrade(trade: any) {
     console.error(`Inject fake trade failed with status ${response.status}: ${errorText}`);
     console.error("Trade data:", JSONStringify(trade, null, 2));
   }
+
   expect(response.status).toBe(200);
-  return response.json();
+  const responseJson = await response.json();
+  if (trade.mirroredTraderAddr) {
+    expect(responseJson.trade).toHaveProperty("mirroredTraderAddr", trade.mirroredTraderAddr);
+  }
+
+  return responseJson;
 }
 
 export async function injectFakePosition(position: any) {
@@ -164,9 +170,9 @@ export async function injectFakePosition(position: any) {
   });
 
   if (response.status !== 200) {
-    const errorText = await response.text();
-    console.error(`Inject fake position failed with status ${response.status}: ${errorText}`);
-    console.error("Position data:", JSONStringify(position));
+    //const errorText = await response.text();
+    //console.error(`Inject fake position failed with status ${response.status}: ${errorText}`);
+    //console.error("Position data:", JSONStringify(position));
   }
   expect(response.status).toBe(200);
   return response.json();
@@ -177,6 +183,7 @@ export function createFakeTrade({
   id = `trade_${Date.now()}`,
   orderType = 2, // MarketIncrease
   traderAddr,
+  mirroredTraderAddr,
   marketAddr = "0x70d95587d40A2caf56bd97485aB3Eec10Bee6336",
   longTokenAddress = "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
   shortTokenAddress = "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
@@ -193,6 +200,7 @@ export function createFakeTrade({
   id?: string;
   orderType?: number;
   traderAddr: string;
+  mirroredTraderAddr?: string;
   marketAddr?: string;
   longTokenAddress?: string;
   shortTokenAddress?: string;
@@ -210,6 +218,7 @@ export function createFakeTrade({
     id,
     orderType,
     traderAddr,
+    mirroredTraderAddr,
     marketAddr,
     longTokenAddress,
     shortTokenAddress,

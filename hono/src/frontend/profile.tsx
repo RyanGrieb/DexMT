@@ -231,6 +231,7 @@ async function renderProfileHTML({
                       <th class="header-cell trade-size">Size</th>
                       <th class="header-cell trade-price">Price</th>
                       <th class="header-cell trade-pnl">PNL</th>
+                      <th class="header-cell trade-is-mirrored">Mirrored</th>
                     </tr>
                   </thead>
                   <tbody class="trade-history-list">
@@ -307,6 +308,8 @@ function renderTrades(trades: DEXTradeAction[], timeZone: string | undefined) {
     const rawType = DEXOrderType[trade.orderType];
     const orderType = rawType.replace(/([a-z])([A-Z])/g, "$1 $2");
 
+    const iconColor = utils.generateIconColor(trade.mirroredTraderAddr ?? trade.traderAddr);
+
     // trade.timestamp comes in seconds ─ multiply by 1000 for JS Date
     const date = new Date(trade.timestamp * 1000);
     const tz = timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -328,6 +331,11 @@ function renderTrades(trades: DEXTradeAction[], timeZone: string | undefined) {
         <td class="trade-size-cell">${trade.sizeUsd.toFixed(2)}</td>
         <td class="trade-price-cell">${trade.priceUsd.toFixed(2)}</td>
         <td class="trade-pnl-cell ${pnlClass}">${trade.rpnl.toFixed(2)}</td>
+        <td class="trade-is-mirrored-cell">
+          ${trade.mirroredTraderAddr
+            ? html` <div class="trader-icon" style="background: ${iconColor}">${trade.mirroredTraderAddr}</div> `
+            : "❌"}
+        </td>
       </tr>
     `;
   });

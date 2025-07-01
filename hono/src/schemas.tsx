@@ -125,6 +125,7 @@ const injectFakeTrade = z.object({
   id: z.string(),
   orderType: z.number().int().min(0).max(9), // DEXOrderType enum values
   traderAddr: defineValidWalletAddr(),
+  mirroredTraderAddr: defineValidWalletAddr().optional(),
   marketAddr: z.string(),
   longTokenAddress: z.string(),
   shortTokenAddress: z.string(),
