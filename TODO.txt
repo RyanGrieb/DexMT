@@ -5,8 +5,6 @@
 
 * Create a trader_options table (Contains copy-trade settings associated with walletAddr)
 
-* Have our github action test if our backend compiles
-
 * Set up the web-ui for tests..?
 
 * Display copied positions in copied-positions.tsx
