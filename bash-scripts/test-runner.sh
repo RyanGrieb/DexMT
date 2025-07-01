@@ -49,4 +49,6 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+# TODO: Run end-to-end tests
+
 echo "✅ All tests passed!"

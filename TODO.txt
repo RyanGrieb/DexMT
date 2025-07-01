@@ -1,3 +1,6 @@
+* Create 'Mirrored Trades' tab for user profiles.
+    (This is important for 2e2 testing for creating, closing, and modifying trades)
+
 * Give claude and co-pilot context by default
     - Location of logfiles
     - Commands to run tests

@@ -14,6 +14,9 @@
     "test:coverage": "vitest run --coverage",
     "test:all": "npm run compile:backend && ../bash-scripts/test-runner.sh",
     "test:all:quick": "npm run compile:backend && npm run test:unit && npm run test:integration",
+    "test:e2e": "npx playwright test",
+    "test:e2e:headed": "npx playwright test --headed",
+    "test:e2e:chromium": "npx playwright test --project=chromium",
     "lint": "eslint src tests --ext .ts,.tsx",
     "typecheck": "tsc --noEmit",
     "compile:backend": "tsc --noEmit --project tsconfig.json"

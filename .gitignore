@@ -2,3 +2,5 @@
 node_modules
 logs
 hono/static/js-compiled/
+playwright-report
+test-results
