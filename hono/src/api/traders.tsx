@@ -214,6 +214,7 @@ async function init(app: Hono) {
         await database.createPositions([position]);
 
         log.output(`Injected fake position: ${position.key} for ${position.traderAddr}`);
+
         return c.json(
           {
             success: true,

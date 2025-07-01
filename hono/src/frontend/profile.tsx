@@ -1,4 +1,5 @@
 import { html } from "hono/html";
+import { JSONStringify } from "json-with-bigint";
 import database from "../database";
 import { DEXOrderType, DEXPosition, DEXTradeAction, Trader } from "../types/trader";
 import log from "../utils/logs";
@@ -30,11 +31,10 @@ export async function renderTraderProfile({
     }
 
     // Fetch positions for this trader
-    const positions = await trader.getPositions();
+    let positions = await trader.getPositions({ fromDb: true });
 
-    if (!positions) {
-      console.error("Failed to fetch positions for trader:", trader.address);
-      return renderErrorPage();
+    if (!positions || positions.length === 0) {
+      positions = await trader.getPositions({ fromDb: false });
     }
 
     // Check if this trader is favorited by the current user
@@ -55,6 +55,7 @@ export async function renderTraderProfile({
     return await renderProfileHTML({ trader, positions, isFavorited, timeZone });
   } catch (error) {
     console.error("Error rendering trader profile:", error);
+    log.error(error);
     return renderErrorPage();
   }
 }
@@ -268,6 +269,8 @@ function renderPositions(positions: DEXPosition[]) {
     // Determine side based on isLong
     const side = position.isLong ? "LONG" : "SHORT";
     const sideClass = position.isLong ? "long" : "short";
+
+    log.output(`Rendering position: ${JSONStringify(position, null, 2)}`);
 
     return html`
       <tr class="position-row">

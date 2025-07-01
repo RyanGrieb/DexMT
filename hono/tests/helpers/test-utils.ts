@@ -1,6 +1,15 @@
 import { HDNodeWallet } from "ethers";
 import { JSONStringify } from "json-with-bigint";
-import { expect } from "vitest";
+
+// Conditionally import expect based on the environment
+let expect: any;
+try {
+  // Try to import from playwright/test first (for e2e tests)
+  expect = require("@playwright/test").expect;
+} catch {
+  // Fall back to vitest (for unit/integration tests)
+  expect = require("vitest").expect;
+}
 
 export const baseUrl = "http://localhost:8788";
 export const chainId = "0xa4b1"; // Arbitrum One
@@ -99,11 +108,19 @@ export async function selectTrader(wallet: HDNodeWallet, targetWallet: HDNodeWal
     timestamp: timestamp,
     selected: selected,
   };
+
   const response = await fetch(`${baseUrl}/api/traders/select_trader`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSONStringify(body),
   });
+
+  if (response.status !== 200) {
+    const errorText = await response.text();
+    console.error(`Select trader failed with status ${response.status}: ${errorText}`);
+    console.error("Request body:", JSONStringify(body, null, 2));
+  }
+
   expect(response.status).toBe(200);
   return response.json();
 }
@@ -234,7 +251,7 @@ export function createFakeTrade({
   };
 }
 
-// Helper function to create a fake position object
+// Helper function to create a fake position object that matches the zValidator schema
 export function createFakePosition({
   key = `position_${Date.now()}`,
   contractKey,
@@ -266,31 +283,37 @@ export function createFakePosition({
   pnlUsd?: number;
   leverage?: number;
 }) {
+  // compute numeric values that will be transformed to BigInt by zValidator
+  const sizeInUsdNum = sizeUsd * 10 ** 30;
+  const sizeInTokensNum = Math.floor(sizeUsd / entryPriceUsd) * 10 ** 18;
+  const collateralAmountNum = collateralAmountUsd * 10 ** 6;
+  const now = Date.now();
+
   return {
     key,
     contractKey: contractKey || key,
     account: traderAddr,
-    traderAddr: traderAddr,
+    traderAddr,
     marketAddress,
     collateralTokenAddress,
-    // Core fields as bigint (as expected by Position interface)
-    sizeInUsd: BigInt(sizeUsd) * BigInt(10 ** 30),
-    sizeInTokens: BigInt(Math.floor(sizeUsd / entryPriceUsd)) * BigInt(10 ** 18),
-    collateralAmount: BigInt(collateralAmountUsd) * BigInt(10 ** 6),
-    pendingBorrowingFeesUsd: BigInt(0),
-    increasedAtTime: BigInt(Date.now()),
-    decreasedAtTime: BigInt(0),
+
+    sizeInUsd: sizeInUsdNum, // z.number().transform(BigInt)
+    sizeInTokens: sizeInTokensNum, // z.number().transform(BigInt)
+    collateralAmount: collateralAmountNum, // z.number().transform(BigInt)
+    pendingBorrowingFeesUsd: 0, // default
+    increasedAtTime: now, // default
+    decreasedAtTime: 0, // default
     isLong,
-    fundingFeeAmount: BigInt(0),
-    claimableLongTokenAmount: BigInt(0),
-    claimableShortTokenAmount: BigInt(0),
-    isOpening: false,
-    pnl: BigInt(pnlUsd) * BigInt(10 ** 30),
-    positionFeeAmount: BigInt(0),
-    traderDiscountAmount: BigInt(0),
-    uiFeeAmount: BigInt(0),
-    data: "",
-    // DEXPosition-only fields as numbers
+    fundingFeeAmount: 0, // default
+    claimableLongTokenAmount: 0, // default
+    claimableShortTokenAmount: 0, // default
+    isOpening: false, // default
+    pnl: pnlUsd * 10 ** 30, // z.number().transform(BigInt).default(0)
+    positionFeeAmount: 0, // default
+    traderDiscountAmount: 0, // default
+    uiFeeAmount: 0, // default
+    data: "", // default
+
     tokenName,
     collateralAmountUsd,
     liqPriceUsd,

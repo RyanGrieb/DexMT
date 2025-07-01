@@ -376,41 +376,44 @@ export class Trader {
 
     if (options?.fromDb) {
       const dbPositions = await database.getPositions(this.address);
-      const dexPositions: DEXPosition[] = dbPositions.map((position) => ({
-        // Position fields
-        key: position.key,
-        contractKey: position.contract_key,
-        account: position.trader_address,
-        marketAddress: position.market_address,
-        collateralTokenAddress: position.collateral_token_address,
-        sizeInUsd: position.size_in_usd,
-        sizeInTokens: position.size_in_tokens,
-        collateralAmount: position.collateral_amount,
-        pendingBorrowingFeesUsd: position.pending_borrowing_fees_usd,
-        increasedAtTime: position.increased_at_time,
-        decreasedAtTime: position.decreased_at_time,
-        isLong: position.is_long,
-        fundingFeeAmount: position.funding_fee_amount,
-        claimableLongTokenAmount: position.claimable_long_token_amount,
-        claimableShortTokenAmount: position.claimable_short_token_amount,
-        isOpening: position.is_opening,
-        pnl: position.pnl,
-        positionFeeAmount: position.position_fee_amount,
-        traderDiscountAmount: position.trader_discount_amount,
-        uiFeeAmount: position.ui_fee_amount,
-        data: position.data,
+      const dexPositions: DEXPosition[] = dbPositions.map(
+        (position) =>
+          ({
+            // Position fields
+            key: position.key,
+            contractKey: position.contract_key,
+            account: position.trader_address,
+            marketAddress: position.market_address,
+            collateralTokenAddress: position.collateral_token_address,
+            sizeInUsd: position.size_in_usd,
+            sizeInTokens: position.size_in_tokens,
+            collateralAmount: position.collateral_amount,
+            pendingBorrowingFeesUsd: position.pending_borrowing_fees_usd,
+            increasedAtTime: position.increased_at_time,
+            decreasedAtTime: position.decreased_at_time,
+            isLong: position.is_long,
+            fundingFeeAmount: position.funding_fee_amount,
+            claimableLongTokenAmount: position.claimable_long_token_amount,
+            claimableShortTokenAmount: position.claimable_short_token_amount,
+            isOpening: position.is_opening,
+            pnl: position.pnl,
+            positionFeeAmount: position.position_fee_amount,
+            traderDiscountAmount: position.trader_discount_amount,
+            uiFeeAmount: position.ui_fee_amount,
+            data: position.data,
 
-        // DEXPosition‐only fields
-        traderAddr: position.trader_address,
-        tokenName: position.token_name,
-        collateralAmountUsd: position.collateral_amount_usd,
-        liqPriceUsd: position.liq_price_usd,
-        entryPriceUsd: position.entry_price_usd,
-        markPriceUsd: position.mark_price_usd,
-        sizeUsd: position.size_usd,
-        pnlUsd: position.pnl_usd,
-        leverage: position.leverage,
-      }));
+            // DEXPosition‐only fields
+            traderAddr: position.trader_address,
+            tokenName: position.token_name,
+            collateralAmountUsd: position.collateral_amount_usd,
+            liqPriceUsd: Number(position.liq_price_usd),
+            entryPriceUsd: Number(position.entry_price_usd),
+            markPriceUsd: Number(position.mark_price_usd),
+            sizeUsd: position.size_usd,
+            pnlUsd: position.pnl_usd,
+            leverage: Number(position.leverage),
+          }) as DEXPosition
+      );
       return dexPositions;
     }
 

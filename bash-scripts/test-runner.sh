@@ -30,6 +30,10 @@ fi
 # Navigate back to hono directory for tests
 cd hono
 
+# Compile backend code (we mainly do this to check for compilation errors)
+echo "🔄 -------------------------------- Compiling backend code... -------------------------------- 🔄"
+npm run compile:backend
+
 # Run unit tests
 echo "🔧 --------------------------------  Running unit tests... --------------------------------  🔧"
 npm run test:unit
@@ -41,14 +45,19 @@ fi
 
 # Run integration tests
 echo "🔗 -------------------------------- Running integration tests... -------------------------------- 🔗"
-# TODO: Change this to use: "test:integration": "vitest run tests/integration",
-npx vitest run tests/integration
+npm run test:integration
 
 if [ $? -ne 0 ]; then
     echo "❌ Integration tests failed"
     exit 1
 fi
 
-# TODO: Run end-to-end tests
+echo "🔗 -------------------------------- Running end-to-end tests... -------------------------------- 🔗"
+npm run test:e2e
+
+if [ $? -ne 0 ]; then
+    echo "❌ End-to-end tests failed"
+    exit 1
+fi
 
 echo "✅ All tests passed!"

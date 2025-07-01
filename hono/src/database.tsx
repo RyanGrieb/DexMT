@@ -596,6 +596,7 @@ async function getPositions(address: string) {
     throw error;
   }
 }
+
 async function closePositions(positions: DEXPosition | DEXPosition[]) {
   if (!db) {
     throw new Error("Database not initialized. Call initializeDatabase first.");
