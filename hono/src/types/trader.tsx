@@ -293,12 +293,12 @@ export class Trader {
             isLong: dbTrade.is_long,
             marketName: dbTrade.market_name,
             tokenName: dbTrade.token_name,
-            sizeUsd: dbTrade.size_usd,
-            priceUsd: dbTrade.price_usd,
-            initialCollateralUsd: dbTrade.initial_collateral_usd,
-            sizeDeltaUsd: dbTrade.size_delta_usd,
-            rpnl: dbTrade.rpnl,
-            timestamp: dbTrade.timestamp,
+            sizeUsd: Number(dbTrade.size_usd),
+            priceUsd: Number(dbTrade.price_usd),
+            initialCollateralUsd: Number(dbTrade.initial_collateral_usd),
+            sizeDeltaUsd: Number(dbTrade.size_delta_usd),
+            rpnl: Number(dbTrade.rpnl),
+            timestamp: Number(dbTrade.timestamp),
           }) as DEXTradeAction
       );
       return dexTrades;

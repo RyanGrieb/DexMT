@@ -1,0 +1,71 @@
+# DEXMT Project Context
+
+## Architecture Overview
+DEXMT is a decentralized exchange mirror trading platform built with:
+- **Backend**: Hono.js (TypeScript) + PostgreSQL database
+- **Frontend**: Vanilla TypeScript + Modern CSS  
+- **Blockchain**: GMX SDK integration for decentralized trading
+- **DevOps**: Docker containerization with hot reloading
+- **Authentication**: MetaMask wallet integration with signature verification
+
+## Project Structure
+DEXMT-Docker/
+├── hono/                    # Main application directory
+│   ├── src/                 # TypeScript source code
+│   │   ├── api/            # API endpoints (traders, wallet)
+│   │   ├── database.tsx    # Database operations (Kysely ORM)
+│   │   ├── gmxsdk.tsx      # GMX SDK integration
+│   │   ├── scheduler.tsx   # Background tasks (position updates, trade mirroring)
+│   │   ├── types/          # TypeScript type definitions
+│   │   ├── utils/          # Utility functions
+│   │   └── logs/           # **LOG FILES LOCATION** 📋
+│   ├── static/             # Frontend assets
+│   │   └── ts-front-end/   # Frontend TypeScript code
+│   ├── tests/              # Test suites
+│   │   ├── unit/           # Unit tests
+│   │   ├── integration/    # Integration tests
+│   │   └── e2e/            # End-to-end tests (Playwright)
+│   └── package.json        # Dependencies and scripts
+├── bash-scripts/           # Utility scripts
+└── compose.yaml            # Docker configuration
+
+## Important NPM Commands (run from /hono directory)
+
+### Development
+- npm run dev - Start development server with hot reloading
+- npm run compile:backend - Check TypeScript compilation (useful for error checking)
+
+### Testing
+- npm test or npm run test:unit - Run unit tests only (fast, no Docker)
+- npm run test:integration - Run integration tests with Docker
+- npm run test:e2e - Run end-to-end tests (Playwright)
+- npm run test:all - Run complete test suite via bash script
+- npm run test:all:quick - Quick test run (assumes server running)
+
+### Docker Operations
+- docker compose up -d - Start main services (port 8787)
+- docker compose -f docker-compose.test.yml up -d - Start test environment (port 8788)
+
+## Log Files Location 📋
+**Critical for debugging**: Log files are located at /hono/src/logs/
+- server-[date].log - Main server logs
+- address/[wallet_address].log - Per-trader specific logs
+
+When debugging issues, always check these log files first!
+
+## Database
+- **Main DB**: PostgreSQL on port 5432 (database: dexmt)
+- **Test DB**: PostgreSQL on port 5433 (database: dexmt_test)
+- **Access script**: bash-scripts/open_db.sh - Opens PostgreSQL CLI
+
+## Key Files to Know
+- src/database.tsx - All database operations using Kysely ORM
+- src/api/traders.tsx - Main trader API endpoints
+- src/gmxsdk.tsx - GMX blockchain integration
+- src/scheduler.tsx - Background position updates and trade mirroring
+- tests/helpers/test-utils.ts - Testing utilities for integration tests
+
+## URLs
+- Main app: http://localhost:8787
+- Test app: http://localhost:8788
+- Health check: http://localhost:8787/health

@@ -1,8 +1,8 @@
 import { html } from "hono/html";
 
 // Helper functions (reuse from leaderboard.tsx)
-function abbreviateNumber(value: number | string): string {
-  const num = Number(value) || 0;
+function abbreviateNumber(value: number): string {
+  const num = value || 0;
   if (Math.abs(num) >= 1e9) {
     return (num / 1e9).toFixed(1).replace(/\.0$/, "") + "B";
   }

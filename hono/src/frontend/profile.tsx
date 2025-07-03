@@ -84,12 +84,20 @@ async function renderProfileHTML({
 
   // Note: volume and totalTrades are not in the Trader class, so we'll use placeholder values
   // You might need to add these to your Trader class or fetch them separately
-  const volumeFormatted = utils.abbreviateNumber("0"); // Placeholder - add volume to Trader class if needed
+  const volumeFormatted = utils.abbreviateNumber(0); // Placeholder - add volume to Trader class if needed
   const avgSizeFormatted = utils.abbreviateNumber(trader.avgSize || 0);
   const winRateFormatted = ((Number(trader.winRatio) || 0) * 100).toFixed(1);
   const avgLeverageFormatted = Number(trader.avgLeverage || 0).toFixed(1);
 
-  const trades = await trader.getTrades({ amount: 25 });
+  const SDKtrades = await trader.getTrades({ amount: 25 });
+  const DBtrades = await trader.getTrades({ amount: 25, fromDb: true });
+
+  // Compare the trades from SDK and DB and return a combination of both unique trades
+  const trades = [
+    ...SDKtrades,
+    ...DBtrades.filter((dbTrade) => !SDKtrades.some((sdkTrade) => sdkTrade.id === dbTrade.id)),
+  ];
+
   const totalTrades = trades.length;
 
   // Set up favorite button state
@@ -326,14 +334,16 @@ function renderTrades(trades: DEXTradeAction[], timeZone: string | undefined) {
       second: "2-digit",
     });
 
+    log.output(`type of trade: ${typeof trade.sizeUsd}`);
+
     return html`
       <tr class="trade-row">
         <td class="trade-action-cell">${orderType}</td>
         <td class="trade-date-cell">${formattedDate}</td>
         <td class="trade-market-cell">${trade.isLong ? "LONG" : "SHORT"} - ${trade.marketName}</td>
-        <td class="trade-size-cell">${trade.sizeUsd.toFixed(2)}</td>
-        <td class="trade-price-cell">${trade.priceUsd.toFixed(2)}</td>
-        <td class="trade-pnl-cell ${pnlClass}">${trade.rpnl.toFixed(2)}</td>
+        <td class="trade-size-cell">${utils.abbreviateNumber(trade.sizeUsd)}</td>
+        <td class="trade-price-cell">${utils.abbreviateNumber(trade.priceUsd)}</td>
+        <td class="trade-pnl-cell ${pnlClass}">${utils.abbreviateNumber(trade.rpnl)}</td>
         <td class="trade-is-mirrored-cell">
           ${trade.mirroredTraderAddr
             ? html` <div class="trader-icon" style="background: ${iconColor}">${trade.mirroredTraderAddr}</div> `
