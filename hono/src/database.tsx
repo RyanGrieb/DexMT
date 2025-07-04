@@ -80,6 +80,8 @@ async function initializeDatabase() {
       .createTable("trades")
       .ifNotExists()
       .addColumn("id", "serial", (col) => col.primaryKey())
+      .addColumn("is_fake", "boolean", (col) => col.defaultTo(false)) // Indicates position data sourced from SDK rather than real trading
+      .addColumn("is_displayed", "boolean", (col) => col.defaultTo(false)) // Indicates if the trade is displayed in the UI
       .addColumn("trade_id", "varchar(255)", (col) => col.notNull().unique())
       .addColumn("order_type", "integer", (col) => col.notNull())
       .addColumn("trader_address", "varchar(42)", (col) => col.notNull())
@@ -102,10 +104,13 @@ async function initializeDatabase() {
     console.log("Trades table created/verified");
 
     // Create positions table (now with all Position fields)
+    // Create positions table to store open trading positions
     await db.schema
       .createTable("positions")
       .ifNotExists()
       .addColumn("id", "serial", (col) => col.primaryKey())
+      .addColumn("is_fake", "boolean", (col) => col.defaultTo(false)) // Indicates position data sourced from SDK rather than real trading
+      .addColumn("is_displayed", "boolean", (col) => col.defaultTo(false)) // Indicates if the position is displayed in the UI
       .addColumn("token_name", "varchar(50)", (col) => col.notNull())
       .addColumn("collateral_amount_usd", "numeric", (col) => col.notNull())
       .addColumn("leverage", "numeric", (col) => col.notNull())
@@ -144,6 +149,8 @@ async function initializeDatabase() {
       .createTable("closed_positions")
       .ifNotExists()
       .addColumn("id", "serial", (col) => col.primaryKey())
+      .addColumn("is_fake", "boolean", (col) => col.defaultTo(false)) // Indicates position data sourced from SDK rather than real trading
+      .addColumn("is_displayed", "boolean", (col) => col.defaultTo(false)) // Indicates if the position is displayed in the UI
       .addColumn("token_name", "varchar(50)", (col) => col.notNull())
       .addColumn("collateral_amount_usd", "numeric", (col) => col.notNull())
       .addColumn("leverage", "numeric", (col) => col.notNull())
@@ -316,7 +323,7 @@ async function addTrader(trader: Trader) {
       )
       .execute();
 
-    log.output(`User added/updated in database: ${trader.address}`);
+    //log.output(`User added/updated in database: ${trader.address}`);
   } catch (error) {
     console.error("Error adding user to database:", error);
     log.output(`Error adding user to database: ${error}`);
@@ -353,6 +360,7 @@ async function favoriteTrader(args: {
 
     console.log(`Trader favorited: ${favoriteAddr} by copier: ${followerAddr}`);
     log.address(followerAddr, `Favorited trader: ${favoriteAddr}`);
+    log.output(`Trader favorited: ${favoriteAddr} by copier: ${followerAddr}`);
   } catch (error) {
     console.error("Error favoriting trader:", error);
   }
@@ -383,6 +391,7 @@ async function unfavoriteTrader(args: {
 
     console.log(`Trader unfavorited: ${favoriteAddr} by user: ${followerAddr}`);
     log.address(followerAddr, `Unfavorited trader: ${favoriteAddr}`);
+    log.output(`Trader unfavorited: ${favoriteAddr} by user: ${followerAddr}`);
   } catch (error) {
     console.error("Error unfavoriting trader:", error);
     throw error;
@@ -419,8 +428,9 @@ async function selectTraders(args: {
       }
     });
 
-    console.log(`Traders ${selected ? "selected" : "deselected"}: ${traderAddresses.join(", ")} by ${followerAddr}`);
-    log.address(followerAddr, `Traders ${selected ? "selected" : "deselected"}: ${traderAddresses.join(", ")}`);
+    console.log(`Trader ${selected ? "selected" : "deselected"}: ${traderAddresses.join(", ")} by ${followerAddr}`);
+    log.address(followerAddr, `Trader ${selected ? "selected" : "deselected"}: ${traderAddresses.join(", ")}`);
+    log.output(`Trader ${selected ? "selected" : "deselected"}: ${traderAddresses.join(", ")} by ${followerAddr}`);
   } catch (error) {
     console.error("Error selecting traders:", error);
     throw error;
@@ -428,7 +438,7 @@ async function selectTraders(args: {
   return db;
 }
 
-async function mirrorTrades(args: { address: string; enable: boolean }) {
+async function mirrorTrades(args: { address: `0x${string}`; enable: boolean }) {
   if (!db) {
     throw new Error("Database not initialized. Call initializeDatabase first.");
   }
@@ -573,11 +583,32 @@ async function getTrades(address: string) {
   }
 
   try {
-    const positions = await db.selectFrom("trades").selectAll().where("trader_address", "=", address).execute();
+    const trades = await db.selectFrom("trades").selectAll().where("trader_address", "=", address).execute();
 
-    return positions;
+    if (trades.length === 0) {
+      return [];
+    }
+
+    return trades;
   } catch (error) {
+    log.error(error);
     console.error("Error fetching trades:", error);
+    throw error;
+  }
+}
+
+async function getTradeById(tradeId: string) {
+  if (!db) {
+    throw new Error("Database not initialized. Call initializeDatabase first.");
+  }
+
+  try {
+    const trade = await db.selectFrom("trades").selectAll().where("trade_id", "=", tradeId).executeTakeFirst();
+
+    return trade;
+  } catch (error) {
+    log.error(error);
+    console.error("Error fetching trade by id:", error);
     throw error;
   }
 }
@@ -592,6 +623,7 @@ async function getPositions(address: string) {
 
     return positions;
   } catch (error) {
+    log.error(error);
     console.error("Error fetching positions:", error);
     throw error;
   }
@@ -599,6 +631,7 @@ async function getPositions(address: string) {
 
 async function closePositions(positions: DEXPosition | DEXPosition[]) {
   if (!db) {
+    log.output("Database not initialized. Call initializeDatabase first.");
     throw new Error("Database not initialized. Call initializeDatabase first.");
   }
 
@@ -620,6 +653,7 @@ async function closePositions(positions: DEXPosition | DEXPosition[]) {
         await trx
           .insertInto("closed_positions")
           .values({
+            is_fake: position.isFake ?? false, // Use isFake if available, otherwise default to false
             token_name: position.tokenName,
             collateral_amount_usd: position.collateralAmountUsd,
             leverage: position.leverage,
@@ -685,6 +719,8 @@ async function createPositions(positions: DEXPosition | DEXPosition[]) {
           .insertInto("positions")
           .values({
             key: position.key,
+            is_fake: position.isFake ?? false, // Use isFake if available, otherwise default to false
+            is_displayed: false,
             contract_key: position.contractKey,
             trader_address: position.traderAddr,
             market_address: position.marketAddress,
@@ -787,6 +823,32 @@ async function updatePositions(positions: DEXPosition[]) {
   }
 }
 
+async function markTradesAsDisplayed(tradeIds: string[]) {
+  if (!db) {
+    throw new Error("Database not initialized. Call initializeDatabase first.");
+  }
+
+  if (tradeIds.length === 0) {
+    return;
+  }
+
+  try {
+    await db
+      .updateTable("trades")
+      .set({
+        is_displayed: true,
+        updated_at: sql`CURRENT_TIMESTAMP`,
+      })
+      .where("trade_id", "in", tradeIds)
+      .execute();
+
+    console.log(`Marked ${tradeIds.length} trades as displayed`);
+  } catch (error) {
+    console.error("Error marking trades as displayed:", error);
+    throw error;
+  }
+}
+
 async function insertTrades(trades: DEXTradeAction[]) {
   if (!db) {
     throw new Error("Database not initialized. Call initializeDatabase first.");
@@ -798,14 +860,16 @@ async function insertTrades(trades: DEXTradeAction[]) {
   try {
     await db.transaction().execute(async (trx) => {
       for (const trade of trades) {
-        await trx
+        const result = await trx
           .insertInto("trades")
           .values({
             trade_id: trade.id,
+            is_fake: trade.isFake ?? false, // Use isFake if available, otherwise default to false
+            is_displayed: false,
             order_type: trade.orderType,
             trader_address: trade.traderAddr,
             mirrored_trader_address: trade.mirroredTraderAddr,
-            market_address: trade.marketAddr,
+            market_address: trade.marketAddress,
             long_token_address: trade.longTokenAddress,
             short_token_address: trade.shortTokenAddress,
             is_long: trade.isLong,
@@ -822,7 +886,10 @@ async function insertTrades(trades: DEXTradeAction[]) {
           .onConflict((oc) => oc.column("trade_id").doNothing())
           .execute();
 
-        log.address(trade.traderAddr, `Trade created:\n ${JSONStringify(trade)}`);
+        // Only log if the trade was actually inserted (not a conflict)
+        if (result.length > 0) {
+          log.address(trade.traderAddr, `Trade created:\n ${JSONStringify(trade)}`);
+        }
       }
     });
 
@@ -874,11 +941,13 @@ const database = {
   getTraders,
   getSelectedTraders,
   getTrades,
+  getTradeById,
   getPositions,
   closePositions,
   createPositions,
   updatePositions,
   insertTrades,
+  markTradesAsDisplayed,
   resetTraders,
 };
 

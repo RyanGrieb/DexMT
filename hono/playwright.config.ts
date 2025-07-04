@@ -6,7 +6,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: 0,
   workers: 1, // Use single worker to avoid conflicts
-  reporter: "html",
+  reporter: "list",
   timeout: 30000, // Increase timeout for slow loading
   use: {
     baseURL: "http://localhost:8788",

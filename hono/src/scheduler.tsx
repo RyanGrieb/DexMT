@@ -1,5 +1,6 @@
 import database from "./database";
 import { DEXTradeAction } from "./types/trader";
+import log from "./utils/logs";
 import scraper from "./utils/scraper";
 
 const UPDATE_USERS_ON_START = false;
@@ -40,9 +41,11 @@ async function updateOpenPositions() {
       const sdkPositions = await selectedTrader.getPositions();
       const dbPositions = await selectedTrader.getPositions({ fromDb: true });
 
+      // For testing, we treat isFake positions as SDK positions (so we don't close them by default)
       const closedPositions = dbPositions.filter(
-        (dbPosition) => !sdkPositions.some((sdkPosition) => sdkPosition.key === dbPosition.key)
+        (dbPosition) => !sdkPositions.some((sdkPosition) => sdkPosition.key === dbPosition.key) && !dbPosition.isFake
       );
+
       // created = new in SDK
       const createdPositions = sdkPositions.filter(
         (sdkPosition) => !dbPositions.some((dbPosition) => dbPosition.key === sdkPosition.key)
@@ -73,24 +76,40 @@ async function updateOpenPositions() {
 async function updateTradeHistory() {
   const traders = await database.getTraders({ isMirroring: true });
 
-  console.log(`Found ${traders.length} traders to update trades for`);
+  log.output(`~~~ Updating trade history for ${traders.length} traders ~~~`);
 
   for (const trader of traders) {
     const newTrades: DEXTradeAction[] = [];
-    console.log(`Updating trades for trader: ${trader.address}`);
     for (const selectedTrader of await database.getTraders({
       favoriteOfAddress: trader.address,
       selected: true,
     })) {
-      const sdkTrades = await selectedTrader.getTrades({ fromDb: false, amount: 5 });
-      const dbTrades = await selectedTrader.getTrades({ fromDb: true }); //FIXME: This is not efficient, we should only query trades from the current day?
+      // Skip if the trader is trying to mirror themselves
+      if (selectedTrader.address === trader.address) {
+        continue;
+      }
 
-      // find only brand‐new trades
-      const freshTrades = sdkTrades.filter((t) => !dbTrades.some((dt) => dt.id === t.id));
+      // FIXME: We might be inserting duplicate trades when fetching from the SDK,
+      // This is because when we insertTrades, by default is_displayed is false for trades.
+      const trades = await selectedTrader.getNewTrades();
+      log.output(`Found ${trades.length} new trades for trader: ${selectedTrader.address}`);
 
-      if (freshTrades.length) {
-        await database.insertTrades(freshTrades);
-        newTrades.push(...freshTrades);
+      if (trades.length) {
+        // Insert the original trades from the selected trader
+        await database.insertTrades(trades);
+
+        // Create mirrored trades with the mirroring trader's address
+        const mirroredTrades = trades.map((trade) => ({
+          ...trade,
+          id: `${trade.id}-mirror`, // Ensure unique ID for mirrored trades
+          traderAddr: trader.address, // Change the trader address to the mirroring trader
+          mirroredTraderAddr: selectedTrader.address, // Keep the original trader as the mirrored trader
+        }));
+
+        // Insert the mirrored trades as separate entries
+        await database.insertTrades(mirroredTrades);
+
+        newTrades.push(...mirroredTrades);
       }
     }
 

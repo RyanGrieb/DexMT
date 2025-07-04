@@ -201,7 +201,7 @@ export function createFakeTrade({
   orderType = 2, // MarketIncrease
   traderAddr,
   mirroredTraderAddr,
-  marketAddr = "0x70d95587d40A2caf56bd97485aB3Eec10Bee6336",
+  marketAddress = "0x70d95587d40A2caf56bd97485aB3Eec10Bee6336",
   longTokenAddress = "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
   shortTokenAddress = "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
   isLong = true,
@@ -218,7 +218,7 @@ export function createFakeTrade({
   orderType?: number;
   traderAddr: string;
   mirroredTraderAddr?: string;
-  marketAddr?: string;
+  marketAddress?: string;
   longTokenAddress?: string;
   shortTokenAddress?: string;
   isLong?: boolean;
@@ -236,7 +236,7 @@ export function createFakeTrade({
     orderType,
     traderAddr,
     mirroredTraderAddr,
-    marketAddr,
+    marketAddress,
     longTokenAddress,
     shortTokenAddress,
     isLong,

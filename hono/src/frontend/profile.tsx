@@ -1,5 +1,4 @@
 import { html } from "hono/html";
-import { JSONStringify } from "json-with-bigint";
 import database from "../database";
 import { DEXOrderType, DEXPosition, DEXTradeAction, Trader } from "../types/trader";
 import log from "../utils/logs";
@@ -89,14 +88,7 @@ async function renderProfileHTML({
   const winRateFormatted = ((Number(trader.winRatio) || 0) * 100).toFixed(1);
   const avgLeverageFormatted = Number(trader.avgLeverage || 0).toFixed(1);
 
-  const SDKtrades = await trader.getTrades({ amount: 25 });
-  const DBtrades = await trader.getTrades({ amount: 25, fromDb: true });
-
-  // Compare the trades from SDK and DB and return a combination of both unique trades
-  const trades = [
-    ...SDKtrades,
-    ...DBtrades.filter((dbTrade) => !SDKtrades.some((sdkTrade) => sdkTrade.id === dbTrade.id)),
-  ];
+  const trades = await trader.getTrades({ amount: 10 });
 
   const totalTrades = trades.length;
 
@@ -278,7 +270,7 @@ function renderPositions(positions: DEXPosition[]) {
     const side = position.isLong ? "LONG" : "SHORT";
     const sideClass = position.isLong ? "long" : "short";
 
-    log.output(`Rendering position: ${JSONStringify(position, null, 2)}`);
+    //log.output(`Rendering position: ${JSONStringify(position, null, 2)}`);
 
     return html`
       <tr class="position-row">

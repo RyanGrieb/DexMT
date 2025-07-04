@@ -6,7 +6,14 @@ import utils from "./utils/utils";
 function defineValidWalletAddr() {
   return z
     .string()
-    .refine((addr) => utils.isValidAddress(addr), { message: "Invalid wallet address format", path: ["walletAddr"] })
+    .refine((addr) => addr.startsWith("0x"), {
+      message: "Wallet address must start with 0x",
+      path: ["walletAddr"],
+    })
+    .refine((addr) => utils.isValidAddress(addr), {
+      message: "Invalid wallet address format",
+      path: ["walletAddr"],
+    })
     .transform((addr) => ethers.getAddress(addr));
 }
 
@@ -123,10 +130,11 @@ const FavoritesOfWallet = z.object({
 // Testing schemas - FIXME: Check for testing environment variable
 const injectFakeTrade = z.object({
   id: z.string(),
+  isFake: z.boolean().default(true), // Indicates this is a fake trade for testing
   orderType: z.number().int().min(0).max(9), // DEXOrderType enum values
   traderAddr: defineValidWalletAddr(),
   mirroredTraderAddr: defineValidWalletAddr().optional(),
-  marketAddr: z.string(),
+  marketAddress: z.string(),
   longTokenAddress: z.string(),
   shortTokenAddress: z.string(),
   isLong: z.boolean(),
@@ -141,6 +149,7 @@ const injectFakeTrade = z.object({
 });
 
 const injectFakePosition = z.object({
+  isFake: z.boolean().default(true), // Indicates this is a fake position for testing
   key: z.string(),
   contractKey: z.string(),
   account: defineValidWalletAddr(),

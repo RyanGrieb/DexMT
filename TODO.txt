@@ -1,10 +1,4 @@
-* Create 'Mirrored Trades' tab for user profiles.
-    (This is important for 2e2 testing for creating, closing, and modifying trades)
-
-* Give claude and co-pilot context by default
-    - Location of logfiles
-    - Commands to run tests
-    - Command to compile backend
+* Instead of us injecting fake trades and positions to the DB, inject them into our websocket listener
 
 * Create a trader_options table (Contains copy-trade settings associated with walletAddr)
 

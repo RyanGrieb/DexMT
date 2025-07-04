@@ -33,7 +33,7 @@ async function init(app: Hono) {
 
     // Add user to database
     const trader: Trader = new Trader({
-      address: walletAddr,
+      address: walletAddr as `0x${string}`,
       balance: await getEthBalance(walletAddr, "https://arb1.arbitrum.io/rpc"),
       chainId: chainId,
       updatedAt: new Date().toISOString(),

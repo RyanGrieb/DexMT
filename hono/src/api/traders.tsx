@@ -82,7 +82,7 @@ async function init(app: Hono) {
           return c.json({ success: false, trades: [] }, 200);
         }
 
-        const trades = await trader.getTrades({ fromDb: true });
+        const trades = await trader.getTrades({ amount: 10 });
 
         return c.json({ success: true, trades: trades }, 200);
       } catch (error) {
@@ -257,7 +257,7 @@ async function handleToggleAutoCopy(
   const { walletAddr, enable } = args;
 
   try {
-    await database.mirrorTrades({ address: walletAddr, enable: enable });
+    await database.mirrorTrades({ address: walletAddr as `0x${string}`, enable });
 
     console.log(`Copy trading ${enable ? "enabled" : "disabled"} for: ${walletAddr}`);
 

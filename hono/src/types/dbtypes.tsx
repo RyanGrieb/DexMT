@@ -10,7 +10,7 @@ export interface Database {
 
 export interface TradersTable {
   id: Generated<number>;
-  address: string;
+  address: `0x${string}`;
   balance: string;
   chain_id: string;
   dexmt_trader: boolean;
@@ -28,6 +28,8 @@ export interface TradersTable {
 
 export interface TradesTable {
   id: Generated<number>;
+  is_fake: boolean; // Indicates if the trade is a fake trade injected for testing purposes
+  is_displayed: boolean; // Indicates if the trade is displayed in the UI
   trade_id: string;
   order_type: number;
   trader_address: string;
@@ -50,6 +52,7 @@ export interface TradesTable {
 
 export interface ClosedPositionsTable {
   id: Generated<number>;
+  is_fake: boolean; // Indicates if the position is a fake position injected for testing purposes
   token_name: string; // DEXPosition.tokenName
   collateral_amount_usd: number; // DEXPosition.collateralAmountUsd
   leverage: number; // DEXPosition.leverage
@@ -87,6 +90,8 @@ export interface ClosedPositionsTable {
 
 export interface OpenPositionsTable {
   id: Generated<number>;
+  is_fake: boolean; // Indicates if the position is a fake position injected for testing purposes
+  is_displayed: boolean; // Indicates if the position is displayed in the UI
   token_name: string; // DEXPosition.tokenName
   collateral_amount_usd: number; // DEXPosition.collateralAmountUsd
   leverage: number; // DEXPosition.leverage
