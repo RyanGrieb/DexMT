@@ -1,7 +1,6 @@
-import database from "./database";
-import { DEXTradeAction } from "./types/trader";
-import log from "./utils/logs";
-import scraper from "./utils/scraper";
+import database from "../database";
+import log from "./logs";
+import scraper from "./scraper";
 
 const UPDATE_USERS_ON_START = false;
 
@@ -79,7 +78,6 @@ async function updateTradeHistory() {
   log.output(`~~~ Updating trade history for ${traders.length} traders ~~~`);
 
   for (const trader of traders) {
-    const newTrades: DEXTradeAction[] = [];
     for (const selectedTrader of await database.getTraders({
       favoriteOfAddress: trader.address,
       selected: true,
@@ -108,12 +106,8 @@ async function updateTradeHistory() {
 
         // Insert the mirrored trades as separate entries
         await database.insertTrades(mirroredTrades);
-
-        newTrades.push(...mirroredTrades);
       }
     }
-
-    await trader.mirrorTrades(newTrades);
   }
 }
 

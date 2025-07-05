@@ -13,6 +13,8 @@ services:
       - PORT=8787
       - NODE_ENV=test
       - DATABASE_URL=postgresql://postgres:password@postgres-test:5432/dexmt_test
+      - ETHERSCAN_API_KEY=${ETHERSCAN_API_KEY}
+      - ALCHEMY_API_KEY=${ALCHEMY_API_KEY}
     volumes:
       - ./hono/src:/hono/src
       - ./hono/static:/hono/static

@@ -1,6 +1,8 @@
 .claude
+.env
 node_modules
 logs
 hono/static/js-compiled/
 playwright-report
 test-results
+misc

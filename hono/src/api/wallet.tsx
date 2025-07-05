@@ -3,7 +3,7 @@ import { ethers } from "ethers";
 import { Hono } from "hono";
 import { JSONStringify } from "json-with-bigint";
 import db from "../database";
-import schemas from "../schemas";
+import schemas from "../types/schemas";
 import { Trader } from "../types/trader";
 import log from "../utils/logs";
 

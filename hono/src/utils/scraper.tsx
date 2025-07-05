@@ -359,7 +359,7 @@ async function getTopTraders(opts: { platform: string; limit: number }): Promise
         winRatio: number;
       }) => {
         return new Trader({
-          address: userData.address,
+          address: userData.address as `0x${string}`, // Ensure address is in correct format
           balance: "0", // Default balance since GMX doesn't provide this
           chainId: "0xa4b1", // Arbitrum chain ID for GMX
           platformRanking: userData.platform_ranking,

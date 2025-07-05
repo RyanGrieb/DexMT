@@ -254,6 +254,7 @@ export class Trader {
     return allTrades.filter((trade) => trade.marketAddr === position.marketAddress && trade.isLong === position.isLong);
   }
 */
+  /*
   async mirrorTrades(newTrades: DEXTradeAction[]) {
     if (!this.isMirroringTrades || newTrades.length === 0) {
       return;
@@ -342,6 +343,7 @@ export class Trader {
       log.address(this.address, "================================================================================\n");
     }
   }
+*/
 
   async getTrades(options: { amount: number }): Promise<DEXTradeAction[]> {
     const sdkTrades = await this.getTradesFromSDK(options);

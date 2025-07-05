@@ -1,10 +1,10 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import database from "../database";
-import scheduler from "../scheduler";
-import schemas from "../schemas";
+import schemas from "../types/schemas";
 import { Trader } from "../types/trader";
 import log from "../utils/logs";
+import scheduler from "../utils/scheduler";
 
 async function init(app: Hono) {
   // API endpoint to get users from database with all trading data

@@ -1,0 +1,2 @@
+TODO: Move this to bash-scripts
+npx typechain --target ethers-v6 --out-dir types gmx-abi.json

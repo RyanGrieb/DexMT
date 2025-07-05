@@ -8,6 +8,8 @@ services:
     environment:
       - PORT=8787
       - DATABASE_URL=postgresql://postgres:password@postgres:5432/dexmt
+      - ETHERSCAN_API_KEY=${ETHERSCAN_API_KEY}
+      - ALCHEMY_API_KEY=${ALCHEMY_API_KEY}
     volumes:
       - ./hono/src:/hono/src
       - ./hono/static:/hono/static

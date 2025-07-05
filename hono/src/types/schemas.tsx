@@ -1,7 +1,7 @@
 import { ethers } from "ethers";
 import { z } from "zod";
-import wallet from "./api/wallet";
-import utils from "./utils/utils";
+import wallet from "../api/wallet";
+import utils from "../utils/utils";
 
 function defineValidWalletAddr() {
   return z
