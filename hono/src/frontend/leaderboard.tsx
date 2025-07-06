@@ -1,6 +1,7 @@
 import { html } from "hono/html";
 import database from "../database/database";
 import { Trader } from "../types/trader";
+import log from "../utils/logs";
 import utils from "../utils/utils";
 
 export async function renderLeaderboard(): Promise<string> {
@@ -86,7 +87,7 @@ export async function renderLeaderboard(): Promise<string> {
       </div>
     `;
   } catch (error) {
-    console.error("Error rendering leaderboard:", error);
+    log.error(error);
     return html`
       <div class="error-container">
         <h2>Error Loading Leaderboard</h2>

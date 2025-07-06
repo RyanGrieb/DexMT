@@ -14,7 +14,7 @@ async function init(app: Hono) {
       const traders = await database.getTraders();
       return c.json(traders);
     } catch (error) {
-      console.error("Error fetching traders:", error);
+      log.error(error);
       return c.json({ error: "Failed to fetch traders" }, 500);
     }
   });
@@ -34,7 +34,7 @@ async function init(app: Hono) {
         const favorites = await database.getTraders({ favoriteOfAddress: walletAddr });
         return c.json({ success: true, favorites }, 200);
       } catch (error) {
-        console.error("Error fetching favorite traders:", error);
+        log.error(error);
         return c.json({ error: "Failed to fetch favorite traders" }, 500);
       }
     }
@@ -60,7 +60,7 @@ async function init(app: Hono) {
 
         return c.json({ success: true, positions: positions }, 200);
       } catch (error) {
-        console.error("Error fetching open positions:", error);
+        log.error(error);
         return c.json({ error: "Failed to fetch open positions" }, 500);
       }
     }
@@ -86,7 +86,7 @@ async function init(app: Hono) {
 
         return c.json({ success: true, trades: trades }, 200);
       } catch (error) {
-        console.error("Error fetching open positions:", error);
+        log.error(error);
         return c.json({ error: "Failed to fetch open positions" }, 500);
       }
     }
@@ -101,7 +101,7 @@ async function init(app: Hono) {
       log.output("Traders reset successfully");
       return c.json({ success: true }, 200);
     } catch (error) {
-      console.error("Error resetting traders:", error);
+      log.error(error);
       return c.json({ error: "Failed to reset traders" }, 500);
     }
   });
@@ -163,7 +163,7 @@ async function init(app: Hono) {
         200
       );
     } catch (error) {
-      console.error("Error triggering mirror trades:", error);
+      log.error(error);
       return c.json({ error: "Failed to trigger mirror trades" }, 500);
     }
   });
@@ -267,7 +267,7 @@ async function handleToggleAutoCopy(
       address: walletAddr,
     });
   } catch (error) {
-    console.error("Error starting auto-copy trading:", error);
+    log.error(error);
     return c.json({ error: "Internal server error" }, 500);
   }
 }
@@ -308,7 +308,7 @@ async function handleFavoriteTrader(
       200
     );
   } catch (error) {
-    console.error(`Error ${favorite ? "favoriting" : "unfavoriting"} trader:`, error);
+    log.error(error);
     return c.json({ error: `Failed to ${favorite ? "favorite" : "unfavorite"} trader` }, 500);
   }
 }
@@ -348,7 +348,7 @@ async function handleTraderSelection(
       200
     );
   } catch (error) {
-    console.error("Error selecting traders:", error);
+    log.error(error);
     return c.json({ error: "Failed to select traders" }, 500);
   }
 }

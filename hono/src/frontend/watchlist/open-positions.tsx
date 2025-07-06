@@ -1,5 +1,6 @@
 import { html, raw } from "hono/html";
 import { DEXOrderType, DEXPosition, DEXTradeAction, Trader } from "../../types/trader";
+import log from "../../utils/logs";
 import utils from "../../utils/utils";
 
 /*
@@ -67,7 +68,7 @@ export async function renderAllOpenPositions(selectedTraders: Trader[]) {
       </div>
     `;
   } catch (error) {
-    console.error("Error rendering open positions:", error);
+    log.error(error);
     return html`
       <div class="positions-container">
         <div class="error-message">

@@ -20,9 +20,9 @@ export async function getTrades(address: string) {
     return trades;
   } catch (error) {
     log.error(error);
-    console.error("Error fetching trades:", error);
-    throw error;
   }
+
+  return [];
 }
 
 export async function getTradeById(tradeId: string) {
@@ -36,9 +36,7 @@ export async function getTradeById(tradeId: string) {
 
     return trade;
   } catch (error) {
-    log.error(error);
-    console.error("Error fetching trade by id:", error);
-    throw error;
+    log.throwError(error);
   }
 }
 
@@ -60,8 +58,7 @@ export async function markTradesAsDisplayed(tradeIds: string[]) {
 
     console.log(`Marked ${tradeIds.length} trades as displayed`);
   } catch (error) {
-    console.error("Error marking trades as displayed:", error);
-    throw error;
+    log.throwError(error);
   }
 }
 
@@ -112,8 +109,6 @@ export async function insertTrades(trades: DEXTradeAction[]) {
 
     //console.log(`Inserted ${trades.length} trades`);
   } catch (error) {
-    console.error("Error inserting trades:", error);
-    log.error(error);
-    throw error;
+    log.throwError(error);
   }
 }

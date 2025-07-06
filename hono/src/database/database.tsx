@@ -1,6 +1,7 @@
 import { Kysely, PostgresDialect, sql } from "kysely";
 import { Pool } from "pg";
 import { Database } from "../types/dbtypes";
+import log from "../utils/logs";
 import { closePositions, createPositions, getPositions, updatePositions } from "./positions-table";
 import {
   addTrader,
@@ -202,7 +203,7 @@ async function initializeDatabase() {
         .addForeignKeyConstraint("trades_trader_address_fkey", ["trader_address"], "traders", ["address"])
         .execute();
     } catch (error) {
-      console.log("Foreign key constraint for trades table already exists or failed to create");
+      log.output("Foreign key constraint for trades table already exists or failed to create", "warn");
     }
 
     try {
@@ -211,7 +212,7 @@ async function initializeDatabase() {
         .addForeignKeyConstraint("positions_trader_address_fkey", ["trader_address"], "traders", ["address"])
         .execute();
     } catch (error) {
-      console.log("Foreign key constraint for positions table already exists or failed to create");
+      log.output("Foreign key constraint for positions table already exists or failed to create", "warn");
     }
 
     // Add indexes for better performance (FIXME: Are we are missing some indexes? (trade_id))
@@ -247,13 +248,12 @@ async function initializeDatabase() {
 
       console.log("Database indexes created/verified");
     } catch (error) {
-      console.log("Some indexes might already exist:", error);
+      log.output("Some indexes might already exist or failed to create", "warn");
     }
 
-    console.log("Database initialized successfully");
+    log.output("Database initialized successfully");
   } catch (error) {
-    console.error("Error initializing database:", error);
-    throw error;
+    log.throwError(error);
   }
 }
 

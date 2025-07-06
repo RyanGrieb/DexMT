@@ -23,7 +23,7 @@ async function updateTraderLeaderboard() {
 
     console.log("Finished updating users from GMX leaderboard");
   } catch (error) {
-    console.error("Error in updateUsersAndTrades:", error);
+    log.throwError(error);
   }
 }
 

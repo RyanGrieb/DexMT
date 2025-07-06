@@ -13,7 +13,7 @@ function resetTraderLogs() {
       fs.rmSync(addressDir, { recursive: true, force: true });
     }
   } catch (error) {
-    console.error("Failed to reset trader logs:", error);
+    log.throwError(error);
   }
 }
 
@@ -21,14 +21,18 @@ function ensureLogsDirectory() {
   try {
     fs.mkdirSync(logsDir, { recursive: true });
   } catch (error) {
-    console.error("Failed to create logs directory:", error);
+    log.throwError(error);
   }
 }
 
 function ensureAddressDirectory() {
-  // Create the 'address' directory inside the logs directory
-  if (!fs.existsSync(path.join(logsDir, "address"))) {
-    fs.mkdirSync(path.join(logsDir, "address"), { recursive: true });
+  try {
+    // Create the 'address' directory inside the logs directory
+    if (!fs.existsSync(path.join(logsDir, "address"))) {
+      fs.mkdirSync(path.join(logsDir, "address"), { recursive: true });
+    }
+  } catch (error) {
+    log.throwError(error);
   }
 }
 
@@ -49,8 +53,7 @@ function address(address: string, message: string, lvl: "info" | "error" | "warn
 
     console.log(`${level}: ${message}`);
   } catch (error) {
-    console.error("Failed to write to address log file:", error);
-    console.log(`${level}: ${message}`);
+    log.throwError(error);
   }
 }
 
@@ -69,21 +72,25 @@ function output(message: string, lvl: "info" | "error" | "warn" | "debug" = "inf
 
     console.log(`${level}: ${message}`);
   } catch (error) {
-    console.error("Failed to write to log file:", error);
-    console.log(`${level}: ${message}`);
+    log.throwError(error);
   }
 }
 
 function error(error: any) {
   if (!(error instanceof Error) || !error.message) {
-    console.error("An error occurred, but it is not an instance of Error or does not have a message.");
+    log.error("An error occurred, but it is not an instance of Error or does not have a message.");
     return;
   }
 
-  const errorMessage = error instanceof Error ? error.message : String(error);
-  const stackTrace = error instanceof Error ? `\nStack trace:\n${error.stack}` : "";
+  const errorMessage = error.message;
+  const stackTrace = error.stack ? `\nStack trace:\n${error.stack}` : "";
   console.error(`Error: ${errorMessage}${stackTrace}`);
-  output(`Error: ${errorMessage}${stackTrace}`, "error");
+  log.output(`Error: ${errorMessage}${stackTrace}`, "error");
+}
+
+function throwError(error: any): never {
+  log.error(error);
+  throw error;
 }
 
 function clearOldLogs(keepCount: number = 5) {
@@ -106,10 +113,10 @@ function clearOldLogs(keepCount: number = 5) {
     // remove old log files beyond the keep count
     for (let i = keepCount; i < logFiles.length; i++) {
       fs.unlinkSync(path.join(logsDir, logFiles[i]));
-      console.log(`Deleted old log file: ${logFiles[i]}`);
+      log.output(`Deleted old log file: ${logFiles[i]}`);
     }
   } catch (error) {
-    console.error("Failed to clear old logs:", error);
+    log.throwError(error);
   }
 }
 
@@ -143,6 +150,7 @@ const log = {
   address,
   output,
   error,
+  throwError,
 };
 
 export default log;

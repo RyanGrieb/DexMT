@@ -258,7 +258,7 @@ async function getTradeHistory(options: {
 
     return tradeActions;
   } catch (error) {
-    console.error("Error fetching trade history:", error);
+    log.throwError(error);
   }
 }
 
@@ -310,8 +310,7 @@ async function getTraderPositions(user_address: string): Promise<
       positionsData: positionsResult.positionsData,
     };
   } catch (error) {
-    console.error("Error fetching user positions:", error);
-    return;
+    log.throwError(error);
   }
 }
 
@@ -332,8 +331,7 @@ async function createPosition(trader: Trader, trade: DEXTradeAction): Promise<DE
 
   try {
   } catch (error) {
-    console.error("Error creating position:", error);
-    log.output(`Error creating position for trader ${trader.address}: ${error}`, "error");
+    log.throwError(error);
   }
 }
 

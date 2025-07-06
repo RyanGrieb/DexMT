@@ -1,4 +1,3 @@
-import { JSONStringify } from "json-with-bigint";
 import { sql } from "kysely";
 import wallet from "../api/wallet";
 import { Trader } from "../types/trader";
@@ -50,8 +49,7 @@ export async function updateTraders(traders: Trader[]): Promise<void> {
 
     console.log(`Updated/inserted ${traders.length} traders in database`);
   } catch (error) {
-    console.error("Error updating traders in database:", error);
-    throw error;
+    log.throwError(error);
   }
 }
 
@@ -77,8 +75,7 @@ export async function addTrader(trader: Trader) {
 
     //log.output(`User added/updated in database: ${trader.address}`);
   } catch (error) {
-    console.error("Error adding user to database:", error);
-    log.output(`Error adding user to database: ${error}`);
+    log.throwError(error);
   }
 }
 
@@ -111,7 +108,7 @@ export async function favoriteTrader(args: {
     log.address(followerAddr, `Favorited trader: ${favoriteAddr}`);
     log.output(`Trader favorited: ${favoriteAddr} by copier: ${followerAddr}`);
   } catch (error) {
-    console.error("Error favoriting trader:", error);
+    log.throwError(error);
   }
 }
 
@@ -139,8 +136,7 @@ export async function unfavoriteTrader(args: {
     log.address(followerAddr, `Unfavorited trader: ${favoriteAddr}`);
     log.output(`Trader unfavorited: ${favoriteAddr} by user: ${followerAddr}`);
   } catch (error) {
-    console.error("Error unfavoriting trader:", error);
-    throw error;
+    log.throwError(error);
   }
 }
 
@@ -177,8 +173,7 @@ export async function selectTraders(args: {
     log.address(followerAddr, `Trader ${selected ? "selected" : "deselected"}: ${traderAddresses.join(", ")}`);
     log.output(`Trader ${selected ? "selected" : "deselected"}: ${traderAddresses.join(", ")} by ${followerAddr}`);
   } catch (error) {
-    console.error("Error selecting traders:", error);
-    throw error;
+    log.throwError(error);
   }
 }
 
@@ -196,8 +191,7 @@ export async function mirrorTrades(args: { address: `0x${string}`; enable: boole
       .where("address", "=", address)
       .execute();
   } catch (error) {
-    log.error(error);
-    throw error;
+    log.throwError(error);
   }
 
   log.address(address, `Mirroring trades ${enable ? "enabled" : "disabled"}`);
@@ -291,9 +285,10 @@ export async function getTraders(selection_args?: {
 
     return traders;
   } catch (error) {
-    console.error("Error fetching traders from database:", error);
-    throw error;
+    log.throwError(error);
   }
+
+  return [];
 }
 
 // Add a helper function to get selected trader addresses for easier use
@@ -309,9 +304,10 @@ export async function getSelectedTraders(followerAddress: string): Promise<strin
 
     return selectedTraders.map((trader) => trader.favorited_address);
   } catch (error) {
-    console.error("Error getting selected traders:", error);
-    throw error;
+    log.throwError(error);
   }
+
+  return [];
 }
 
 export async function resetTraders() {
@@ -330,10 +326,7 @@ export async function resetTraders() {
 
         console.log("All traders and related data reset successfully");
       } catch (error) {
-        console.error("Error resetting traders:", error);
-        console.error("Error details:", JSONStringify(error, null, 2));
-        log.error(error);
-        throw error;
+        log.throwError(error);
       }
     });
 }

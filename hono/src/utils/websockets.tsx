@@ -26,8 +26,7 @@ function getGmxAbi() {
     log.output(`Successfully loaded GMX ABI`, "info");
     return abi;
   } catch (error) {
-    log.output(`Error loading GMX ABI from local file: ${error}`, "error");
-    throw new Error(`Failed to load ABI from local file: ${error}`);
+    log.throwError(error);
   }
 }
 
@@ -116,6 +115,7 @@ async function listenForGMXEvents() {
       await database.insertTrades([tradeAction]);
     } catch (error) {
       log.output(`Error processing GMX event: ${error}`, "error");
+      log.error(error);
       //log.output(`Raw log - Topics: ${JSON.stringify(logOutput.topics)}, Data: ${logOutput.data}`, "debug");
     }
   });

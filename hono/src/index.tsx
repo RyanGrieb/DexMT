@@ -44,7 +44,7 @@ app.get("/api/html/traderprofile", async (c) => {
     const traderProfileHTML = await renderTraderProfile({ traderAddress, timeZone, userAddress });
     return c.html(traderProfileHTML);
   } catch (error) {
-    console.error("Error rendering trader profile:", error);
+    log.error(error);
     return c.html('<div class="error-message">Error loading trader profile</div>', 500);
   }
 });
@@ -63,7 +63,7 @@ app.get("/api/html/toptraders", async (c) => {
     const leaderboardHTML = await renderLeaderboard();
     return c.html(leaderboardHTML);
   } catch (error) {
-    console.error("Error rendering leaderboard:", error);
+    log.error(error);
     return c.html('<div class="error-message">Error loading top traders</div>', 500);
   }
 });
@@ -81,7 +81,7 @@ app.get("/api/html/mywatchlist", async (c) => {
     const watchlistHTML = await renderWatchlist(userAddr);
     return c.html(watchlistHTML);
   } catch (error) {
-    console.error("Error rendering watchlist:", error);
+    log.error(error);
     return c.html('<div class="error-message">Error loading watchlist</div>', 500);
   }
 });
@@ -105,6 +105,7 @@ app.get("/html/*", async (c) => {
     const content = await fs.readFile(filePath, "utf-8");
     return c.html(content);
   } catch (error) {
+    log.error(error);
     return c.text("Not Found", 404);
   }
 });
@@ -115,6 +116,7 @@ app.get("/css/*", async (c) => {
     const content = await fs.readFile(filePath, "utf-8");
     return c.text(content, 200, { "Content-Type": "text/css" });
   } catch (error) {
+    log.error(error);
     return c.text("Not Found", 404);
   }
 });
@@ -136,7 +138,8 @@ app.get("/js/*", async (c) => {
     return c.text(content, 200, {
       "Content-Type": "application/javascript; charset=utf-8",
     });
-  } catch {
+  } catch (error) {
+    log.error(error);
     return c.text("Not Found", 404);
   }
 });
@@ -162,7 +165,8 @@ app.get("/img/*", async (c) => {
     return c.body(data, 200, {
       "Content-Type": mimeType,
     });
-  } catch (err) {
+  } catch (error) {
+    log.error(error);
     return c.text("Not Found", 404);
   }
 });

@@ -15,10 +15,10 @@ export async function getPositions(address: string) {
 
     return positions;
   } catch (error) {
-    log.error(error);
-    console.error("Error fetching positions:", error);
-    throw error;
+    log.throwError(error);
   }
+
+  return [];
 }
 
 export async function closePositions(positions: DEXPosition | DEXPosition[]) {
@@ -85,9 +85,7 @@ export async function closePositions(positions: DEXPosition | DEXPosition[]) {
 
     log.output(`Closed and removed ${positionsArr.length} positions`);
   } catch (error) {
-    console.error("Error closing positions:", error);
-    log.output(`Error closing positions: ${error}`, "error");
-    throw error;
+    log.throwError(error);
   }
 }
 
@@ -149,8 +147,7 @@ export async function createPositions(positions: DEXPosition | DEXPosition[]) {
 
     log.output(`Created ${positionsArr.length} positions`);
   } catch (error) {
-    console.error("Error creating positions:", error);
-    throw error;
+    log.throwError(error);
   }
 }
 
@@ -207,7 +204,6 @@ export async function updatePositions(positions: DEXPosition[]) {
 
     //console.log(`Updated ${positions.length} positions`);
   } catch (error) {
-    console.error("Error updating positions:", error);
-    throw error;
+    log.throwError(error);
   }
 }

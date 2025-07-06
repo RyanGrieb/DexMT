@@ -91,7 +91,8 @@ async function getEthBalance(address: string, rpcUrl: string): Promise<string> {
 
     return balanceEth.toFixed(6); // Return with 6 decimal places
   } catch (error) {
-    console.error(`Error fetching balance for ${address}:`, error);
+    log.output(`Error fetching ETH balance for ${address}`, "error");
+    log.error(error);
     return "0"; // Return 0 on error
   }
 }
@@ -101,7 +102,11 @@ function verifySignature(message: string, signature: string, expectedAddress: st
     const recoveredAddress = ethers.verifyMessage(message, signature);
     return recoveredAddress.toLowerCase() === expectedAddress.toLowerCase();
   } catch (error) {
-    console.error("Error verifying signature:", error);
+    log.output(
+      `Signature verification failed: msg: ${message}, sig: ${signature}, expected: ${expectedAddress}`,
+      "error"
+    );
+    log.error(error);
     return false;
   }
 }

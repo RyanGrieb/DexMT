@@ -39,21 +39,16 @@ export async function renderTraderProfile({
     // Check if this trader is favorited by the current user
     let isFavorited = false;
     if (userAddress) {
-      try {
-        const favoritedTraders = await database.getTraders({
-          favoriteOfAddress: userAddress,
-        });
-        isFavorited = favoritedTraders.some((fav) => fav.address === traderAddress);
-      } catch (error) {
-        console.error("Error checking favorite status:", error);
-      }
+      const favoritedTraders = await database.getTraders({
+        favoriteOfAddress: userAddress,
+      });
+      isFavorited = favoritedTraders.some((fav) => fav.address === traderAddress);
     }
 
     //console.log(`User address: ${userAddress} favorited trader ${traderAddress}: ${isFavorited}`);
 
     return await renderProfileHTML({ trader, positions, isFavorited, timeZone });
   } catch (error) {
-    console.error("Error rendering trader profile:", error);
     log.error(error);
     return renderErrorPage();
   }

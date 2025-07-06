@@ -1,5 +1,6 @@
 import puppeteer from "puppeteer";
 import { Trader } from "../types/trader";
+import log from "./logs";
 
 /**
  * Fetch top traders for a given platform.
@@ -79,12 +80,12 @@ async function getTopTraders(opts: { platform: string; limit: number }): Promise
       } catch (error) {
         retries--;
         if (retries === 0) throw error;
-        console.log(`Navigation failed, retrying... (${retries} attempts left)`);
+        log.output(`Navigation failed, retrying... (${retries} attempts left)`, "warn");
         await new Promise((resolve) => setTimeout(resolve, 2000));
       }
     }
 
-    console.log("Page loaded, waiting for table...");
+    log.output("Page loaded, waiting for table...");
 
     // Wait for the leaderboard table to load with retries
     let tableRetries = 10; // Increased retries
@@ -93,7 +94,7 @@ async function getTopTraders(opts: { platform: string; limit: number }): Promise
     while (tableRetries > 0 && !tableFound) {
       try {
         await page.waitForSelector("table", { timeout: 10000 });
-        console.log("Table element found, waiting for data to load...");
+        log.output("Table element found, waiting for data to load...");
 
         // Wait a bit more for JavaScript to populate the table
         await new Promise((resolve) => setTimeout(resolve, 3000));
@@ -146,7 +147,7 @@ async function getTopTraders(opts: { platform: string; limit: number }): Promise
           }
         }
       } catch (error: any) {
-        console.log(`Table wait attempt failed: ${error.message}`);
+        log.output(`Table wait attempt failed: ${error.message}`, "warn");
         tableRetries--;
         if (tableRetries > 0) {
           await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -155,7 +156,6 @@ async function getTopTraders(opts: { platform: string; limit: number }): Promise
     }
 
     if (!tableFound) {
-      // Let's see what's actually on the page
       const pageContent = await page.evaluate(() => {
         const hasLoadingSkeletons = document.querySelectorAll(".react-loading-skeleton").length;
         const hasAriaLoading = document.querySelectorAll('[aria-busy="true"]').length;
@@ -172,7 +172,7 @@ async function getTopTraders(opts: { platform: string; limit: number }): Promise
         };
       });
 
-      //console.log("Page debug info:", pageContent);
+      //log.output("Page debug info:", pageContent);
 
       if (pageContent.loadingSkeletons > 0 || pageContent.ariaLoading > 0) {
         throw new Error(
@@ -208,21 +208,20 @@ async function getTopTraders(opts: { platform: string; limit: number }): Promise
       };
     });
 
-    //console.log("Debug info from page:", JSONStringify(debugInfo, null, 2));
+    //log.output("Debug info from page:", JSONStringify(debugInfo, null, 2));
 
     // Extract the top traders data and convert to Trader objects
     const users = await page.evaluate((maxUsers) => {
       const rows = document.querySelectorAll("table tbody tr");
       const extractedUsers = [];
-      const debugLogs = [];
 
-      debugLogs.push(`Found ${rows.length} rows in the leaderboard`);
+      log.output(`Found ${rows.length} rows in the leaderboard`);
 
       for (let i = 0; i < Math.min(rows.length, maxUsers); i++) {
         const row = rows[i];
         const cells = row.querySelectorAll("td");
 
-        debugLogs.push(`Processing row ${i}: ${cells.length} cells`);
+        log.output(`Processing row ${i}: ${cells.length} cells`);
 
         if (cells.length >= 7) {
           try {
@@ -237,12 +236,12 @@ async function getTopTraders(opts: { platform: string; limit: number }): Promise
             const linkElement = cells[1].querySelector("a[href]");
             if (linkElement) {
               const href = linkElement.getAttribute("href") || "";
-              debugLogs.push(`Row ${i} - Link href: "${href}"`);
+              log.output(`Row ${i} - Link href: "${href}"`);
 
               const addressMatch = href.match(/\/accounts\/([0-9a-fA-Fx]+)/);
               if (addressMatch) {
                 address = addressMatch[1];
-                debugLogs.push(`Row ${i} - Extracted address from href: "${address}"`);
+                log.output(`Row ${i} - Extracted address from href: "${address}"`);
               }
             }
 
@@ -254,7 +253,7 @@ async function getTopTraders(opts: { platform: string; limit: number }): Promise
                 const element = cells[1].querySelector(selector);
                 if (element) {
                   const text = element.textContent?.trim() || "";
-                  debugLogs.push(`Row ${i} - Found text with selector "${selector}": "${text}"`);
+                  log.output(`Row ${i} - Found text with selector "${selector}": "${text}"`);
 
                   if (text && text !== "You" && (text.startsWith("0x") || text.length === 42)) {
                     address = text;
@@ -267,14 +266,14 @@ async function getTopTraders(opts: { platform: string; limit: number }): Promise
             // Strategy 3: Get any text from the second cell
             if (!address) {
               const cellText = cells[1].textContent?.trim() || "";
-              debugLogs.push(`Row ${i} - Cell 1 full text: "${cellText}"`);
+              log.output(`Row ${i} - Cell 1 full text: "${cellText}"`);
 
               // Look for patterns that might be addresses
               const addressPattern = /(0x[a-fA-F0-9]{40})/;
               const match = cellText.match(addressPattern);
               if (match) {
                 address = match[1];
-                debugLogs.push(`Row ${i} - Found address via regex: "${address}"`);
+                log.output(`Row ${i} - Found address via regex: "${address}"`);
               }
             }
 
@@ -301,7 +300,7 @@ async function getTopTraders(opts: { platform: string; limit: number }): Promise
             const losses = parseFloat(winLossParts[1] || "1");
             const winRatio: number = losses > 0 ? wins / losses : wins;
 
-            debugLogs.push(
+            log.output(
               `Row ${i} extracted data: rank=${rank}, address="${address}", pnl="${pnl}", avgSize="${avgSize}"`
             );
 
@@ -325,23 +324,22 @@ async function getTopTraders(opts: { platform: string; limit: number }): Promise
                 avgLeverage,
                 winRatio,
               });
-              debugLogs.push(`✅ Added user ${extractedUsers.length}: ${extractedAddress}`);
+              log.output(`✅ Added user ${extractedUsers.length}: ${extractedAddress}`);
             } else {
-              debugLogs.push(`❌ Skipped row ${i} - invalid address: "${address}" (length: ${address.length})`);
+              log.output(`❌ Skipped row ${i} - invalid address: "${address}" (length: ${address.length})`);
             }
           } catch (error: any) {
-            debugLogs.push(`Error processing row ${i}: ${error.message}`);
+            log.error(error);
           }
         } else {
-          debugLogs.push(`Row ${i} has insufficient cells: ${cells.length}`);
+          log.output(`Row ${i} has insufficient cells: ${cells.length}`);
         }
       }
 
-      debugLogs.push(`Extraction complete. Found ${extractedUsers.length} valid users out of ${rows.length} rows`);
+      log.output(`Extraction complete. Found ${extractedUsers.length} valid users out of ${rows.length} rows`);
 
       return {
         users: extractedUsers,
-        debugLogs: debugLogs,
       };
     }, limit);
 
@@ -374,28 +372,21 @@ async function getTopTraders(opts: { platform: string; limit: number }): Promise
         });
       }
     );
+
     return traders;
   } catch (error) {
-    console.error("Error scraping GMX leaderboard:", error);
-    throw error;
+    log.throwError(error);
   } finally {
-    // Ensure cleanup happens properly
-    try {
-      if (page) {
-        await page.close();
-      }
-    } catch (e) {
-      console.warn("Error closing page:", e);
+    if (page) {
+      await page.close();
     }
 
-    try {
-      if (browser) {
-        await browser.close();
-      }
-    } catch (e) {
-      console.warn("Error closing browser:", e);
+    if (browser) {
+      await browser.close();
     }
   }
+
+  return [];
 }
 
 // bundle into a single object so you can do `scraper.getTopUsers()`
