@@ -1,5 +1,7 @@
 * Instead of us injecting fake trades and positions to the DB, inject them into our websocket listener
 
+* Remove scheduler.tsx
+
 * Look into implementing UI fee here: https://gmx-docs.io/docs/community/frontends/#running-a-frontend
 
 * Create a trader_options table (Contains copy-trade settings associated with walletAddr)

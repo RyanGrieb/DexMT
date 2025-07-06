@@ -1,6 +1,6 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
-import database from "../database";
+import database from "../database/database";
 import schemas from "../types/schemas";
 import { Trader } from "../types/trader";
 import log from "../utils/logs";

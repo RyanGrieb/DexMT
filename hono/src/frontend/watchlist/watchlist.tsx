@@ -1,5 +1,5 @@
 import { html } from "hono/html";
-import database from "../../database";
+import database from "../../database/database";
 import { renderCopiedPositions } from "./copied-positions";
 import { renderFavoritedTraders } from "./favorited";
 import { renderAllOpenPositions } from "./open-positions";

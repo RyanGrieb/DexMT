@@ -1,4 +1,4 @@
-import database from "../database";
+import database from "../database/database";
 import log from "./logs";
 import scraper from "./scraper";
 

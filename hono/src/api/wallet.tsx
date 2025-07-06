@@ -2,7 +2,7 @@ import { zValidator } from "@hono/zod-validator";
 import { ethers } from "ethers";
 import { Hono } from "hono";
 import { JSONStringify } from "json-with-bigint";
-import db from "../database";
+import db from "../database/database";
 import schemas from "../types/schemas";
 import { Trader } from "../types/trader";
 import log from "../utils/logs";

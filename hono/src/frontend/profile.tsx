@@ -1,5 +1,5 @@
 import { html } from "hono/html";
-import database from "../database";
+import database from "../database/database";
 import { DEXOrderType, DEXPosition, DEXTradeAction, Trader } from "../types/trader";
 import log from "../utils/logs";
 import utils from "../utils/utils";

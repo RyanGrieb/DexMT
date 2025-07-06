@@ -1,5 +1,5 @@
 import { html } from "hono/html";
-import database from "../database";
+import database from "../database/database";
 import { Trader } from "../types/trader";
 import utils from "../utils/utils";
 

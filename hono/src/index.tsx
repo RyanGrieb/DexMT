@@ -4,12 +4,11 @@ import fs from "fs/promises";
 import { Hono } from "hono";
 import path from "path";
 import dexmtAPI from "./api/dexmt-api";
-import database from "./database";
+import database from "./database/database";
 import { renderLeaderboard } from "./frontend/leaderboard";
 import { renderTraderProfile } from "./frontend/profile";
 import { renderWatchlist } from "./frontend/watchlist/watchlist";
 import log from "./utils/logs";
-import websockets from "./utils/websockets";
 
 const app = new Hono();
 const startTime = Date.now();
@@ -173,7 +172,7 @@ async function startup() {
   await database.initializeDatabase();
   await dexmtAPI.init(app);
   //scheduler.init();
-  await websockets.init();
+  //await websockets.init();
 
   serve({
     fetch: app.fetch,

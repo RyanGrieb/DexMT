@@ -1,6 +1,6 @@
 import { Position } from "@gmx-io/sdk/types/positions";
 import { JSONStringify } from "json-with-bigint";
-import database from "../database";
+import database from "../database/database";
 import gmxSdk from "../gmxsdk";
 import log from "../utils/logs";
 
