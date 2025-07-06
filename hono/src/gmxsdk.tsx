@@ -68,7 +68,7 @@ async function getMarketsInfoCached(): Promise<{
   return { marketsInfoData, tokensData };
 }
 
-async function getTokenName(marketAddress: string): Promise<string | undefined> {
+async function getMarketName(marketAddress: string): Promise<string | undefined> {
   const { marketsInfoData } = await getMarketsInfoCached();
 
   if (!marketsInfoData) {
@@ -346,7 +346,7 @@ const gmxSdk = {
   getGmxSdk,
   getTraderPositions,
   getTradeHistory,
-  getTokenName,
+  getMarketName,
   getTokenNames,
   getMarketInfo,
   getMarketsInfo,

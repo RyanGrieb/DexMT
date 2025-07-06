@@ -19,6 +19,7 @@ export enum DEXOrderType {
 
 export type DEXTradeAction = {
   id: string;
+  eventName: string;
   isFake: boolean;
   orderType: DEXOrderType;
   traderAddr: string;
@@ -254,6 +255,76 @@ export class Trader {
     return allTrades.filter((trade) => trade.marketAddr === position.marketAddress && trade.isLong === position.isLong);
   }
 */
+
+  async mirrorTrade(trade: DEXTradeAction) {
+    const associatedPosition: DEXPosition | undefined = await this.getPositionFromTrade(trade);
+
+    log.address(this.address, "================================================================================");
+    log.address(
+      this.address,
+      `Processing [${trade.isLong ? "long" : "short"}] trade - copying ${trade.mirroredTraderAddr} for ${this.address}`
+    );
+    log.address(this.address, `Order Type: ${DEXOrderType[trade.orderType]}`);
+    log.address(this.address, `Trade ID: ${trade.id}`);
+    log.address(this.address, `Size USD: ${trade.sizeUsd}`);
+    log.address(this.address, `Price USD: ${trade.priceUsd}`);
+    log.address(this.address, `Initial Collateral: ${trade.initialCollateralUsd}`);
+    log.address(this.address, `Market Name : ${trade.marketName}`);
+    log.address(this.address, `Market Address: ${trade.marketAddress}`);
+    log.address(this.address, `Associated Position: ${associatedPosition ? "Found" : "Not Found"}\n`);
+
+    switch (trade.orderType) {
+      case DEXOrderType.MarketIncrease:
+        if (trade.sizeUsd > 0 && !associatedPosition) {
+          log.address(this.address, `NO ACTION: Increasing position`);
+        }
+
+        // Market increase means we are opening a new position or increasing an existing one
+        if (trade.sizeUsd > 0 && associatedPosition) {
+          // We are increasing an existing position
+          log.address(this.address, `ACTION: Increasing position`);
+          this.modifyPosition(associatedPosition, trade);
+        } else if (trade.sizeUsd <= 0) {
+          // We are opening a new position
+          log.address(this.address, `ACTION: Opening new position`);
+          await this.createPosition(trade);
+        }
+        break;
+      case DEXOrderType.MarketDecrease:
+        // Market decrease means we are closing a position or decreasing an existing one
+
+        if (trade.sizeUsd > 0 && !associatedPosition) {
+          log.address(this.address, `NO ACTION: Decreasing position`);
+        }
+
+        if (trade.sizeUsd <= 0 && !associatedPosition) {
+          log.address(this.address, `NO ACTION: Closing position`);
+        }
+
+        if (trade.sizeUsd > 0 && associatedPosition) {
+          log.address(this.address, `ACTION: Decreasing position`);
+          this.modifyPosition(associatedPosition, trade);
+        } else if (associatedPosition) {
+          log.address(this.address, `ACTION: Closing position`);
+          this.closePosition(associatedPosition);
+        }
+        break;
+      case DEXOrderType.Deposit:
+        // Deposit means we are adjusting collateral, either increasing or decreasing, without changing the position size
+
+        if (trade.sizeUsd > 0 && !associatedPosition) {
+          log.address(this.address, `NO ACTION: Deposit without an existing position`);
+        }
+
+        if (trade.sizeUsd > 0 && associatedPosition) {
+          log.address(this.address, `ACTION: Adjusting collateral for position`);
+          this.modifyPosition(associatedPosition, trade);
+        }
+        break;
+    }
+
+    log.address(this.address, "================================================================================\n");
+  }
   /*
   async mirrorTrades(newTrades: DEXTradeAction[]) {
     if (!this.isMirroringTrades || newTrades.length === 0) {
@@ -274,73 +345,7 @@ export class Trader {
 
     //1. Determine if we are to market increase/decrease our order, or we deposit (collateral adjustment)
     for (const trade of newTrades) {
-      const associatedPosition: DEXPosition | undefined = await this.getPositionFromTrade(trade);
 
-      log.address(this.address, "================================================================================");
-      log.address(
-        this.address,
-        `Processing [${trade.isLong ? "long" : "short"}] trade - copying ${trade.mirroredTraderAddr} for ${this.address}`
-      );
-      log.address(this.address, `Order Type: ${DEXOrderType[trade.orderType]}`);
-      log.address(this.address, `Trade ID: ${trade.id}`);
-      log.address(this.address, `Size USD: ${trade.sizeUsd}`);
-      log.address(this.address, `Price USD: ${trade.priceUsd}`);
-      log.address(this.address, `Initial Collateral: ${trade.initialCollateralUsd}`);
-      log.address(this.address, `Market Name : ${trade.marketName}`);
-      log.address(this.address, `Market Address: ${trade.marketAddress}`);
-      log.address(this.address, `Associated Position: ${associatedPosition ? "Found" : "Not Found"}\n`);
-
-      switch (trade.orderType) {
-        case DEXOrderType.MarketIncrease:
-          if (trade.sizeUsd > 0 && !associatedPosition) {
-            log.address(this.address, `NO ACTION: Increasing position`);
-          }
-
-          // Market increase means we are opening a new position or increasing an existing one
-          if (trade.sizeUsd > 0 && associatedPosition) {
-            // We are increasing an existing position
-            log.address(this.address, `ACTION: Increasing position`);
-            this.modifyPosition(associatedPosition, trade);
-          } else if (trade.sizeUsd <= 0) {
-            // We are opening a new position
-            log.address(this.address, `ACTION: Opening new position`);
-            await this.createPosition(trade);
-          }
-          break;
-        case DEXOrderType.MarketDecrease:
-          // Market decrease means we are closing a position or decreasing an existing one
-
-          if (trade.sizeUsd > 0 && !associatedPosition) {
-            log.address(this.address, `NO ACTION: Decreasing position`);
-          }
-
-          if (trade.sizeUsd <= 0 && !associatedPosition) {
-            log.address(this.address, `NO ACTION: Closing position`);
-          }
-
-          if (trade.sizeUsd > 0 && associatedPosition) {
-            log.address(this.address, `ACTION: Decreasing position`);
-            this.modifyPosition(associatedPosition, trade);
-          } else if (associatedPosition) {
-            log.address(this.address, `ACTION: Closing position`);
-            this.closePosition(associatedPosition);
-          }
-          break;
-        case DEXOrderType.Deposit:
-          // Deposit means we are adjusting collateral, either increasing or decreasing, without changing the position size
-
-          if (trade.sizeUsd > 0 && !associatedPosition) {
-            log.address(this.address, `NO ACTION: Deposit without an existing position`);
-          }
-
-          if (trade.sizeUsd > 0 && associatedPosition) {
-            log.address(this.address, `ACTION: Adjusting collateral for position`);
-            this.modifyPosition(associatedPosition, trade);
-          }
-          break;
-      }
-
-      log.address(this.address, "================================================================================\n");
     }
   }
 */

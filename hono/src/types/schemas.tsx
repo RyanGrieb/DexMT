@@ -130,6 +130,7 @@ const FavoritesOfWallet = z.object({
 // Testing schemas - FIXME: Check for testing environment variable
 const injectFakeTrade = z.object({
   id: z.string(),
+  eventName: z.string(), // FIXME: Validate event name
   isFake: z.boolean().default(true), // Indicates this is a fake trade for testing
   orderType: z.number().int().min(0).max(9), // DEXOrderType enum values
   traderAddr: defineValidWalletAddr(),

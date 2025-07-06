@@ -310,6 +310,75 @@ export async function getSelectedTraders(followerAddress: string): Promise<strin
   return [];
 }
 
+export async function getTradersFollowing(address: string): Promise<Trader[]> {
+  try {
+    const traders = await database
+      .get()
+      .selectFrom("traders")
+      .select([
+        "address",
+        "balance",
+        "chain_id",
+        "platform_ranking",
+        "dexmt_trader",
+        "mirroring_trades",
+        "dex_platform",
+        "pnl",
+        "pnl_percentage",
+        "avg_size",
+        "avg_leverage",
+        "win_ratio",
+        "updated_at",
+        // Add watching_amt subquery like in getTraders
+        (eb) =>
+          eb
+            .selectFrom("favorited_traders")
+            .select((eb) => eb.fn.count("follower_address").distinct().as("count"))
+            .whereRef("favorited_traders.favorited_address", "=", "traders.address")
+            .where("favorited_traders.selected", "=", true)
+            .as("watching_amt"),
+      ])
+      // Filter for traders that the given address has favorited AND selected
+      .where(({ exists, selectFrom }) =>
+        exists(
+          selectFrom("favorited_traders")
+            .select("id")
+            .where("favorited_traders.follower_address", "=", address)
+            .whereRef("favorited_traders.favorited_address", "=", "traders.address")
+            .where("favorited_traders.selected", "=", true)
+        )
+      )
+      // Filter for traders who have mirroring enabled
+      .where("mirroring_trades", "=", true)
+      .orderBy("platform_ranking", "asc")
+      .execute();
+
+    return traders.map(
+      (trader) =>
+        new Trader({
+          address: trader.address,
+          balance: trader.balance,
+          chainId: trader.chain_id,
+          isDexmtTrader: trader.dexmt_trader,
+          isMirroringTrades: trader.mirroring_trades,
+          platformRanking: trader.platform_ranking,
+          dexPlatform: trader.dex_platform,
+          pnl: trader.pnl,
+          pnlPercentage: trader.pnl_percentage,
+          avgSize: trader.avg_size,
+          avgLeverage: trader.avg_leverage,
+          winRatio: trader.win_ratio,
+          watchingAmt: Number(trader.watching_amt) || 0,
+          updatedAt: trader.updated_at.toISOString(),
+        })
+    );
+  } catch (error) {
+    log.throwError(error);
+  }
+
+  return [];
+}
+
 export async function resetTraders() {
   return database
     .get()
