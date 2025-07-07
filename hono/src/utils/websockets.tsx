@@ -81,7 +81,15 @@ async function getDEXTradeActionFromGMXEvent(event: any): Promise<DEXTradeAction
   const collateralToken = getAddressItem("collateralToken");
   const isLong = getBoolItem("isLong");
   const orderType = Number(getUintItem("orderType"));
-  const executionPrice = Number(getUintItem("executionPrice")) / 1e30; // FIXME: This is wrong.
+
+  const { marketsInfoData } = await gmxSdk.getMarketsInfoCached();
+
+  // Get market info to determine the index token and its decimals
+  const marketInfo = marketsInfoData?.[marketAddress];
+  const indexToken = marketInfo?.indexToken;
+  const tokenDecimals = indexToken?.decimals || 18; // Default to 18 if not found
+
+  const executionPrice = Number(getUintItem("executionPrice")) / 10 ** (30 - tokenDecimals);
 
   // Size and collateral calculations
   const sizeInUsd = Number(getUintItem("sizeInUsd")) / 1e30;
